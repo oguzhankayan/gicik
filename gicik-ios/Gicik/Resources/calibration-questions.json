@@ -70,6 +70,7 @@
     "title": "karşıdaki uzun mesaj attı.\nsen?",
     "options": [
       { "id": "photo", "text": "hemen aynı uzunlukta\ncevap atarım" },
+      { "id": "balanced", "text": "normal gerektiği gibi\ncevap yazarım" },
       { "id": "leave", "text": "birkaç saat sonra\ndüşünüp yazarım" }
     ]
   },

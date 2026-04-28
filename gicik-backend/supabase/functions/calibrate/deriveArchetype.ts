@@ -43,7 +43,7 @@ export function deriveArchetype(answers: CalibrationAnswer[]): ArchetypeResult {
     slang_level: answerNumber(answers, "slang_level"),
     humor_intensity: HUMOR_INTENSITY[answerString(answers, "humor_style")] ?? 0.5,
     petty: answerString(answers, "vibe_scenario_2") === "screenshot" ? 0.8 : 0.2,
-    impulse: answerString(answers, "vibe_scenario_1") === "photo" ? 0.7 : 0.3,
+    impulse: impulseFromAnswer(answerString(answers, "vibe_scenario_1")),
   };
 
   const { primary, secondary } = pickArchetype(traits);
@@ -56,6 +56,15 @@ export function deriveArchetype(answers: CalibrationAnswer[]): ArchetypeResult {
     traits: traits as unknown as Record<string, number>,
     full_profile: { traits, raw_answers: answers, version: 1 },
   };
+}
+
+function impulseFromAnswer(s: string): number {
+  switch (s) {
+    case "photo": return 0.75;     // hemen, anlık
+    case "balanced": return 0.5;   // normal akış
+    case "leave": return 0.25;     // bekle, düşün
+    default: return 0.5;
+  }
 }
 
 function pickArchetype(t: Traits): { primary: ArchetypePrimary; secondary: ArchetypePrimary } {

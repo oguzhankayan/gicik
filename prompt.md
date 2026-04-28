@@ -1054,12 +1054,14 @@ calibration_questions:
       - "feminist klişe"
     
   - id: "vibe_scenario_1"
-    type: "image_binary"
+    type: "image_binary"  # 3 option, dikey stack
     title: "karşıdaki uzun mesaj attı. sen?"
-    # impulse trait: 'photo' id → impulsive (0.7), 'leave' → composed (0.3)
+    # impulse trait: photo→0.75 (anlık), balanced→0.5 (normal), leave→0.25 (bekle)
     options:
       - id: "photo"
         text: "hemen aynı uzunlukta cevap atarım"
+      - id: "balanced"
+        text: "normal gerektiği gibi cevap yazarım"
       - id: "leave"
         text: "birkaç saat sonra düşünüp yazarım"
     
@@ -1095,7 +1097,7 @@ function deriveArchetype(answers: CalibrationAnswers): Archetype {
     slang_level: answers.slang_level,
     humor_intensity: HUMOR_INTENSITY[answers.humor_style],
     petty: answers.vibe_scenario_2 === 'screenshot' ? 0.8 : 0.2,
-    impulse: answers.vibe_scenario_1 === 'photo' ? 0.7 : 0.3
+    impulse: ({photo: 0.75, balanced: 0.5, leave: 0.25}[answers.vibe_scenario_1]) ?? 0.5
   };
 
   // Arketip atama (rule-based, deterministic)
