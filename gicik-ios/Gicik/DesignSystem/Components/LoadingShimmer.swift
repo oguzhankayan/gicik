@@ -1,8 +1,10 @@
 import SwiftUI
 
 /// Skeleton shimmer placeholder. Tokens.css `@keyframes shimmer` SwiftUI versiyonu.
-/// Kullanım: `Rectangle().shimmer()` veya `Capsule().shimmer()`
+/// Yuvarlak köşeli alanlarda kullanırken `cornerRadius` parametresi geçilmeli;
+/// shimmer overlay aynı şekle clip edilir, aksi halde kareden taşar.
 struct ShimmerModifier: ViewModifier {
+    let cornerRadius: CGFloat
     @State private var phase: CGFloat = -1
 
     func body(content: Content) -> some View {
@@ -18,6 +20,7 @@ struct ShimmerModifier: ViewModifier {
                     endPoint: UnitPoint(x: phase + 0.3, y: 0.5)
                 )
                 .blendMode(.plusLighter)
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             )
             .onAppear {
                 withAnimation(AppAnimation.shimmer) {
@@ -28,8 +31,8 @@ struct ShimmerModifier: ViewModifier {
 }
 
 extension View {
-    func shimmer() -> some View {
-        modifier(ShimmerModifier())
+    func shimmer(cornerRadius: CGFloat = AppRadius.card) -> some View {
+        modifier(ShimmerModifier(cornerRadius: cornerRadius))
     }
 }
 

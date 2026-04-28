@@ -34,25 +34,26 @@ struct ScreenshotPickerView: View {
             Color.clear.frame(width: 20)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 60)
-        .padding(.bottom, 8)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("EKRAN GÖRÜNTÜSÜNÜ\nYÜKLE")
-                .font(AppFont.display(24, weight: .bold))
-                .tracking(-0.02 * 24)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("EKRAN GÖRÜNTÜSÜNÜ YÜKLE")
+                .font(AppFont.display(22, weight: .bold))
+                .tracking(-0.02 * 22)
                 .foregroundColor(.white)
-                .lineSpacing(24 * 0.05)
+                .fixedSize(horizontal: false, vertical: true)
 
-            Text("konuşmanın olduğu kadar göstermen yeter.\nkim olduğun gizli kalır.")
-                .font(AppFont.body(14))
+            Text("konuşmanın olduğu kadar göstermen yeter. kim olduğun gizli kalır.")
+                .font(AppFont.body(13))
                 .foregroundColor(AppColor.text60)
-                .lineSpacing(14 * 0.45)
+                .lineSpacing(13 * 0.40)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 24)
-        .padding(.top, 10)
+        .padding(.top, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -69,21 +70,22 @@ struct ScreenshotPickerView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             PhotosPicker(selection: $vm.pickedItem, matching: .images, photoLibrary: .shared()) {
-                VStack(spacing: 14) {
+                VStack(spacing: 12) {
                     Image(systemName: "arrow.up.to.line.compact")
-                        .font(.system(size: 42, weight: .light))
+                        .font(.system(size: 38, weight: .light))
                         .foregroundColor(AppColor.text60)
                     Text("fotoğraflardan seç")
                         .font(AppFont.body(16))
                         .foregroundColor(.white.opacity(0.85))
-                    Text("veya buraya sürükle")
+                    Text("başı sonu görünsün, gerisi bana")
                         .font(AppFont.body(13))
+                        .italic()
                         .foregroundColor(AppColor.text40)
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 280)
+                .frame(height: 240)
                 .overlay(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .strokeBorder(AppColor.text20,
