@@ -985,11 +985,13 @@ selected_tone: {{ tone }}
 calibration_questions:
   - id: "context_weight"
     type: "multi_select_with_priority"
-    title: "GICIK SENİ NEREDE EN ÇOK YORUYOR"
-    subtitle: "ilk 3'ü seç, en çok zorlandığın ilk olsun"
+    title: "MESAJDA EN ÇOK NEREDE ZORLANIYORSUN"
+    subtitle: "ilk 3'ü seç, en çok zorlananın ilk olsun"
+    # NOT: rakip dating app isimleri (Tinder, Bumble) Apple Review riski
+    # nedeniyle UI'de geçmez — generic "flört" kullanılır.
     options:
-      - "tinder, bumble vb"
-      - "instagram dm"
+      - "flört"
+      - "sosyal medyada dm"
       - "iş mesajları"
       - "ex ile konuşma"
       - "aile (anne, baba, kardeş)"
@@ -1009,11 +1011,15 @@ calibration_questions:
   - id: "humor_style"
     type: "single_select"
     title: "MİZAH TARZIN"
+    subtitle: "hangisi sana en yakın"
+    # Gen Z TR: İngilizce + boomer kelimeleri (sarcasm/wholesome/şirin)
+    # yerine yerel kullanımdan çağrışım yapan etiketler.
     options:
-      - "dry, deadpan (poker face)"
-      - "sarcasm, iğneli"
-      - "absurd, saçma"
-      - "wholesome, şirin"
+      - "kara mizah"            # intensity 0.95
+      - "laf sokan, ironik"      # intensity 0.85
+      - "absürt, saçma"          # intensity 0.70
+      - "düz, ifadesiz"          # intensity 0.50
+      - "tatlış, masum"          # intensity 0.25
     
   - id: "boldness"
     type: "likert"
@@ -1049,10 +1055,13 @@ calibration_questions:
     
   - id: "vibe_scenario_1"
     type: "image_binary"
-    title: "PARTİDESİN. EN İYİ ARKADAŞIN BAŞKASIYLA ÖPÜŞÜYOR"
+    title: "karşıdaki uzun mesaj attı. sen?"
+    # impulse trait: 'photo' id → impulsive (0.7), 'leave' → composed (0.3)
     options:
-      - "fotoğraf çekerim"
-      - "kibarca ortamı terk ederim"
+      - id: "photo"
+        text: "hemen aynı uzunlukta cevap atarım"
+      - id: "leave"
+        text: "birkaç saat sonra düşünüp yazarım"
     
   - id: "vibe_scenario_2"
     type: "image_binary"
@@ -1073,11 +1082,18 @@ calibration_questions:
 
 ```typescript
 function deriveArchetype(answers: CalibrationAnswers): Archetype {
+  const HUMOR_INTENSITY = {
+    "kara mizah": 0.95,
+    "laf sokan, ironik": 0.85,
+    "absürt, saçma": 0.7,
+    "düz, ifadesiz": 0.5,
+    "tatlış, masum": 0.25,
+  };
   const traits = {
     directness: answers.directness === 'direct' ? 0.8 : 0.3,
     boldness: answers.boldness / 5,
     slang_level: answers.slang_level,
-    humor_intensity: humorIntensityMap[answers.humor_style],
+    humor_intensity: HUMOR_INTENSITY[answers.humor_style],
     petty: answers.vibe_scenario_2 === 'screenshot' ? 0.8 : 0.2,
     impulse: answers.vibe_scenario_1 === 'photo' ? 0.7 : 0.3
   };

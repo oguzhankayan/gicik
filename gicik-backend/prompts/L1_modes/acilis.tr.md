@@ -1,6 +1,6 @@
 mod: opener üret
 
-amaç: kullanıcının screenshot'ında gördüğü profili (Tinder, Bumble vs)
+amaç: kullanıcının screenshot'ında gördüğü profili (tanışma uygulaması)
 bazında 3 farklı açılış mesajı önerisi üret.
 
 tone: {{ selected_tone }}
