@@ -2,8 +2,7 @@ import SwiftUI
 import PhotosUI
 
 /// Screenshot picker — 3 state: empty (PhotosPicker), uploading (shimmer overlay),
-/// done (holographic border + checkmark).
-/// design-source/parts/main.jsx → PickerEmpty / PickerProgress / PickerComplete
+/// done (full-fit preview + holographic border + checkmark).
 struct ScreenshotPickerView: View {
     @Bindable var vm: HomeViewModel
     let mode: Mode
@@ -11,15 +10,25 @@ struct ScreenshotPickerView: View {
     var body: some View {
         VStack(spacing: 0) {
             topBar
-            header
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                    contentArea
+                        .padding(.top, 22)
+                    privacyHint
+                        .padding(.top, 14)
+                }
+                .padding(.horizontal, 24)
                 .padding(.top, 4)
-            contentArea
-                .padding(.top, 18)
-            Spacer(minLength: 16)
+                .padding(.bottom, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
             footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
+
+    // MARK: - TopBar
 
     private var topBar: some View {
         HStack {
@@ -33,31 +42,34 @@ struct ScreenshotPickerView: View {
                 .font(AppFont.body(16))
                 .foregroundColor(.white.opacity(0.85))
             Spacer()
-            Color.clear.frame(width: 20)
+            Color.clear.frame(width: 24, height: 1)
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
-        .padding(.bottom, 4)
+        .padding(.bottom, 6)
     }
+
+    // MARK: - Header
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("EKRAN GÖRÜNTÜSÜNÜ YÜKLE")
+            Text("KONUŞMANIN EKRAN\nGÖRÜNTÜSÜNÜ YÜKLE")
                 .font(AppFont.display(22, weight: .bold))
                 .tracking(-0.02 * 22)
                 .foregroundColor(.white)
+                .lineSpacing(22 * 0.06)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("konuşmanın olduğu kadar göstermen yeter. kim olduğun gizli kalır.")
+            Text("konuşmanın olduğu kadarı göstermen yeter. kim olduğun gizli kalır.")
                 .font(AppFont.body(13))
                 .foregroundColor(AppColor.text60)
                 .lineSpacing(13 * 0.40)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+
+    // MARK: - Content
 
     @ViewBuilder
     private var contentArea: some View {
@@ -72,82 +84,48 @@ struct ScreenshotPickerView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 14) {
-            PhotosPicker(selection: $vm.pickedItem, matching: .images, photoLibrary: .shared()) {
-                VStack(spacing: 12) {
-                    Image(systemName: "arrow.up.to.line.compact")
-                        .font(.system(size: 38, weight: .light))
-                        .foregroundColor(AppColor.text60)
-                    Text("fotoğraflardan seç")
-                        .font(AppFont.body(16))
-                        .foregroundColor(.white.opacity(0.85))
-                    Text("başı sonu görünsün, gerisi bana")
-                        .font(AppFont.body(13))
-                        .italic()
-                        .foregroundColor(AppColor.text40)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 240)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(AppColor.text20,
-                                      style: StrokeStyle(lineWidth: 1.5, dash: [6, 6]))
-                )
+        PhotosPicker(selection: $vm.pickedItem, matching: .images, photoLibrary: .shared()) {
+            VStack(spacing: 14) {
+                Image(systemName: "arrow.up.to.line.compact")
+                    .font(.system(size: 38, weight: .light))
+                    .foregroundColor(AppColor.text60)
+                Text("fotoğraflardan seç")
+                    .font(AppFont.body(16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.85))
+                Text("tek karede tüm konuşma görünsün")
+                    .font(AppFont.body(12))
+                    .foregroundColor(AppColor.text40)
             }
-
-            // Privacy obs (non-italic, smaller)
-            HStack(alignment: .top, spacing: 14) {
-                Capsule()
-                    .fill(AppColor.lime)
-                    .frame(width: 3)
-                Text("screenshot 24 saat sonra silinir. isimleri otomatik bulanıklaştırırız (deneysel).")
-                    .font(AppFont.body(13))
-                    .foregroundColor(.white.opacity(0.75))
-                    .lineSpacing(13 * 0.40)
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, 14)
-            .padding(.leading, 13)
-            .padding(.trailing, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(AppColor.bg1.opacity(0.5))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(AppColor.text05, lineWidth: 1)
+            .frame(maxWidth: .infinity)
+            .frame(height: 240)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(
+                        AppColor.text20,
+                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 6])
                     )
             )
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 24)
     }
 
     private var uploadingState: some View {
         ZStack(alignment: .bottomLeading) {
-            // Faux gradient bg
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x2D1B4E), Color(hex: 0x1A0F2E)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-
             if let data = vm.pickedScreenshot, let img = UIImage(data: data) {
                 Image(uiImage: img)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .blur(radius: 4)
                     .clipped()
+            } else {
+                Rectangle().fill(AppColor.bg1)
             }
 
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .opacity(0.6)
-                .shimmer()
+                .shimmer(cornerRadius: 18)
 
-            HStack {
+            HStack(spacing: 8) {
                 Circle().fill(AppColor.lime).frame(width: 8, height: 8)
                 Text("yorumlanıyor…")
                     .font(AppFont.body(14))
@@ -170,16 +148,21 @@ struct ScreenshotPickerView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(AppColor.text10, lineWidth: 1)
         )
-        .padding(.horizontal, 24)
-        .padding(.top, 24)
     }
 
     private func doneState(thumbnail data: Data) -> some View {
-        VStack(spacing: 14) {
+        VStack(alignment: .leading, spacing: 14) {
             // Arketip etiketi (kim olduğun)
-            archetypeTag
+            HStack(spacing: 8) {
+                Text(archetypeEmoji)
+                    .font(.system(size: 16))
+                Text("\(archetypeShortLabel) tarzında")
+                    .font(AppFont.mono(11))
+                    .tracking(0.04 * 11)
+                    .foregroundColor(AppColor.text60)
+                Spacer()
+            }
 
-            // Tam görsel — fit, kesilmiyor, max ekrana göre
             ZStack(alignment: .topTrailing) {
                 if let img = UIImage(data: data) {
                     Image(uiImage: img)
@@ -203,32 +186,25 @@ struct ScreenshotPickerView: View {
                     .strokeBorder(AppColor.holographic, lineWidth: 1.5)
             )
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 16)
     }
 
-    private var archetypeTag: some View {
-        HStack(spacing: 8) {
-            Text(archetypeEmoji)
-                .font(.system(size: 16))
-            Text("\(archetypeShortLabel) tarzında")
-                .font(AppFont.mono(11))
-                .tracking(0.04 * 11)
-                .foregroundColor(AppColor.text60)
-            Spacer()
+    // MARK: - Privacy hint
+
+    private var privacyHint: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "info.circle")
+                .font(.system(size: 12))
+                .foregroundColor(AppColor.text40)
+                .padding(.top, 1)
+            Text("yüklediğin ekran görüntüsü 24 saat sonra otomatik silinir.")
+                .font(AppFont.body(12))
+                .foregroundColor(AppColor.text40)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
     }
 
-    private var archetypeEmoji: String {
-        guard let a = vm.archetype else { return "✨" }
-        return String(a.label.first ?? "✨")
-    }
-
-    private var archetypeShortLabel: String {
-        guard let a = vm.archetype else { return "" }
-        let parts = a.label.split(separator: " ", maxSplits: 1)
-        return (parts.last.map(String.init) ?? "").lowercased()
-    }
+    // MARK: - Footer
 
     @ViewBuilder
     private var footer: some View {
@@ -245,11 +221,20 @@ struct ScreenshotPickerView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         case .empty, .uploading:
-            SecondaryButton(title: "örnek görüntü kullan", action: {
-                // TODO: load bundled sample, advance.
-            })
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
+            EmptyView()
         }
+    }
+
+    // MARK: - Computed
+
+    private var archetypeEmoji: String {
+        guard let a = vm.archetype else { return "✨" }
+        return String(a.label.first ?? "✨")
+    }
+
+    private var archetypeShortLabel: String {
+        guard let a = vm.archetype else { return "" }
+        let parts = a.label.split(separator: " ", maxSplits: 1)
+        return (parts.last.map(String.init) ?? "").lowercased()
     }
 }
