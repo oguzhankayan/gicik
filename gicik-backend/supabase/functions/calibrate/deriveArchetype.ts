@@ -4,10 +4,11 @@
 import type { CalibrationAnswer, ArchetypeResult, ArchetypePrimary } from "../_shared/types.ts";
 
 const HUMOR_INTENSITY: Record<string, number> = {
-  "dry, deadpan (poker face)": 0.5,
-  "sarcasm, iğneli": 0.85,
-  "absurd, saçma": 0.7,
-  "wholesome, şirin": 0.25,
+  "kara mizah": 0.95,
+  "laf sokan, ironik": 0.85,
+  "absürt, saçma": 0.7,
+  "düz, ifadesiz": 0.5,
+  "tatlış, masum": 0.25,
 };
 
 interface Traits {

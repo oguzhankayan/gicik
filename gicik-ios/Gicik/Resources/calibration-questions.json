@@ -31,10 +31,11 @@
     "title": "MİZAH TARZIN",
     "subtitle": "hangisi sana en yakın",
     "options": [
-      { "text": "dry, deadpan (poker face)" },
-      { "text": "sarcasm, iğneli" },
-      { "text": "absurd, saçma" },
-      { "text": "wholesome, şirin" }
+      { "text": "kara mizah" },
+      { "text": "laf sokan, ironik" },
+      { "text": "absürt, saçma" },
+      { "text": "düz, ifadesiz" },
+      { "text": "tatlış, masum" }
     ]
   },
   {
