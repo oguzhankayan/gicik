@@ -18,15 +18,17 @@ struct DemoUploadView: View {
 
     private let chat: [ChatMessage] = [
         .init(isMine: false, text: "akşam ne yapıyon"),
-        .init(isMine: true,  text: "huysuz kediyle huysuz insan, ikimizden biri kahve içecek"),
-        .init(isMine: false, text: "demek ki ikimiz buluşacağız"),
-        .init(isMine: false, text: "11 cumartesi?"),  // last, unanswered
+        .init(isMine: true,  text: "valla bilmiyom ne yapsak?"),
+        .init(isMine: false, text: "8'de kadıköy boğa uyar mı?"),  // last, unanswered
     ]
 
+    /// Demo'da 6 arketipten 3'ünü gösteriyoruz: en kontrastlı uçlar
+    /// (kuru-zekice / soğukkanlı-stratejik / sıcak-samimi) ki kullanıcı
+    /// kalibrasyonun çıktıyı nasıl etkilediğini hisseden.
     private let demoReplies: [(label: String, text: String)] = [
-        ("01 — DOĞRUDAN", "11 ideal. yer ben söylerim."),
-        ("02 — İRONİK", "kahve mi yoksa kedi mi? ikisi de huysuz, sıkıntı."),
-        ("03 — İLERİ TAŞIMA", "11 ok. ama yarım saat geç gel, ben hazırlanırken huysuzlanıyorum."),
+        ("🥀 GICIK olsa",  "8 erken ama gelirim. boğa'da masa kapma, sen ayarla."),
+        ("✨ HAVALI olsa", "8 ok. ben yola çıkmadan haber, masa için."),
+        ("🍬 TATLI olsa",  "olur, geliyorum. seni görmek iyi gelecek."),
     ]
 
     var body: some View {
@@ -55,7 +57,7 @@ struct DemoUploadView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 18)
 
-            ObservationCard(text: "üç turdur sıcak. yer veya saat sorusuna kısa, net bir cevap istiyor.")
+            ObservationCard(text: "davet karşıdan. uzun cevap istemiyor — gel ya da kontra teklif et.")
                 .padding(.horizontal, 24)
                 .padding(.top, 14)
 
