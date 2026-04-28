@@ -104,8 +104,26 @@ struct ResultView: View {
     }
 
     private func sendFeedback(_ reply: ReplyOption, positive: Bool) {
-        // Phase 2'de mock. Phase 2.7 backend'e bağlanır:
-        // POST /functions/v1/prompt-feedback
-        // { conversation_id, selected_reply_index, feedback: positive ? "positive" : "negative" }
+        guard let conversationId = result.conversationId else { return }
+
+        struct FeedbackBody: Encodable {
+            let conversation_id: String
+            let selected_reply_index: Int?
+            let feedback: String
+        }
+
+        struct FeedbackResp: Decodable { let ok: Bool }
+
+        Task {
+            _ = try? await APIClient.shared.invokeJSON(
+                .promptFeedback,
+                body: FeedbackBody(
+                    conversation_id: conversationId,
+                    selected_reply_index: reply.index,
+                    feedback: positive ? "positive" : "negative"
+                ),
+                as: FeedbackResp.self
+            )
+        }
     }
 }

@@ -16,7 +16,7 @@ struct HomeView: View {
             case .tone(let mode, _):
                 ToneSelectorView(vm: vm, mode: mode)
             case .generation(let mode, let tone, _):
-                GenerationView(mode: mode, tone: tone)
+                GenerationView(vm: vm, mode: mode, tone: tone)
             case .result(let result):
                 ResultView(vm: vm, result: result)
             }

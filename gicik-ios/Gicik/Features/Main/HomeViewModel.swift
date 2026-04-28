@@ -60,8 +60,14 @@ final class HomeViewModel {
     func selectTone(_ tone: Tone) {
         guard case .tone(let mode, let data) = stage else { return }
         stage = .generation(mode, tone, screenshot: data)
-        Task { await runGeneration(mode: mode, tone: tone) }
+        Task { await runRealGeneration(mode: mode, tone: tone, imageData: data) }
     }
+
+    /// Streaming partial result — GenerationView reads this for live UI.
+    /// Phase 2.4 wired to real SSE.
+    var streamingObservation: String = ""
+    var streamingReplies: [Int: ReplyOption] = [:]
+    var conversationId: String?
 
     func reset() {
         stage = .home
@@ -91,21 +97,112 @@ final class HomeViewModel {
         }
     }
 
-    // MARK: - Mock generation
+    // MARK: - Real generation (Phase 2.3 + 2.4 wired)
 
-    /// Phase 2'de mock. Phase 2.4'te SSE backend stream'i ile değişir.
-    private func runGeneration(mode: Mode, tone: Tone) async {
-        let mock = GenerationResult(
-            observation: mockObservation(for: mode),
-            replies: mockReplies(for: mode, tone: tone),
-            conversationId: UUID().uuidString,
+    private func runRealGeneration(mode: Mode, tone: Tone, imageData: Data) async {
+        streamingObservation = ""
+        streamingReplies = [:]
+        conversationId = nil
+
+        // Stage 1: parse-screenshot (multipart)
+        struct ParseResp: Decodable {
+            let conversation_id: String
+            let parse_result: ParseResultDTO
+            let duration_ms: Int
+        }
+
+        let parseResp: ParseResp
+        do {
+            parseResp = try await APIClient.shared.invokeMultipart(
+                .parseScreenshot,
+                imageData: imageData,
+                imageMimeType: "image/jpeg",
+                formFields: ["mode": mode.rawValue],
+                as: ParseResp.self
+            )
+            conversationId = parseResp.conversation_id
+        } catch {
+            lastError = "parse: \(error.localizedDescription)"
+            // Show error state on result screen so user can retry
+            stage = .result(GenerationResult(
+                observation: "bağlantı sorunu. tekrar dene.",
+                replies: [],
+                conversationId: nil,
+                mode: mode,
+                tone: tone
+            ))
+            return
+        }
+
+        // Stage 2: generate-replies (SSE)
+        struct GenBody: Encodable {
+            let conversation_id: String
+            let tone: String
+        }
+
+        let body = GenBody(conversation_id: parseResp.conversation_id, tone: tone.rawValue)
+        var finalReplies: [ReplyOption] = []
+        var observation = ""
+
+        do {
+            for try await event in APIClient.shared.invokeStream(.generateReplies, body: body) {
+                switch event {
+                case .observation(let text):
+                    observation = text
+                    streamingObservation = text
+                case .reply(let index, let toneAngle, let text):
+                    let r = ReplyOption(index: index, toneAngle: toneAngle, text: text)
+                    streamingReplies[index] = r
+                case .done:
+                    break
+                case .error(let msg):
+                    lastError = "generate: \(msg)"
+                case .unknown:
+                    continue
+                }
+            }
+        } catch {
+            lastError = "generate: \(error.localizedDescription)"
+        }
+
+        finalReplies = (0..<3).compactMap { streamingReplies[$0] }
+
+        if finalReplies.isEmpty {
+            stage = .result(GenerationResult(
+                observation: observation.isEmpty ? "üretim başarısız." : observation,
+                replies: [],
+                conversationId: conversationId,
+                mode: mode,
+                tone: tone
+            ))
+            return
+        }
+
+        stage = .result(GenerationResult(
+            observation: observation,
+            replies: finalReplies,
+            conversationId: conversationId,
             mode: mode,
             tone: tone
-        )
-        // Streaming benzeri bekleme
-        try? await Task.sleep(nanoseconds: 1_500_000_000)
-        stage = .result(mock)
+        ))
+
+        // Append to history
+        history.insert(.init(
+            id: conversationId ?? UUID().uuidString,
+            mode: mode,
+            platform: "image",
+            createdAt: Date(),
+            snippet: "\"\(finalReplies.first?.text.prefix(40) ?? "")...\""
+        ), at: 0)
     }
+
+    /// Mirror of backend ParseResult — only fields we care about on the client.
+    private struct ParseResultDTO: Decodable {
+        let platform_detected: String?
+        let context_summary_tr: String?
+    }
+
+    // ─── legacy mock helpers retained for previews / offline fallback ───
 
     private func mockObservation(for mode: Mode) -> String {
         switch mode {

@@ -86,35 +86,35 @@ final class OnboardingViewModel {
     // MARK: - Calibration submission
 
     /// Phase 1.4 — backend `/calibrate` endpoint'ini çağırır.
-    /// Şu an mock. Gerçek deploy sonrası SupabaseService.shared.functions.invoke kullanılacak.
     func submitCalibration() async {
         isSubmitting = true
         defer { isSubmitting = false }
 
         let answers = Array(quizAnswers.values)
 
-        // Mock: deterministic local archetype (matches backend logic)
-        let archetype = mockDeriveArchetype(from: answers)
-        try? await Task.sleep(nanoseconds: 800_000_000)
-        self.archetype = ArchetypeResult(
-            archetypePrimary: archetype,
-            archetypeSecondary: .observer,
-            displayLabel: archetype.label,
-            displayDescription: archetype.description
-        )
-    }
-
-    private func mockDeriveArchetype(from answers: [CalibrationAnswer]) -> ArchetypePrimary {
-        let directness = answers.first { $0.questionId == "directness" }?.selected.first
-        let humor = answers.first { $0.questionId == "humor_style" }?.selected.first
-
-        if directness == "direct" && humor?.contains("sarcasm") == true {
-            return .dryroaster
+        struct CalibrateBody: Encodable {
+            let answers: [CalibrationAnswer]
         }
-        if directness == "indirect" {
-            return .observer
+
+        do {
+            let result: ArchetypeResult = try await APIClient.shared.invokeJSON(
+                .calibrate,
+                body: CalibrateBody(answers: answers),
+                as: ArchetypeResult.self
+            )
+            self.archetype = result
+        } catch {
+            self.lastError = error.localizedDescription
+            // Fallback: don't block onboarding even if backend fails — pick best-guess archetype
+            // so user can still continue.
+            let fallback: ArchetypePrimary = .dryroaster
+            self.archetype = ArchetypeResult(
+                archetypePrimary: fallback,
+                archetypeSecondary: .observer,
+                displayLabel: fallback.label,
+                displayDescription: fallback.description
+            )
         }
-        return .dryroaster // safe default
     }
 
     // MARK: - Question loading
