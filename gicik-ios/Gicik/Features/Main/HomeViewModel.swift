@@ -41,13 +41,45 @@ final class HomeViewModel {
     // MARK: - Stage transitions
 
     func selectMode(_ mode: Mode) {
+        resetFlowState()
         stage = .picker(mode)
-        pickerState = .empty
-        pickedScreenshot = nil
     }
 
     func backToHome() {
+        resetFlowState()
         stage = .home
+    }
+
+    /// Picker'a dön (done state'ten 'değiştir').
+    func resetPicker() {
+        if case .picker(let mode) = stage {
+            resetFlowState()
+            stage = .picker(mode)
+        } else if case .generation(let mode, _) = stage {
+            resetFlowState()
+            stage = .picker(mode)
+        }
+    }
+
+    private func resetFlowState() {
+        pickerState = .empty
+        pickedScreenshot = nil
+        pickedItem = nil
+        streamingObservation = ""
+        streamingReplies = [:]
+        conversationId = nil
+    }
+
+    /// Aynı screenshot ile yeniden üret (Result'ta 'yeni cevap üret').
+    func regenerate() {
+        // Result stage'inde önceki screenshot mevcut.
+        guard case .result(let prev) = stage,
+              let data = pickedScreenshot else { return }
+        // Streaming state'i temizle, generation'a dön, yeniden başlat.
+        streamingObservation = ""
+        streamingReplies = [:]
+        stage = .generation(prev.mode, screenshot: data)
+        Task { await runRealGeneration(mode: prev.mode, imageData: data) }
     }
 
     /// Picker'dan generation'a doğrudan geç — ton seçimi yok.

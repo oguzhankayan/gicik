@@ -70,10 +70,7 @@ struct ResultView: View {
             }
             Spacer()
             Button {
-                // Regenerate
-                if case .result = vm.stage {
-                    vm.stage = .generation(result.mode, screenshot: vm.pickedScreenshot ?? Data())
-                }
+                vm.regenerate()
             } label: {
                 Image(systemName: "arrow.clockwise")
                     .font(.system(size: 18, weight: .medium))

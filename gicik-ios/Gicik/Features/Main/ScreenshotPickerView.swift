@@ -173,50 +173,81 @@ struct ScreenshotPickerView: View {
     }
 
     private func doneState(thumbnail data: Data) -> some View {
-        ZStack(alignment: .topTrailing) {
-            if let img = UIImage(data: data) {
-                Image(uiImage: img)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 280)
-                    .clipped()
+        VStack(spacing: 14) {
+            // Arketip etiketi (kim olduğun)
+            archetypeTag
+
+            // Tam görsel — fit, kesilmiyor, max ekrana göre
+            ZStack(alignment: .topTrailing) {
+                if let img = UIImage(data: data) {
+                    Image(uiImage: img)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity)
+                }
+                Circle()
+                    .fill(AppColor.lime)
+                    .frame(width: 28, height: 28)
+                    .overlay(
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(AppColor.bg0)
+                    )
+                    .padding(10)
             }
-
-            // Holographic border overlay
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(AppColor.holographic, lineWidth: 1.5)
-                .frame(height: 280)
-
-            Circle()
-                .fill(AppColor.lime)
-                .frame(width: 28, height: 28)
-                .overlay(
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(AppColor.bg0)
-                )
-                .padding(10)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(AppColor.holographic, lineWidth: 1.5)
+            )
         }
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .padding(.horizontal, 24)
-        .padding(.top, 24)
+        .padding(.top, 16)
+    }
+
+    private var archetypeTag: some View {
+        HStack(spacing: 8) {
+            Text(archetypeEmoji)
+                .font(.system(size: 16))
+            Text("\(archetypeShortLabel) tarzında")
+                .font(AppFont.mono(11))
+                .tracking(0.04 * 11)
+                .foregroundColor(AppColor.text60)
+            Spacer()
+        }
+    }
+
+    private var archetypeEmoji: String {
+        guard let a = vm.archetype else { return "✨" }
+        return String(a.label.first ?? "✨")
+    }
+
+    private var archetypeShortLabel: String {
+        guard let a = vm.archetype else { return "" }
+        let parts = a.label.split(separator: " ", maxSplits: 1)
+        return (parts.last.map(String.init) ?? "").lowercased()
     }
 
     @ViewBuilder
     private var footer: some View {
         switch vm.pickerState {
         case .done:
-            PrimaryButton("devam") {
-                vm.proceedToGeneration()
+            HStack(spacing: 10) {
+                SecondaryButton(title: "değiştir") {
+                    vm.resetPicker()
+                }
+                PrimaryButton("devam") {
+                    vm.proceedToGeneration()
+                }
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 32)
+            .padding(.bottom, 24)
         case .empty, .uploading:
             SecondaryButton(title: "örnek görüntü kullan", action: {
                 // TODO: load bundled sample, advance.
             })
             .padding(.horizontal, 24)
-            .padding(.bottom, 32)
+            .padding(.bottom, 24)
         }
     }
 }
