@@ -57,9 +57,9 @@ struct DemoUploadView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 18)
 
-            ObservationCard(text: "davet karşıdan. uzun cevap istemiyor — gel ya da kontra teklif et.")
+            inlineHint("davet karşıdan. uzun cevap istemiyor — gel ya da kontra teklif et.")
                 .padding(.horizontal, 24)
-                .padding(.top, 14)
+                .padding(.top, 12)
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 10) {
@@ -101,6 +101,24 @@ struct DemoUploadView: View {
             withAnimation(AppAnimation.pulseGlow) {
                 pulseEmphasis = true
             }
+        }
+    }
+
+    /// Demo-only inline hint — info icon + italic asistan voice.
+    /// Tam ObservationCard'tan daha az yer kaplar; mesaj kutusunun önüne geçmez.
+    private func inlineHint(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 14))
+                .foregroundColor(AppColor.lime)
+                .padding(.top, 2)
+            Text(text)
+                .font(AppFont.body(13))
+                .italic()
+                .foregroundColor(AppColor.text60)
+                .lineSpacing(13 * 0.40)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
     }
 

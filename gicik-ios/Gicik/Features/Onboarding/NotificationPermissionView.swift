@@ -40,7 +40,7 @@ struct NotificationPermissionView: View {
                 .lineSpacing(28 * 0.05)
                 .padding(.top, 36)
 
-            Text("yeni mod geldiğinde, prompt güncellendiğinde,\nya da tarzına bir şey eklediğimizde.\nseyrek. sıkıcı değil.")
+            Text("yeni mod geldiğinde, cevap stilleri tazelendiğinde,\nya da tarzına bir şey eklediğimizde.\nseyrek. sıkıcı değil.")
                 .font(AppFont.body(15))
                 .foregroundColor(AppColor.text60)
                 .multilineTextAlignment(.center)
