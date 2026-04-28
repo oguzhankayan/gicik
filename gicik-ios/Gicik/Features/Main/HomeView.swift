@@ -8,7 +8,7 @@ struct HomeView: View {
     @State private var showArchetypeSwitcher = false
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             switch vm.stage {
             case .home:
                 homeContent

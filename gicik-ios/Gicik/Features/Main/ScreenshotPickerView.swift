@@ -12,11 +12,13 @@ struct ScreenshotPickerView: View {
         VStack(spacing: 0) {
             topBar
             header
+                .padding(.top, 4)
             contentArea
-            Spacer()
+                .padding(.top, 18)
+            Spacer(minLength: 16)
             footer
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var topBar: some View {
