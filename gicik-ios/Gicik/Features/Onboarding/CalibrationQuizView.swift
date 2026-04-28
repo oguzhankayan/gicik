@@ -231,14 +231,23 @@ struct CalibrationQuizView: View {
             HStack(spacing: 0) {
                 ForEach(min...max, id: \.self) { n in
                     Button { likertValue = n } label: {
-                        Circle()
-                            .fill(likertValue == n
-                                  ? AnyShapeStyle(AppColor.holographic)
-                                  : AnyShapeStyle(Color.white.opacity(0.12)))
-                            .frame(width: likertValue == n ? 28 : 18,
-                                   height: likertValue == n ? 28 : 18)
-                            .shadow(color: likertValue == n ? Color(hex: 0xFF0080, alpha: 0.4) : .clear, radius: 8)
-                            .frame(maxWidth: .infinity)
+                        ZStack {
+                            // sabit 28pt frame: scale animation Circle'ı deforme etmez
+                            Circle()
+                                .fill(Color.white.opacity(0.12))
+                                .frame(width: 18, height: 18)
+                                .opacity(likertValue == n ? 0 : 1)
+
+                            Circle()
+                                .fill(AppColor.holographic)
+                                .frame(width: 28, height: 28)
+                                .shadow(color: Color(hex: 0xFF0080, alpha: 0.4), radius: 8)
+                                .opacity(likertValue == n ? 1 : 0)
+                                .scaleEffect(likertValue == n ? 1.0 : 0.5)
+                        }
+                        .frame(width: 36, height: 36)
+                        .frame(maxWidth: .infinity)
+                        .animation(AppAnimation.standard, value: likertValue)
                     }
                     .sensoryFeedback(.selection, trigger: likertValue)
                 }
