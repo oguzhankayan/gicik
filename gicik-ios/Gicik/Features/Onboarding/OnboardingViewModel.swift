@@ -103,18 +103,17 @@ final class OnboardingViewModel {
                 as: ArchetypeResult.self
             )
             self.archetype = result
+            self.lastError = nil
         } catch {
+            // Hata yüzeye çıkar — silent fallback bug'ını gizliyordu.
+            // CalibrationResultView retry UI gösterir.
             self.lastError = error.localizedDescription
-            // Fallback: don't block onboarding even if backend fails — pick best-guess archetype
-            // so user can still continue.
-            let fallback: ArchetypePrimary = .dryroaster
-            self.archetype = ArchetypeResult(
-                archetypePrimary: fallback,
-                archetypeSecondary: .observer,
-                displayLabel: fallback.label,
-                displayDescription: fallback.description
-            )
+            self.archetype = nil
         }
+    }
+
+    func retryCalibrationSubmit() {
+        Task { await submitCalibration() }
     }
 
     // MARK: - Question loading

@@ -1,16 +1,32 @@
 import SwiftUI
 
-/// Demo upload — pre-loaded sample profile + 4 hardcoded reply (typewriter).
-/// design-source/parts/onboard2.jsx → DemoUpload
+/// Demo upload — aha moment.
+/// Yukarıda küçük bir konuşma geçmişi (rounded rectangle, son mesaj cevapsız).
+/// Ortada Gıcık'ın o son mesaja dair gözlemi.
+/// Aşağıda kalibrasyon modellerinin önereceği 3 farklı cevap (typewriter reveal).
+///
+/// Cevap modu deneyimini birebir taklit eder.
 struct DemoUploadView: View {
     let onContinue: () -> Void
     @State private var revealedCount: Int = 0
+    @State private var pulseEmphasis: Bool = false
+
+    private struct ChatMessage {
+        let isMine: Bool
+        let text: String
+    }
+
+    private let chat: [ChatMessage] = [
+        .init(isMine: false, text: "akşam ne yapıyon"),
+        .init(isMine: true,  text: "huysuz kediyle huysuz insan, ikimizden biri kahve içecek"),
+        .init(isMine: false, text: "demek ki ikimiz buluşacağız"),
+        .init(isMine: false, text: "11 cumartesi?"),  // last, unanswered
+    ]
 
     private let demoReplies: [(label: String, text: String)] = [
-        ("01 — SPESİFİK", "huysuz kediyle huysuz insan arasında fark var mı?"),
-        ("02 — SORU", "üç huysuzluğun ortak özelliği ne?"),
-        ("03 — İRONİ", "kahve, kitap, kedi listene 'huy' eklersen tehlikeli oluyor."),
-        ("04 — DİREKT", "mira, profilin bana fazla iyi görünüyor. neredesin?"),
+        ("01 — DOĞRUDAN", "11 ideal. yer ben söylerim."),
+        ("02 — İRONİK", "kahve mi yoksa kedi mi? ikisi de huysuz, sıkıntı."),
+        ("03 — İLERİ TAŞIMA", "11 ok. ama yarım saat geç gel, ben hazırlanırken huysuzlanıyorum."),
     ]
 
     var body: some View {
@@ -23,25 +39,26 @@ struct DemoUploadView: View {
                     .tracking(0.04 * 11)
                     .foregroundColor(AppColor.text40)
 
-                Text("böyle bir şey")
-                    .font(AppFont.display(26, weight: .bold))
-                    .tracking(-0.02 * 26)
+                Text("son mesaj cevapsız.\ngıcık olsa ne yazardı?")
+                    .font(AppFont.display(22, weight: .bold))
+                    .tracking(-0.02 * 22)
                     .foregroundColor(.white)
+                    .lineSpacing(22 * 0.10)
                     .padding(.top, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, 24)
-            .padding(.top, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 4)
 
-            // Faux screenshot
-            fauxScreenshot
-                .padding(.top, 18)
-
-            ObservationCard(text: "kahve klişesi var ama 'huysuz' iyi detay. oradan tut.")
+            chatBubbleCard
                 .padding(.horizontal, 24)
                 .padding(.top, 18)
 
-            // Reply cards (animated reveal)
+            ObservationCard(text: "üç turdur sıcak. yer veya saat sorusuna kısa, net bir cevap istiyor.")
+                .padding(.horizontal, 24)
+                .padding(.top, 14)
+
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 10) {
                     ForEach(Array(demoReplies.enumerated()), id: \.offset) { idx, item in
@@ -52,12 +69,14 @@ struct DemoUploadView: View {
                                 onCopy: {}
                             )
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        } else {
+                            ReplyCardSkeleton()
                         }
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 14)
-                .padding(.bottom, 110)
+                .padding(.top, 12)
+                .padding(.bottom, 100)
             }
 
             Spacer(minLength: 0)
@@ -70,81 +89,80 @@ struct DemoUploadView: View {
         .task {
             revealedCount = 0
             for i in 1...demoReplies.count {
-                try? await Task.sleep(nanoseconds: 700_000_000)
+                try? await Task.sleep(nanoseconds: 800_000_000)
                 withAnimation(AppAnimation.standard) {
                     revealedCount = i
                 }
             }
         }
+        .onAppear {
+            withAnimation(AppAnimation.pulseGlow) {
+                pulseEmphasis = true
+            }
+        }
     }
 
-    private var fauxScreenshot: some View {
-        ZStack(alignment: .topTrailing) {
-            // Diagonal striped bg
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x2D1B4E), Color(hex: 0x1A0F2E)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    DiagonalStripes(spacing: 16, lineWidth: 1, opacity: 0.04)
-                )
-                .frame(width: 240, height: 180)
-
-            VStack(alignment: .leading) {
-                Spacer()
-                Text("Mira, 27")
-                    .font(AppFont.body(18, weight: .semibold))
-                    .foregroundColor(.white)
-                Text("kahve, kitap, kedi.\nüçü de huysuz.")
-                    .font(AppFont.body(13))
-                    .foregroundColor(AppColor.text60)
-                    .padding(.top, 2)
+    private var chatBubbleCard: some View {
+        VStack(spacing: 8) {
+            ForEach(Array(chat.enumerated()), id: \.offset) { idx, msg in
+                chatBubble(msg, isLast: idx == chat.count - 1)
             }
-            .padding(12)
-            .frame(width: 240, height: 180, alignment: .bottomLeading)
-
-            // DEMO badge
-            Text("DEMO")
-                .font(AppFont.mono(10))
-                .foregroundColor(AppColor.lime)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3)
-                .overlay(
-                    Capsule().strokeBorder(AppColor.lime.opacity(0.4), lineWidth: 1)
-                )
-                .padding(10)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(AppColor.holographic, lineWidth: 1)
-                .opacity(0.6)
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(AppColor.bg1.opacity(0.55))
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(AppColor.text08, lineWidth: 1)
+            }
         )
     }
-}
 
-private struct DiagonalStripes: View {
-    let spacing: CGFloat
-    let lineWidth: CGFloat
-    let opacity: Double
+    @ViewBuilder
+    private func chatBubble(_ msg: ChatMessage, isLast: Bool) -> some View {
+        HStack(spacing: 0) {
+            if msg.isMine { Spacer(minLength: 60) }
 
-    var body: some View {
-        GeometryReader { geo in
-            Path { path in
-                let w = geo.size.width
-                let h = geo.size.height
-                var x: CGFloat = -h
-                while x < w + h {
-                    path.move(to: CGPoint(x: x, y: 0))
-                    path.addLine(to: CGPoint(x: x + h, y: h))
-                    x += spacing
-                }
+            Text(msg.text)
+                .font(AppFont.body(14))
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(
+                    bubbleBackground(isMine: msg.isMine, emphasized: isLast && !msg.isMine)
+                )
+                .scaleEffect(isLast && !msg.isMine && pulseEmphasis ? 1.02 : 1.0)
+                .shadow(
+                    color: isLast && !msg.isMine
+                        ? Color(hex: 0xFF0080, alpha: pulseEmphasis ? 0.35 : 0.15)
+                        : .clear,
+                    radius: 14
+                )
+
+            if !msg.isMine { Spacer(minLength: 60) }
+        }
+    }
+
+    @ViewBuilder
+    private func bubbleBackground(isMine: Bool, emphasized: Bool) -> some View {
+        if emphasized {
+            // Last unanswered "their" bubble — holographic 1pt border + glow
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(AppColor.bg2.opacity(0.85))
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(AppColor.holographic, lineWidth: 1)
             }
-            .stroke(Color.white.opacity(opacity), lineWidth: lineWidth)
+        } else if isMine {
+            // User's reply bubble — pink fill
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(hex: 0xFF0080, alpha: 0.5))
+        } else {
+            // Their bubble — neutral glass
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.white.opacity(0.10))
         }
     }
 }

@@ -30,12 +30,23 @@ struct CalibrationResultView: View {
                     .padding(.top, 18)
 
                 if let result = vm.archetype {
-                    // Arketip label — emoji + caps text
-                    Text(result.archetypePrimary.label.dropFirst(2)) // strip emoji prefix
+                    Text(result.archetypePrimary.label.dropFirst(2))
                         .font(AppFont.display(40, weight: .bold))
                         .tracking(-0.01 * 40)
                         .foregroundColor(.white)
                         .padding(.top, 6)
+                } else if let err = vm.lastError {
+                    VStack(spacing: 8) {
+                        Text("hesaplanamadı")
+                            .font(AppFont.display(28, weight: .bold))
+                            .foregroundColor(AppColor.danger)
+                        Text(err)
+                            .font(AppFont.body(12))
+                            .foregroundColor(AppColor.text40)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
+                    .padding(.top, 6)
                 } else {
                     Text("yükleniyor…")
                         .font(AppFont.body(16))
@@ -68,8 +79,17 @@ struct CalibrationResultView: View {
                     .tracking(0.04 * 11)
                     .foregroundColor(AppColor.text40)
 
-                PrimaryButton("devam et", action: vm.advance)
+                if vm.lastError != nil {
+                    PrimaryButton("tekrar dene") {
+                        vm.retryCalibrationSubmit()
+                    }
                     .padding(.horizontal, 24)
+                } else {
+                    PrimaryButton("devam et",
+                                  isEnabled: vm.archetype != nil,
+                                  action: vm.advance)
+                    .padding(.horizontal, 24)
+                }
 
                 Button("yeniden kalibre et") {
                     vm.quizIndex = 0
