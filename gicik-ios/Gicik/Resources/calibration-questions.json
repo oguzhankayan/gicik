@@ -1,0 +1,93 @@
+[
+  {
+    "id": "context_weight",
+    "type": "multi_select_with_priority",
+    "title": "GICIK SENİ NEREDE EN ÇOK YORUYOR",
+    "subtitle": "ilk 3'ü seç, en çok zorlandığın ilk olsun",
+    "options": [
+      { "text": "tinder, bumble vb" },
+      { "text": "instagram dm" },
+      { "text": "iş mesajları" },
+      { "text": "ex ile konuşma" },
+      { "text": "aile (anne, baba, kardeş)" },
+      { "text": "arkadaşlarla" },
+      { "text": "kendi kendime konuşma" }
+    ]
+  },
+  {
+    "id": "directness",
+    "type": "binary_scenario",
+    "title": "arkadaşın kötü bir karar\nalmak üzere",
+    "subtitle": null,
+    "footerLink": "ikisi de değil",
+    "options": [
+      { "id": "direct", "text": "açıkça\nsöylerim", "emoji": "💬" },
+      { "id": "indirect", "text": "soru sorarım,\nkendi görsün", "emoji": "🤔" }
+    ]
+  },
+  {
+    "id": "humor_style",
+    "type": "single_select",
+    "title": "MİZAH TARZIN",
+    "subtitle": "hangisi sana en yakın",
+    "options": [
+      { "text": "dry, deadpan (poker face)" },
+      { "text": "sarcasm, iğneli" },
+      { "text": "absurd, saçma" },
+      { "text": "wholesome, şirin" }
+    ]
+  },
+  {
+    "id": "boldness",
+    "type": "likert",
+    "title": "flört ederken risk\nalır mısın?",
+    "scaleMin": 1,
+    "scaleMax": 5,
+    "scaleLabels": ["asla", "şartlara göre", "evet"]
+  },
+  {
+    "id": "slang_level",
+    "type": "slider",
+    "title": "yazma stilin",
+    "minLabel": "yarı formal",
+    "maxLabel": "amk yaa abi"
+  },
+  {
+    "id": "english_mix",
+    "type": "single_select",
+    "title": "MESAJDA İNGİLİZCE KARIŞIK",
+    "options": [
+      { "text": "asla, garip duruyor" },
+      { "text": "az, gerekli yerde" },
+      { "text": "orta, doğal akışta" },
+      { "text": "çok, hayatımın yarısı zaten ingilizce" }
+    ]
+  },
+  {
+    "id": "vibe_scenario_1",
+    "type": "image_binary",
+    "title": "hangisi senin gibi",
+    "options": [
+      { "id": "photo", "text": "fotoğraf çekerim" },
+      { "id": "leave", "text": "kibarca ortamı terk ederim" }
+    ]
+  },
+  {
+    "id": "vibe_scenario_2",
+    "type": "image_binary",
+    "title": "EX, INSTAGRAM STORY'NE BAKMIŞ",
+    "options": [
+      { "id": "screenshot", "text": "ekran görüntüsü, arkadaşa atarım" },
+      { "id": "ignore", "text": "görmemiş gibi yaparım" }
+    ]
+  },
+  {
+    "id": "writing_style_sample",
+    "type": "free_text",
+    "title": "son flört ettiğin\nmesajdan bir parça",
+    "subtitle": "opsiyonel. atlayabilirsin.",
+    "footerLink": "atla",
+    "optional": true,
+    "maxLength": 500
+  }
+]
