@@ -12,32 +12,53 @@ struct ResultView: View {
         VStack(spacing: 0) {
             topBar
             header
-            ObservationCard(text: result.observation)
-                .padding(.horizontal, 24)
-                .padding(.top, 14)
 
+            // Cevaplar = ana içerik (ekranın çoğu).
+            // Observation hint replies'la birlikte scroll ediyor, sabit değil.
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 12) {
-                    ForEach(result.replies) { reply in
-                        ReplyCard(
-                            toneAngle: "\(String(format: "%02d", reply.index + 1)) — \(reply.toneAngle)",
-                            text: reply.text,
-                            isCopied: copiedIndex == reply.index,
-                            onCopy: { copy(reply) },
-                            onThumbsUp: { sendFeedback(reply, positive: true) },
-                            onThumbsDown: { sendFeedback(reply, positive: false) }
-                        )
+                VStack(spacing: 14) {
+                    inlineHint(result.observation)
+                        .padding(.top, 6)
+
+                    VStack(spacing: 12) {
+                        ForEach(result.replies) { reply in
+                            ReplyCard(
+                                toneAngle: "\(String(format: "%02d", reply.index + 1)) — \(reply.toneAngle)",
+                                text: reply.text,
+                                isCopied: copiedIndex == reply.index,
+                                onCopy: { copy(reply) },
+                                onThumbsUp: { sendFeedback(reply, positive: true) },
+                                onThumbsDown: { sendFeedback(reply, positive: false) }
+                            )
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 16)
-                .padding(.bottom, 180)
+                .padding(.top, 12)
+                .padding(.bottom, 32)
             }
 
-            Spacer(minLength: 0)
             actionFooter
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Demo screen ile aynı kompakt hint bileşeni — info icon + italic text.
+    /// Kart yerine satır içi gösterim; cevaplar için maksimum dikey alan.
+    private func inlineHint(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 14))
+                .foregroundColor(AppColor.lime)
+                .padding(.top, 2)
+            Text(text.lowercased())
+                .font(AppFont.body(13))
+                .italic()
+                .foregroundColor(AppColor.text60)
+                .lineSpacing(13 * 0.40)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
     }
 
     private var topBar: some View {

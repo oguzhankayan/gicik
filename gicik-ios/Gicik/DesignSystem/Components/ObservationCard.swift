@@ -16,9 +16,11 @@ struct ObservationCard: View {
                 .italic()
                 .foregroundColor(.white.opacity(0.8))
                 .lineSpacing(15 * 0.45)
+                .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 0)
         }
+        .fixedSize(horizontal: false, vertical: true)
         .padding(.vertical, 14)
         .padding(.leading, 13)
         .padding(.trailing, 16)

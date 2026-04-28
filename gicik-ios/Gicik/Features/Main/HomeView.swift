@@ -5,6 +5,7 @@ import SwiftUI
 struct HomeView: View {
     @State private var vm = HomeViewModel()
     @State private var showProfile = false
+    @State private var showArchetypeSwitcher = false
 
     var body: some View {
         ZStack {
@@ -41,27 +42,32 @@ struct HomeView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 topBar
-                archetypeBanner.padding(.top, 18)
-                modesHeader.padding(.top, 24)
-                modesGrid.padding(.top, 4)
-                historySection.padding(.top, 20)
+                modesHeader.padding(.top, 28)
+                modesGrid.padding(.top, 8)
+                historySection.padding(.top, 24)
                 Spacer(minLength: 40)
             }
+        }
+        .sheet(isPresented: $showArchetypeSwitcher) {
+            ArchetypeSwitcherSheet(vm: vm)
+                .presentationDetents([.large])
+                .presentationBackground(AppColor.bg0)
         }
     }
 
     private var topBar: some View {
         HStack {
-            // Archetype dot
-            Button { showProfile = true } label: {
-                Text(archetypeEmoji)
-                    .font(.system(size: 18))
-                    .frame(width: 36, height: 36)
-                    .background(
-                        Circle()
-                            .fill(AppColor.bg2.opacity(0.7))
-                            .overlay(Circle().strokeBorder(AppColor.text10, lineWidth: 1))
-                    )
+            // Archetype avatar — tap opens switcher sheet
+            Button { showArchetypeSwitcher = true } label: {
+                ZStack {
+                    Circle()
+                        .fill(AppColor.bg2.opacity(0.7))
+                    Circle()
+                        .strokeBorder(AppColor.holographic, lineWidth: 1)
+                    Text(archetypeEmoji)
+                        .font(.system(size: 18))
+                }
+                .frame(width: 36, height: 36)
             }
             Spacer()
             Logo(size: 26)
