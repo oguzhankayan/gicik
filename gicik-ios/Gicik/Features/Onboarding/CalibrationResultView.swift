@@ -9,15 +9,9 @@ struct CalibrationResultView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                Button("tamam") { /* placeholder for now */ }
-                    .font(AppFont.body(16))
-                    .foregroundColor(AppColor.text60)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 60)
-            .padding(.bottom, 8)
+            // Reveal ekranında back/close butonu yok — kullanıcı alttaki
+            // 'devam et' veya 'yeniden kalibre et' ile ilerler.
+            Spacer().frame(height: 60)
 
             VStack(spacing: 0) {
                 orbital

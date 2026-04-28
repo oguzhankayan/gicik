@@ -4,7 +4,6 @@ import SwiftUI
 /// design-source/parts/main.jsx → Home
 struct HomeView: View {
     @State private var vm = HomeViewModel()
-    @State private var showProfile = false
     @State private var showArchetypeSwitcher = false
 
     var body: some View {
@@ -72,12 +71,9 @@ struct HomeView: View {
             Logo(size: 26)
             Spacer()
 
-            Button { showProfile = true } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 20))
-                    .foregroundColor(AppColor.text60)
-            }
-            .accessibilityLabel("ayarlar")
+            // Gear/profile butonu Phase 3'e bırakıldı (ProfileView yok henüz).
+            // Sağda dengelemek için boş alan tut.
+            Color.clear.frame(width: 36, height: 36)
         }
         .padding(.horizontal, 24)
         .padding(.top, 58)

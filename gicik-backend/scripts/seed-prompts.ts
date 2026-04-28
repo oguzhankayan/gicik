@@ -37,12 +37,9 @@ const seeds: Seed[] = [
   { layer: "L3", name: "L3 output schemas", path: "L3_output_schemas.json" },
   { layer: "L4", name: "L4 runtime template", path: "L4_runtime_template.tr.md" },
   { layer: "stage1", name: "stage1 vision parser", path: "stage1_parser.md" },
-  // L1 modes
+  // L1 modes (MVP: cevap + acilis; bio/hayalet/davet kaldırıldı)
   { layer: "L1", mode: "cevap", name: "L1 mode cevap", path: "L1_modes/cevap.tr.md" },
   { layer: "L1", mode: "acilis", name: "L1 mode acilis", path: "L1_modes/acilis.tr.md" },
-  { layer: "L1", mode: "bio", name: "L1 mode bio", path: "L1_modes/bio.tr.md" },
-  { layer: "L1", mode: "hayalet", name: "L1 mode hayalet", path: "L1_modes/hayalet.tr.md" },
-  { layer: "L1", mode: "davet", name: "L1 mode davet", path: "L1_modes/davet.tr.md" },
   // tones
   { layer: "tone", tone: "flortoz", name: "tone flortoz", path: "tones/flortoz.tr.md" },
   { layer: "tone", tone: "esprili", name: "tone esprili", path: "tones/esprili.tr.md" },

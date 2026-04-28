@@ -1,6 +1,7 @@
 // Shared types — Edge Functions across gıcık backend
 
-export type Mode = "cevap" | "acilis" | "bio" | "hayalet" | "davet";
+// Bio / Hayalet / Davet MVP'den çıkarıldı — gerek olursa geri eklenir.
+export type Mode = "cevap" | "acilis";
 export type Tone = "flortoz" | "esprili" | "direkt" | "sicak" | "gizemli";
 export type Platform =
   | "tinder" | "bumble" | "hinge" | "instagram"

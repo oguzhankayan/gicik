@@ -36,7 +36,7 @@ Deno.serve(async (req: Request) => {
     if (!(screenshot instanceof File)) {
       return errorResponse("invalid_input", "screenshot file required");
     }
-    if (!modeStr || !["cevap", "acilis", "bio", "hayalet", "davet"].includes(modeStr)) {
+    if (!modeStr || !["cevap", "acilis"].includes(modeStr)) {
       return errorResponse("invalid_input", "valid mode required");
     }
     const mode = modeStr as Mode;

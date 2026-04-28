@@ -137,10 +137,8 @@ gicik-ios/
 │   │   │
 │   │   ├── Modes/
 │   │   │   ├── CevapModeView.swift
-│   │   │   ├── AcilisModeView.swift    # opener
-│   │   │   ├── BioModeView.swift
-│   │   │   ├── HayaletModeView.swift   # ghost
-│   │   │   └── DavetModeView.swift     # invite
+│   │   │   └── AcilisModeView.swift    # opener
+│   │   │   # Bio / Hayalet / Davet MVP'den çıkarıldı; gerek olursa Phase 7+'ta yeniden değerlendir
 │   │   │
 │   │   ├── Profile/
 │   │   │   ├── ProfileView.swift
@@ -226,9 +224,7 @@ gicik-backend/
 │   ├── L1_modes/
 │   │   ├── cevap.tr.md
 │   │   ├── acilis.tr.md
-│   │   ├── bio.tr.md
-│   │   ├── hayalet.tr.md
-│   │   └── davet.tr.md
+│   │   └── # bio / hayalet / davet MVP'den çıkarıldı
 │   ├── L2_constraints.tr.md
 │   ├── L3_output_schemas.json
 │   ├── L4_runtime_template.tr.md
@@ -357,7 +353,7 @@ Her ekran arasında smooth transition. Skip butonu YOK calibration'da. Onboardin
 
 ### Main App (paywall sonrası)
 
-**HomeView**: 5 mod kartı, kullanıcının arketipi üst banner ("Gıcık seni 🥀 olarak biliyor"), son kullanım history.
+**HomeView**: 2 mod kartı (Cevap, Açılış), arketip avatarı sol üstte (tıklayınca arketip switcher), gear sağ üstte, son kullanım history.
 
 **Mod akışı (örn. Cevap modu)**:
 1. Kullanıcı modu tıklar
@@ -428,7 +424,7 @@ CREATE TABLE public.conversations (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     
     -- Input
-    mode TEXT NOT NULL,  -- cevap, acilis, bio, hayalet, davet
+    mode TEXT NOT NULL,  -- cevap, acilis (bio/hayalet/davet MVP'den çıkarıldı)
     tone TEXT NOT NULL,  -- flortoz, esprili, direkt, sicak, gizemli
     screenshot_storage_path TEXT,  -- supabase storage path
     
@@ -542,7 +538,7 @@ CREATE TABLE public.security_events (
 // Request (multipart)
 {
   screenshot: File,  // image
-  mode: "cevap" | "acilis" | "bio" | "hayalet" | "davet"
+  mode: "cevap" | "acilis"
 }
 
 // Response
@@ -683,86 +679,10 @@ her opener:
 - soru ile bitmesi tercih edilir (ama mecbur değil)
 ```
 
-### L1 — Mode: Bio
+### L1 — Mode: Bio / Hayalet / Davet
 
-```
-mod: bio üret veya iyileştir
-
-amaç: kullanıcının dating app bio'sunu yazmak veya iyileştirmek.
-
-tone: {{ selected_tone }}
-
-input: kullanıcı 3 soruya cevap verir:
-1. ne işle uğraşıyorsun (1 cümle)
-2. ne sevmezsin (1 cümle)
-3. ne dener insanı seven biriyim (1 cümle)
-
-output: 3 farklı bio versiyonu, her biri 80-150 karakter
-
-her bio:
-- klişe değil (ENTP, traveler, foodie YASAK)
-- spesifik detay
-- mizah varsa kuru/zekice (telaffuz mizahı değil)
-- emoji 1'i geçmesin
-- ironik mesafe + samimiyet karışımı
-```
-
-### L1 — Mode: Hayalet (Ghost)
-
-```
-mod: ghost senaryosu
-
-amaç: kullanıcı 3+ gündür cevap alamadığı bir konuşmada
-ne yapacağını bulamıyor. 3 öneri ver, ama ÖZGÜR OL —
-gerekirse "yazma" da de.
-
-tone: {{ selected_tone }} (ama temkinli kal)
-
-3 angle:
-1. yazma — sessizliği koru (bu da geçerli bir cevap)
-2. kısa ve tatlı (low-pressure, kapı aralık)
-3. deneme yok — direkt kapatma (closure mesajı)
-
-ÖZEL KURAL: angle 1 her zaman "yazma" olmalı.
-neden? kullanıcının çıkarına çoğu zaman bu.
-
-her cevap:
-- spam etme
-- yalvarma yok
-- "neden cevap vermiyorsun" YASAK
-- "selam" tek başına YASAK (anlamsız)
-```
-
-### L1 — Mode: Davet
-
-```
-mod: konuşmayı buluşmaya çevir
-
-amaç: konuşmanın gidişatını analiz et. davet etme anı geldiyse
-3 davet cümlesi öner. gelmediyse "biraz daha bekle, şu sinyalleri
-ara" de.
-
-tone: {{ selected_tone }}
-
-önce karar ver: davet etme anı geldi mi?
-sinyaller:
-- karşı taraf soru soruyor mu (ilgi)
-- konuşma 5+ tur sürdü mü
-- mesaj uzunlukları karşılıklı dengeli mi
-- humor ya da flört tonu var mı
-
-evet ise: 3 davet cümlesi
-hayır ise: "henüz değil. şunu ara: [spesifik sinyal]"
-
-davet cümleleri:
-1. spesifik plan (gün + aktivite)
-2. low-pressure (açık uçlu)
-3. eğlenceli/ironic ("çay içelim ama berbat bir yerde" gibi)
-
-asla:
-- "buluşmak ister misin?" (çok generic)
-- "müsait misin?" (cevap "hayır" çıkartır)
-```
+> MVP'den çıkarıldı (Apr 28, 2026). Yalnızca **cevap** ve **açılış** modları aktif.
+> Geri eklenirse referans tasarımları git history'de.
 
 ### Tone Layers
 
@@ -1240,22 +1160,23 @@ const ARCHETYPE_DISPLAY: Record<Archetype, DisplayConfig> = {
 - Prompt injection test: 5 örnek injection denemesi blocked
 - Türkçe quality eval: 20 senaryo, %80+ kabul edilebilir
 
-### Phase 3: Modes (3-4 gün)
+### Phase 3: Modes + Profile (1-2 gün)
 
 **iOS:**
-- 5 mode için ayrı flow: Cevap, Açılış, Bio, Hayalet, Davet
-- Bio modu: 3 soru sorma flow'u
-- Davet modu: timing analizi (gelen response'a göre "henüz değil" path'i)
-- HomeView: 5 mode kartı
+- 2 mod aktif (Cevap + Açılış), her ikisi de aynı picker → tone-varyasyon → result flow'unu kullanır
+- Profile screen: arketip kart + history list + ayarlar
+- ConversationHistoryItem DB'den gerçek conversations çek
 
 **Backend:**
-- Her mode için L1 prompt fragment'i
+- Her aktif mode için L1 prompt fragment'i (cevap.tr.md, acilis.tr.md)
 - Mode-specific output schema validation
 
 **Definition of done:**
-- 5 mode hepsi çalışıyor
-- Her mode için 5 senaryo eval edildi
+- Cevap + Açılış uçtan uca çalışıyor
+- Profile screen, history listesi, eski conversation'lara dönüş
 - Mode'lar arası context kaybı yok
+
+> Bio / Hayalet / Davet MVP'den çıkarıldı (Apr 28, 2026). Phase 7+'ta gerek olursa.
 
 ### Phase 4: Subscription & Paywall (2 gün)
 
