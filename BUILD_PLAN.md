@@ -26,38 +26,80 @@ Bu plan `prompt.md` (master) + `design/` referansları + tasarım sistemini somu
 
 ---
 
-## Design Klasörü ↔ SwiftUI View Mapping
+## Design Source ↔ SwiftUI View Mapping
 
-| `design/` referansı | SwiftUI View | Phase |
-|---|---|---|
-| `splash_screen` | `SplashView` | 1 |
-| `demographic_screen` | `DemographicView` | 1 |
-| `calibration_intro` | `CalibrationIntroView` | 1 |
-| `quiz_binary_scenario`, `quiz_likert_scale`, `quiz_single_select` | `CalibrationQuizView` (3 cell varyantı) | 1 |
-| `calibration_result_reveal` | `CalibrationResultView` (Lottie) | 1 |
-| `demo_upload_aha_moment` | `DemoUploadView` | 1 |
-| `notification_permission` | `NotificationPermissionView` | 1 |
-| `ai_consent_screen` | `AICOnsentView` | 1 |
-| `paywall_option_1`, `paywall_option_2_high_contrast`, `paywall_option_3_feature_focused` | `PaywallView` (A/B test üç varyant) | 4 |
-| `home_variation_1/2/3` | `HomeView` (A/B test üç varyant) | 2 |
-| `screenshot_picker_empty_state` | `ScreenshotPickerView.empty` | 2 |
-| `screenshot_picker_in_progress` | `ScreenshotPickerView.uploading` | 2 |
-| `screenshot_picker_complete` | `ScreenshotPickerView.done` | 2 |
-| `tone_selector` | `ToneSelectorView` | 2 |
-| `generation_streaming_state` | `GenerationView` | 2 |
-| `result_screen_default_state` | `ResultView` (3 reply card) | 2 |
-| `profile_screen` | `ProfileView` | 3 |
-| `empty_state_no_history` | `EmptyState.noHistory` | 5 |
-| `empty_state_network_error` | `ErrorState.network` | 5 |
-| `empty_state_rate_limited` | `ErrorState.rateLimited` | 5 |
-| `empty_state_unsupported_image` | `ErrorState.unsupportedImage` | 5 |
-| `cyber_ironic_coach` | Karakter art (asset, splash bg) | 1 |
-| `design_system.png` | DesignSystem token kaynak | 0 |
-| `app_clip_siri_shortcut` | AppShortcuts | 7 |
-| `ios_widgets_small_medium` | WidgetKit | 7 |
-| `share_extension_ui` | Share Extension | 7 |
+> **Tek tasarım kaynağı:** `design-source/project/gicik design.html` (Claude Design export). 24 ekran, 5 section. Eski `design/` PNG mockup klasörü silindi — artık kullanılmıyor.
+>
+> **Component kaynağı:** `design-source/swiftui/DesignTokens.swift` + `Primitives.swift` (Phase 0.4'te bölünüp `gicik-ios/Gicik/DesignSystem/` altına taşınır).
 
-Her view'ı yazarken önce `design/<klasör>/screen.png` ve `code.html`'e bak, refleks olmadan kopyalama — SwiftUI native'ine çevir.
+### 01 — Onboarding (7 ekran)
+
+Kaynak: `design-source/project/parts/onboarding.jsx`, `onboard2.jsx`
+
+| Artboard ID | Component | SwiftUI View | Phase |
+|---|---|---|---|
+| `splash` | `SplashScreen` | `SplashView` | 1 |
+| `demo-graph` | `DemographicScreen` | `DemographicView` | 1 |
+| `cal-intro` | `CalibrationIntro` | `CalibrationIntroView` | 1 |
+| `cal-result` | `CalibrationResult` | `CalibrationResultView` (Lottie reveal) | 1 |
+| `demo-upload` | `DemoUpload` | `DemoUploadView` (aha moment) | 1 |
+| `notif` | `NotificationPermission` | `NotificationPermissionView` | 1 |
+| `paywall` | `Paywall` | `PaywallView` | 4 |
+
+### 02 — Kalibrasyon · 6 quiz variants
+
+Kaynak: `design-source/project/parts/quiz.jsx`
+
+Her quiz varyantı `CalibrationQuizView` içinde bir cell tipi olur:
+
+| Artboard | Component | SwiftUI cell | Phase |
+|---|---|---|---|
+| `qa · single select` | `QuizSingleSelect` | `SingleSelectCell` | 1 |
+| `qb · binary scenario` | `QuizBinary` | `BinaryScenarioCell` | 1 |
+| `qc · likert 1-5` | `QuizLikert` | `LikertScaleCell` | 1 |
+| `qd · slider` | `QuizSlider` | `SliderCell` | 1 |
+| `qe · stacked binary` | `QuizImageBinary` | `ImageBinaryCell` (vibe scenarios) | 1 |
+| `qf · free text` | `QuizFreeText` | `FreeTextCell` (optional, atlanabilir) | 1 |
+
+### 03 — Ana akış (7 ekran)
+
+Kaynak: `design-source/project/parts/main.jsx`, `result.jsx`
+
+| Artboard | Component | SwiftUI View | Phase |
+|---|---|---|---|
+| `home` | `Home` | `HomeView` (5 mode kartı) | 2 |
+| `pick-empty` | `PickerEmpty` | `ScreenshotPickerView.empty` | 2 |
+| `pick-prog` | `PickerProgress` | `ScreenshotPickerView.uploading` | 2 |
+| `pick-done` | `PickerComplete` | `ScreenshotPickerView.done` | 2 |
+| `tone` | `ToneSelector` | `ToneSelectorView` | 2 |
+| `gen` | `Generation` | `GenerationView` (streaming) | 2 |
+| `result` | `Result` | `ResultView` (3 ReplyCard) | 2 |
+
+### 04 — Profil & sistem (2 ekran)
+
+| Artboard | Component | SwiftUI View | Phase |
+|---|---|---|---|
+| `profile` | `Profile` | `ProfileView` | 3 |
+| `ai-consent` | `AIConsent` | `AICOnsentView` | 1 |
+
+### 05 — Empty & error states (4 ekran)
+
+Kaynak: tek `EmptyState` component, `kind` prop'u ile varyant.
+
+| Artboard | kind | SwiftUI varyant | Phase |
+|---|---|---|---|
+| `e-history` | `history` | `EmptyStateView.noHistory` | 5 |
+| `e-network` | `network` | `ErrorStateView.network` | 5 |
+| `e-rate` | `rate` | `ErrorStateView.rateLimited` | 5 |
+| `e-unsupp` | `unsupported` | `ErrorStateView.unsupportedImage` | 5 |
+
+### Implementation kuralları
+
+1. **Önce JSX'i oku** — `design-source/project/parts/<file>.jsx` ilgili component
+2. **Token'ları DesignTokens.swift'ten kullan** — `AppColor.bg0`, `AppFont.display(28)`, `AppRadius.card`. `tokens.css` referans, asla raw hex kopyalama
+3. **Primitives'i tekrar yazma** — `PrimaryButton`, `Chip`, `ProgressDots`, `TopBar`, `ObservationCard`, `ReplyCard`, `Logo` zaten `Primitives.swift`'te. SwiftUI view'ında direkt kullan
+4. **HTML'i refleks olarak kopyalama** — SwiftUI native'ine çevir. Holographic border? `.strokeBorder(AppColor.holographic, lineWidth: 1.5)`. Glass? `.glassCard()` modifier
+5. **İki ses ayrımı** — `ObservationCard` sadece asistan sesi (italik, lime stripe). `ReplyCard` sadece çıkış mesajı. Karıştırma
 
 ---
 
