@@ -26,8 +26,8 @@ struct DemoUploadView: View {
     /// (kuru-zekice / soğukkanlı-stratejik / sıcak-samimi) ki kullanıcı
     /// kalibrasyonun çıktıyı nasıl etkilediğini hisseden.
     private let demoReplies: [(label: String, text: String)] = [
-        ("🥀 GICIK olsa",  "8 erken ama gelirim. boğa'da masa kapma, sen ayarla."),
-        ("✨ HAVALI olsa", "8 ok. ben yola çıkmadan haber, masa için."),
+        ("🥀 GICIK olsa",  "8 erken ama gelirim. nereye otursak, boğa'nın orda mı dikilelim?"),
+        ("✨ HAVALI olsa", "8 ok, yola çıkmadan önce haber veririm. bir yerlerden yer ayarlarsın."),
         ("🍬 TATLI olsa",  "olur, geliyorum. seni görmek iyi gelecek."),
     ]
 
