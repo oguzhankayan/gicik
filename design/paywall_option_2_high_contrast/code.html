@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GICIK_PRO - Paywall</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed-variant": "#594400",
+                      "primary-fixed-dim": "#cfbcff",
+                      "primary": "#cfbcff",
+                      "inverse-primary": "#6750a4",
+                      "surface-tint": "#cfbcff",
+                      "on-primary-fixed-variant": "#4f378a",
+                      "on-background": "#e6e0e9",
+                      "tertiary-container": "#c9a74d",
+                      "surface-bright": "#3b383e",
+                      "on-secondary": "#342b4b",
+                      "tertiary-fixed": "#ffdf93",
+                      "surface-container-high": "#2b292f",
+                      "on-primary-fixed": "#22005d",
+                      "surface-container-low": "#1d1b20",
+                      "secondary-fixed": "#e9ddff",
+                      "secondary-fixed-dim": "#cdc0e9",
+                      "on-tertiary-container": "#503d00",
+                      "on-secondary-fixed-variant": "#4b4263",
+                      "primary-fixed": "#e9ddff",
+                      "tertiary-fixed-dim": "#e7c365",
+                      "surface-container-highest": "#36343a",
+                      "secondary": "#cdc0e9",
+                      "on-secondary-container": "#bfb2da",
+                      "surface-dim": "#141218",
+                      "error-container": "#93000a",
+                      "surface-variant": "#36343a",
+                      "on-surface": "#e6e0e9",
+                      "error": "#ffb4ab",
+                      "tertiary": "#e7c365",
+                      "surface-container-lowest": "#0f0d13",
+                      "on-primary": "#381e72",
+                      "secondary-container": "#4d4465",
+                      "surface-container": "#211f24",
+                      "outline-variant": "#494551",
+                      "on-tertiary": "#3e2e00",
+                      "inverse-surface": "#e6e0e9",
+                      "on-secondary-fixed": "#1f1635",
+                      "on-primary-container": "#e0d2ff",
+                      "inverse-on-surface": "#322f35",
+                      "background": "#141218",
+                      "surface": "#141218",
+                      "on-error-container": "#ffdad6",
+                      "on-error": "#690005",
+                      "primary-container": "#6750a4",
+                      "on-surface-variant": "#cbc4d2",
+                      "outline": "#948e9c",
+                      "on-tertiary-fixed": "#241a00"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "edge_padding": "24px",
+                      "stack_lg": "40px",
+                      "gutter": "16px",
+                      "stack_sm": "8px",
+                      "stack_md": "20px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Space Grotesk"
+                      ],
+                      "body-main": [
+                              "Inter"
+                      ],
+                      "technical-mono": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-main": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "technical-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+          },
+          }
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom Holographic Effects */
+        .holographic-border {
+            position: relative;
+            background: linear-gradient(135deg, #FF0080, #CCFF00, #00FFFF);
+            padding: 1px;
+            border-radius: 20px;
+        }
+        .holographic-border > div {
+            background: rgba(26, 15, 46, 0.9);
+            border-radius: 19px;
+            height: 100%;
+        }
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(255, 0, 128, 0.4), inset 0 0 10px rgba(204, 255, 0, 0.1);
+        }
+        .holographic-fill {
+            background: linear-gradient(90deg, #FF0080, #CCFF00);
+            background-size: 200% auto;
+            color: #141218;
+        }
+        .bg-glass {
+            background: rgba(26, 15, 46, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col relative overflow-x-hidden selection:bg-[#FF0080] selection:text-white">
+<!-- Ambient Background Lighting -->
+<div class="fixed inset-0 pointer-events-none z-0">
+<div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#FF0080] opacity-10 blur-[100px]"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-[#6750a4] opacity-20 blur-[120px]"></div>
+</div>
+<!-- TopAppBar -->
+<header class="docked full-width top-0 z-50 flex justify-between items-center w-full px-6 py-4 bg-transparent border-b border-[#2D1B4E] flat no shadows">
+<button class="text-[#CCFF00] hover:opacity-80 transition-opacity active:scale-95 duration-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+<h1 class="font-['Space_Grotesk'] uppercase tracking-tighter font-bold text-xl font-black text-[#CCFF00] italic">GICIK_PRO</h1>
+<div class="w-6"></div> <!-- Spacer for balance -->
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col px-edge_padding py-stack_lg z-10 relative max-w-md mx-auto w-full">
+<!-- Hero Section -->
+<div class="text-center mb-stack_lg">
+<h2 class="font-display-lg text-display-lg mb-stack_sm text-[#e6e0e9] drop-shadow-[0_0_10px_rgba(230,224,233,0.3)]">GICIK / <span class="text-[#CCFF00]">SINIRSIZ</span></h2>
+<p class="font-body-main text-body-main text-on-surface-variant max-w-xs mx-auto">Sınırsız analiz, sıfır filtre. Gerçekleri duymaya hazır mısın?</p>
+</div>
+<!-- Features List -->
+<div class="bg-glass border border-[#2D1B4E] rounded-[20px] p-6 mb-stack_lg flex flex-col gap-4">
+<div class="flex items-start gap-4 pb-4 border-b border-[#2D1B4E]">
+<span class="material-symbols-outlined text-[#CCFF00] shrink-0 mt-0.5 icon-filled">check_circle</span>
+<p class="font-body-main text-body-main text-on-surface">Sınırsız mesaj analizi ve taktiksel yanıtlar.</p>
+</div>
+<div class="flex items-start gap-4 pb-4 border-b border-[#2D1B4E]">
+<span class="material-symbols-outlined text-[#CCFF00] shrink-0 mt-0.5 icon-filled">check_circle</span>
+<p class="font-body-main text-body-main text-on-surface">Gizli mod: Kimse Gıcık kullandığını bilmeyecek.</p>
+</div>
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-[#CCFF00] shrink-0 mt-0.5 icon-filled">check_circle</span>
+<p class="font-body-main text-body-main text-on-surface">Öncelikli sunucu erişimi ile sıfır bekleme süresi.</p>
+</div>
+</div>
+<!-- Plan Selection -->
+<div class="flex flex-col gap-gutter mb-stack_lg">
+<!-- Plan A (Emphasized) -->
+<button class="w-full text-left holographic-border glow-effect active:scale-95 transition-transform duration-200">
+<div class="p-6 flex justify-between items-center relative overflow-hidden">
+<div class="absolute top-0 right-0 bg-[#FF0080] text-white font-technical-mono text-technical-mono px-3 py-1 rounded-bl-lg font-bold tracking-wider uppercase text-[10px]">
+                        %80 AVANTAJ
+                    </div>
+<div class="z-10">
+<h3 class="font-headline-md text-headline-md text-white mb-1">YILLIK PRO</h3>
+<p class="font-body-main text-body-main text-on-surface-variant">₺49.99 / ay</p>
+</div>
+<div class="z-10 flex items-center gap-2">
+<div class="flex flex-col items-end">
+<span class="text-sm line-through text-outline">₺299.99</span>
+<span class="font-bold text-xl text-[#CCFF00]">₺599.88</span>
+</div>
+<span class="material-symbols-outlined text-[#CCFF00] icon-filled">radio_button_checked</span>
+</div>
+</div>
+</button>
+<!-- Plan B (Secondary) -->
+<button class="w-full text-left bg-glass border border-[#2D1B4E] rounded-[20px] p-5 flex justify-between items-center active:scale-95 transition-transform duration-200 hover:border-[#6750a4]">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface text-lg">AYLIK PRO</h3>
+<p class="font-body-main text-body-main text-on-surface-variant text-sm">İstediğin zaman iptal et</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-bold text-lg text-on-surface">₺249.99</span>
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+</div>
+</button>
+</div>
+<div class="mt-auto">
+<!-- Trial Toggle -->
+<div class="flex items-center justify-center gap-3 mb-6 bg-surface-container-high rounded-full py-2 px-4 mx-auto w-max border border-outline-variant">
+<span class="font-technical-mono text-technical-mono text-on-surface-variant uppercase">3 Gün Ücretsiz Dene</span>
+<button class="w-10 h-6 bg-[#CCFF00] rounded-full relative flex items-center px-1 transition-colors">
+<div class="w-4 h-4 bg-[#141218] rounded-full translate-x-4 transition-transform shadow-sm"></div>
+</button>
+</div>
+<!-- Primary CTA -->
+<button class="w-full holographic-fill rounded-2xl py-4 px-6 flex justify-center items-center gap-2 font-headline-md text-[18px] uppercase font-black tracking-widest shadow-[0_0_30px_rgba(255,0,128,0.3)] hover:opacity-90 active:scale-95 transition-all duration-200">
+                ÜCRETSİZ BAŞLAT
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<p class="text-center font-technical-mono text-[11px] text-outline mt-4 opacity-70">
+                Ücretsiz deneme süresi bittikten sonra seçtiğin plan üzerinden ücretlendirilirsin.
+            </p>
+</div>
+</main>
+</body></html>

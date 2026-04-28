@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Gıcık - Generation Screen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&amp;family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-fixed-variant": "#4f378a",
+                        "surface-container-low": "#1d1b20",
+                        "on-tertiary": "#3e2e00",
+                        "error": "#ffb4ab",
+                        "background": "#0A0612", // Custom background for generation screen based on prompt
+                        "on-primary-container": "#e0d2ff",
+                        "tertiary": "#e7c365",
+                        "inverse-on-surface": "#322f35",
+                        "surface-container-high": "#2b292f",
+                        "tertiary-container": "#c9a74d",
+                        "on-error": "#690005",
+                        "on-secondary-fixed": "#1f1635",
+                        "secondary": "#cdc0e9",
+                        "on-primary-fixed": "#22005d",
+                        "primary-fixed-dim": "#cfbcff",
+                        "on-tertiary-container": "#503d00",
+                        "surface-tint": "#cfbcff",
+                        "secondary-container": "#4d4465",
+                        "on-tertiary-fixed": "#241a00",
+                        "outline": "#948e9c",
+                        "on-surface": "#e6e0e9",
+                        "secondary-fixed-dim": "#cdc0e9",
+                        "primary-container": "#6750a4",
+                        "outline-variant": "#494551",
+                        "on-secondary-container": "#bfb2da",
+                        "on-surface-variant": "#cbc4d2",
+                        "error-container": "#93000a",
+                        "primary-fixed": "#e9ddff",
+                        "primary": "#cfbcff",
+                        "on-background": "#e6e0e9",
+                        "inverse-primary": "#6750a4",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#141218",
+                        "surface-container-highest": "#36343a",
+                        "tertiary-fixed-dim": "#e7c365",
+                        "surface-variant": "#36343a",
+                        "surface-container-lowest": "#0f0d13",
+                        "tertiary-fixed": "#ffdf93",
+                        "surface-container": "#211f24",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "secondary-fixed": "#e9ddff",
+                        "on-primary": "#381e72",
+                        "on-secondary-fixed-variant": "#4b4263",
+                        "on-secondary": "#342b4b",
+                        "inverse-surface": "#e6e0e9",
+                        "surface-dim": "#141218",
+                        "surface-bright": "#3b383e",
+                        // Cyberbrutalism Specific
+                        "brand-lime": "#CCFF00",
+                        "brand-pink": "#FF0080",
+                        "glass-panel": "rgba(26, 15, 46, 0.7)",
+                        "glass-border": "#2D1B4E"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "card": "20px",
+                        "btn": "16px"
+                    },
+                    spacing: {
+                        "stack_sm": "8px",
+                        "stack_md": "20px",
+                        "gutter": "16px",
+                        "edge_padding": "24px",
+                        "stack_lg": "40px",
+                        "safe": "env(safe-area-inset-bottom)"
+                    },
+                    fontFamily: {
+                        "headline-md": ["Space Grotesk", "sans-serif"],
+                        "display-lg": ["Space Grotesk", "sans-serif"],
+                        "body-main": ["Inter", "sans-serif"],
+                        "technical-mono": ["Inter", "monospace"] // Using Inter as mono per config, but ideally SF Mono
+                    },
+                    fontSize: {
+                        "headline-md": ["24px", { lineHeight: "1.2", letterSpacing: "0.02em", fontWeight: "700" }],
+                        "display-lg": ["48px", { lineHeight: "1.1", letterSpacing: "0.05em", fontWeight: "700" }],
+                        "body-main": ["16px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "technical-mono": ["13px", { lineHeight: "1.4", letterSpacing: "-0.02em", fontWeight: "400" }]
+                    },
+                    keyframes: {
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' },
+                        },
+                        blink: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0' },
+                        }
+                    },
+                    animation: {
+                        shimmer: 'shimmer 2s infinite linear',
+                        blink: 'blink 1s step-end infinite',
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .holographic-border {
+            position: relative;
+        }
+        .holographic-border::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(45deg, #FF0080, #CCFF00, #FF0080);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        
+        .shimmer-effect {
+            background: linear-gradient(to right, #1A0F2E 4%, rgba(204, 255, 0, 0.1) 25%, #1A0F2E 36%);
+            background-size: 1000px 100%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-main antialiased selection:bg-brand-lime selection:text-background">
+<!-- TopAppBar (JSON + Prompt overrides) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-950/70 backdrop-blur-xl border-b border-[#2D1B4E] shadow-[0_0_15px_rgba(204,255,0,0.1)]">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/5 transition-colors group">
+<span class="material-symbols-outlined text-slate-500 group-hover:text-[#CCFF00] transition-colors">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<h1 class="font-headline-md text-headline-md text-[#CCFF00] uppercase tracking-wider font-bold">GICIK YAZIYOR...</h1>
+<span class="font-technical-mono text-technical-mono text-brand-pink tracking-widest uppercase text-[10px]">CEVAP MODU / FLÖRTÖZ TON</span>
+</div>
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/5 transition-colors group">
+<span class="material-symbols-outlined text-slate-500 group-hover:text-[#CCFF00] transition-colors">sensors</span>
+</button>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 pt-24 pb-safe px-edge_padding flex flex-col gap-stack_md max-w-md mx-auto w-full">
+<!-- Streaming Observation Zone (Coach Feedback Trigger style) -->
+<section class="flex flex-col gap-stack_sm mb-stack_lg">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-brand-pink text-sm">troubleshoot</span>
+<span class="font-technical-mono text-technical-mono text-slate-400 uppercase">ANALİZ EDİLİYOR...</span>
+</div>
+<div class="bg-glass-panel backdrop-blur-[20px] rounded-card p-6 border border-glass-border relative overflow-hidden">
+<!-- Subtle glow behind text -->
+<div class="absolute inset-0 bg-brand-pink/5 blur-xl rounded-card pointer-events-none"></div>
+<p class="font-technical-mono text-technical-mono text-on-surface leading-relaxed relative z-10">
+<span class="text-slate-500">&gt; log: </span>
+                    3 gün cevap yok, sonra 'selam'. yazmamış sayılır. ama ben yazacağım.
+                    <span class="inline-block w-2 h-4 bg-brand-lime align-middle ml-1 animate-blink"></span>
+</p>
+</div>
+</section>
+<!-- Reply Cards Skeleton Zone -->
+<section class="flex flex-col gap-stack_md flex-1">
+<h2 class="font-headline-md text-sm text-slate-500 uppercase tracking-widest mb-2">ALTERNATİFLER OLUŞTURULUYOR</h2>
+<!-- Reply Card 1: Half-streamed -->
+<div class="bg-glass-panel backdrop-blur-[20px] rounded-card p-5 holographic-border flex flex-col gap-4 shadow-[0_0_20px_rgba(204,255,0,0.05)]">
+<div class="flex justify-between items-start">
+<div class="font-technical-mono text-[10px] uppercase border border-glass-border px-2 py-1 rounded-full text-brand-lime">Seçenek_01</div>
+<span class="material-symbols-outlined text-slate-600 text-sm animate-spin">sync</span>
+</div>
+<p class="font-body-main text-body-main text-on-surface">
+                    selam, kahve<span class="text-slate-500/50">...</span>
+</p>
+<div class="h-2 w-3/4 rounded bg-glass-border animate-shimmer shimmer-effect mt-2"></div>
+<div class="h-2 w-1/2 rounded bg-glass-border animate-shimmer shimmer-effect"></div>
+</div>
+<!-- Reply Card 2: Full Shimmer -->
+<div class="bg-surface-container-highest/30 backdrop-blur-[10px] rounded-card p-5 border border-glass-border flex flex-col gap-4 opacity-70">
+<div class="flex justify-between items-start">
+<div class="font-technical-mono text-[10px] uppercase border border-glass-border px-2 py-1 rounded-full text-slate-500">Seçenek_02</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<div class="h-3 w-full rounded bg-glass-border animate-shimmer shimmer-effect"></div>
+<div class="h-3 w-5/6 rounded bg-glass-border animate-shimmer shimmer-effect"></div>
+<div class="h-3 w-4/6 rounded bg-glass-border animate-shimmer shimmer-effect"></div>
+</div>
+</div>
+<!-- Reply Card 3: Full Shimmer -->
+<div class="bg-surface-container-highest/20 backdrop-blur-[10px] rounded-card p-5 border border-glass-border flex flex-col gap-4 opacity-50">
+<div class="flex justify-between items-start">
+<div class="font-technical-mono text-[10px] uppercase border border-glass-border px-2 py-1 rounded-full text-slate-500">Seçenek_03</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<div class="h-3 w-11/12 rounded bg-glass-border animate-shimmer shimmer-effect"></div>
+<div class="h-3 w-3/4 rounded bg-glass-border animate-shimmer shimmer-effect"></div>
+</div>
+</div>
+</section>
+</main>
+<!-- Suppress BottomNavBar as this is a transactional/generation screen -->
+</body></html>

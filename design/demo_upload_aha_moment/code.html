@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gıcık - Demo Upload</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&amp;family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-bright": "#3b383e",
+                        "on-tertiary-container": "#503d00",
+                        "tertiary-container": "#c9a74d",
+                        "secondary-container": "#4d4465",
+                        "on-primary": "#381e72",
+                        "background": "#0A0612", /* OVERRIDDEN FOR COSMIC BLACK */
+                        "surface-tint": "#cfbcff",
+                        "primary-fixed-dim": "#cfbcff",
+                        "on-surface": "#e6e0e9",
+                        "on-primary-fixed-variant": "#4f378a",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#cdc0e9",
+                        "on-primary-fixed": "#22005d",
+                        "tertiary": "#e7c365",
+                        "primary-fixed": "#e9ddff",
+                        "primary-container": "#6750a4",
+                        "primary": "#cfbcff",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "inverse-on-surface": "#322f35",
+                        "on-secondary-container": "#bfb2da",
+                        "on-error": "#690005",
+                        "surface-variant": "#36343a",
+                        "on-primary-container": "#e0d2ff",
+                        "on-background": "#e6e0e9",
+                        "outline": "#948e9c",
+                        "on-secondary-fixed": "#1f1635",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#e7c365",
+                        "surface-container": "#211f24",
+                        "on-tertiary": "#3e2e00",
+                        "surface": "#1A0F2E", /* Glass card background */
+                        "outline-variant": "#494551",
+                        "on-secondary": "#342b4b",
+                        "surface-dim": "#141218",
+                        "on-secondary-fixed-variant": "#4b4263",
+                        "inverse-surface": "#e6e0e9",
+                        "on-surface-variant": "#cbc4d2",
+                        "surface-container-highest": "#36343a",
+                        "inverse-primary": "#6750a4",
+                        "surface-container-low": "#1d1b20",
+                        "on-tertiary-fixed": "#241a00",
+                        "surface-container-lowest": "#0f0d13",
+                        "secondary": "#cdc0e9",
+                        "tertiary-fixed": "#ffdf93",
+                        "surface-container-high": "#2b292f",
+                        "secondary-fixed": "#e9ddff",
+                        "accent-lime": "#CCFF00",
+                        "accent-magenta": "#FF0080",
+                        "border-dark": "#2D1B4E"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "btn": "16px",
+                        "card": "20px"
+                    },
+                    spacing: {
+                        "stack_sm": "8px",
+                        "stack_lg": "40px",
+                        "stack_md": "20px",
+                        "edge_padding": "24px",
+                        "gutter": "16px"
+                    },
+                    fontFamily: {
+                        "display-lg": ["Space Grotesk"],
+                        "body-main": ["Inter"],
+                        "technical-mono": ["Inter"],
+                        "headline-md": ["Space Grotesk"]
+                    },
+                    fontSize: {
+                        "display-lg": ["48px", { lineHeight: "1.1", letterSpacing: "0.05em", fontWeight: "700" }],
+                        "body-main": ["16px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "technical-mono": ["13px", { lineHeight: "1.4", letterSpacing: "-0.02em", fontWeight: "400" }],
+                        "headline-md": ["24px", { lineHeight: "1.2", letterSpacing: "0.02em", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .holographic-border {
+            position: relative;
+            background: rgba(26, 15, 46, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+        }
+        .holographic-border::before {
+            content: "";
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: -1px;
+            background: linear-gradient(45deg, #FF0080, #CCFF00, #FF0080);
+            z-index: -1;
+            border-radius: 21px;
+            opacity: 0.5;
+        }
+        .glass-panel {
+            background: rgba(26, 15, 46, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid #2D1B4E;
+        }
+        .debug-text {
+            font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen font-body-main antialiased selection:bg-accent-magenta selection:text-white pb-[100px]">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-[#0A0510]/70 backdrop-blur-xl border-b border-[#2D1B4E] shadow-[0_0_15px_rgba(204,255,0,0.2)]">
+<button class="text-accent-lime hover:bg-accent-lime hover:text-black transition-all p-2 rounded-full scale-95 active:duration-100 flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="font-display-lg font-bold tracking-tighter uppercase text-xs text-accent-lime">06/08_ANALYSIS_PHASE</div>
+<div class="w-8"></div> <!-- Spacer -->
+</header>
+<main class="pt-24 px-edge_padding pb-edge_padding max-w-md mx-auto relative flex flex-col gap-stack_lg">
+<!-- Header Section -->
+<section class="flex flex-col gap-2">
+<span class="font-technical-mono text-technical-mono text-on-surface/50 uppercase tracking-widest">DEMO / DENEME</span>
+<h1 class="font-headline-md text-headline-md uppercase text-white">BÖYLE BIR ŞEY</h1>
+</section>
+<!-- Screenshot Area -->
+<section class="w-[70%] holographic-border p-4 flex flex-col gap-4 relative mx-auto shadow-[0_0_30px_rgba(255,0,128,0.1)]">
+<div class="absolute -top-3 -right-3 bg-accent-lime text-black font-technical-mono text-technical-mono px-3 py-1 rounded-full border border-black z-10 lowercase font-bold">
+                demo
+            </div>
+<div class="aspect-[3/4] rounded-lg overflow-hidden relative border border-border-dark bg-surface-bright">
+<img alt="Mira profile photo" class="w-full h-full object-cover grayscale opacity-80 mix-blend-luminosity" data-alt="close up portrait of a young woman with a neutral expression, dark lighting, cyber aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiOD2UeWsnXxuIBYsGvFhZQpKVE3Rt3ZueBldgZKf1JeoVVgSUEy77OwTP0FUJYaoKlKD6tbT7Cua7Oy9Hq-DzcejMaDRc4FG6P6--Q-PIqKXzEwW8dFPQuXySYzZt82JPhzhn71prU3VUA474HTlSvNHVKPDQ5TWQcxufRKtlaYCOgVoX8CKc_0JPO-D_KOVEqkF0DWrDipGj5fsHhWQRYRnYPAQr3CxAESmB_39TTy4xLEWRxNEwlahwT0DbLrMXkIL1SpKpxn1K"/>
+<div class="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/90 to-transparent">
+<div class="font-display-lg text-[20px] font-bold text-white tracking-tight">Mira, 27</div>
+</div>
+</div>
+<div class="debug-text text-[12px] text-on-surface/80 leading-relaxed">
+                kahve, kitap, kedi. üçü de huysuz.
+            </div>
+</section>
+<!-- Observation Card -->
+<section class="bg-surface/40 border-l-2 border-accent-lime p-4 rounded-r-lg">
+<p class="font-body-main text-body-main italic text-on-surface/90">
+                kahve klişesi var ama 'huysuz' iyi detay. oradan tut.
+            </p>
+</section>
+<!-- Reply Cards Stack -->
+<section class="flex flex-col gap-stack_sm">
+<!-- Card 01 -->
+<div class="glass-panel rounded-card p-4 flex flex-col gap-4 group hover:border-accent-magenta transition-colors">
+<div class="flex justify-between items-start">
+<span class="debug-text text-[10px] text-accent-magenta tracking-widest uppercase">01 — spesifik</span>
+</div>
+<p class="font-body-main text-body-main text-white">
+                    "huysuz kediyle huysuz insan arasında fark var mı?"
+                </p>
+<div class="flex justify-end">
+<button class="font-technical-mono text-[11px] border border-border-dark px-3 py-1 rounded-full lowercase hover:bg-white hover:text-black transition-colors">kopyala</button>
+</div>
+</div>
+<!-- Card 02 -->
+<div class="glass-panel rounded-card p-4 flex flex-col gap-4 group hover:border-accent-magenta transition-colors">
+<div class="flex justify-between items-start">
+<span class="debug-text text-[10px] text-accent-lime tracking-widest uppercase">02 — soru</span>
+</div>
+<p class="font-body-main text-body-main text-white">
+                    "üç huysuzluğun ortak özelliği ne?"
+                </p>
+<div class="flex justify-end">
+<button class="font-technical-mono text-[11px] border border-border-dark px-3 py-1 rounded-full lowercase hover:bg-white hover:text-black transition-colors">kopyala</button>
+</div>
+</div>
+<!-- Card 03 -->
+<div class="glass-panel rounded-card p-4 flex flex-col gap-4 group hover:border-accent-magenta transition-colors">
+<div class="flex justify-between items-start">
+<span class="debug-text text-[10px] text-accent-magenta tracking-widest uppercase">03 — ironi</span>
+</div>
+<p class="font-body-main text-body-main text-white">
+                    "kahve, kitap, kedi listene 'huy' eklersen tehlikeli oluyor."
+                </p>
+<div class="flex justify-end">
+<button class="font-technical-mono text-[11px] border border-border-dark px-3 py-1 rounded-full lowercase hover:bg-white hover:text-black transition-colors">kopyala</button>
+</div>
+</div>
+<!-- Card 04 -->
+<div class="glass-panel rounded-card p-4 flex flex-col gap-4 group hover:border-accent-magenta transition-colors">
+<div class="flex justify-between items-start">
+<span class="debug-text text-[10px] text-accent-lime tracking-widest uppercase">04 — direkt</span>
+</div>
+<p class="font-body-main text-body-main text-white">
+                    "mira, profilin bana fazla iyi görünüyor. neredesin?"
+                </p>
+<div class="flex justify-end">
+<button class="font-technical-mono text-[11px] border border-border-dark px-3 py-1 rounded-full lowercase hover:bg-white hover:text-black transition-colors">kopyala</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Bottom Action -->
+<div class="fixed bottom-0 left-0 w-full p-edge_padding bg-gradient-to-t from-background via-background/90 to-transparent z-40 pb-8">
+<button class="w-full max-w-md mx-auto bg-surface-bright border border-border-dark rounded-btn py-4 px-6 flex items-center justify-center gap-2 hover:bg-white hover:text-black transition-colors text-white group shadow-[0_0_20px_rgba(204,255,0,0.05)]">
+<span class="font-display-lg text-[14px] font-bold uppercase tracking-wider">ben de denemek istiyorum</span>
+<span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</body></html>

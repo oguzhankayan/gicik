@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Calibration Quiz - Variant A</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#141218",
+                        "secondary-fixed-dim": "#cdc0e9",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "on-error-container": "#ffdad6",
+                        "on-background": "#e6e0e9",
+                        "inverse-surface": "#e6e0e9",
+                        "primary-container": "#6750a4",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#0f0d13",
+                        "on-secondary": "#342b4b",
+                        "inverse-primary": "#6750a4",
+                        "on-primary": "#381e72",
+                        "on-primary-fixed": "#22005d",
+                        "on-tertiary-fixed": "#241a00",
+                        "on-primary-fixed-variant": "#4f378a",
+                        "on-surface-variant": "#cbc4d2",
+                        "secondary": "#cdc0e9",
+                        "on-secondary-fixed": "#1f1635",
+                        "surface-dim": "#141218",
+                        "primary-fixed-dim": "#cfbcff",
+                        "surface-tint": "#cfbcff",
+                        "surface-container-low": "#1d1b20",
+                        "error": "#ffb4ab",
+                        "primary": "#cfbcff",
+                        "on-secondary-fixed-variant": "#4b4263",
+                        "inverse-on-surface": "#322f35",
+                        "on-secondary-container": "#bfb2da",
+                        "secondary-container": "#4d4465",
+                        "tertiary-container": "#c9a74d",
+                        "primary-fixed": "#e9ddff",
+                        "tertiary": "#e7c365",
+                        "surface-container-high": "#2b292f",
+                        "on-error": "#690005",
+                        "surface-bright": "#3b383e",
+                        "secondary-fixed": "#e9ddff",
+                        "on-primary-container": "#e0d2ff",
+                        "outline-variant": "#494551",
+                        "on-tertiary": "#3e2e00",
+                        "tertiary-fixed-dim": "#e7c365",
+                        "surface-variant": "#36343a",
+                        "surface-container-highest": "#36343a",
+                        "on-tertiary-container": "#503d00",
+                        "on-surface": "#e6e0e9",
+                        "surface": "#141218",
+                        "tertiary-fixed": "#ffdf93",
+                        "surface-container": "#211f24",
+                        "outline": "#948e9c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack_md": "20px",
+                        "edge_padding": "24px",
+                        "stack_lg": "40px",
+                        "stack_sm": "8px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Space Grotesk"],
+                        "display-lg": ["Space Grotesk"],
+                        "body-main": ["Inter"],
+                        "technical-mono": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-main": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "technical-mono": ["13px", { "lineHeight": "1.4", "letterSpacing": "-0.02em", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .ultra-thin-material {
+            background-color: rgba(26, 15, 46, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .holographic-border {
+            position: relative;
+        }
+        .holographic-border::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(45deg, #FF0080, #CCFF00, #FF0080);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .soft-glow {
+            box-shadow: 0 0 15px rgba(204, 255, 0, 0.1);
+        }
+        .active-glow {
+            box-shadow: 0 0 20px rgba(255, 0, 128, 0.2);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-main text-body-main antialiased min-h-screen flex flex-col pt-16">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-zinc-950/70 backdrop-blur-xl docked full-width border-b border-[#2D1B4E] shadow-[0_0_15px_rgba(204,255,0,0.1)]">
+<button class="text-zinc-500 hover:text-[#FF0080] transition-colors active:scale-95 duration-150 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_back</span>
+</button>
+<h1 class="text-[#CCFF00] font-['Space_Grotesk'] font-bold tracking-tighter uppercase font-headline-md text-headline-md">4 / 9</h1>
+<button class="text-zinc-500 hover:text-[#FF0080] transition-colors active:scale-95 duration-150 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">close</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col px-edge_padding pb-[120px] pt-stack_lg">
+<!-- Question Header -->
+<div class="flex flex-col gap-stack_sm mb-stack_lg">
+<div class="font-technical-mono text-technical-mono text-[#CCFF00]">04 / 09</div>
+<h2 class="font-display-lg text-display-lg uppercase tracking-tight text-on-background">MİZAH TARZIN</h2>
+<p class="font-body-main text-body-main text-on-surface-variant lowercase">seçimini yap</p>
+</div>
+<!-- Answer Options (Stacked Chips) -->
+<div class="flex flex-col gap-stack_md w-full">
+<button class="w-full text-left rounded-full border border-[#2D1B4E] px-6 py-4 flex items-center justify-between group hover:border-[#CCFF00] transition-colors active:scale-95 duration-150">
+<span class="font-technical-mono text-technical-mono lowercase">dry, deadpan</span>
+</button>
+<button class="w-full text-left rounded-full border px-6 py-4 flex items-center justify-between group transition-all active:scale-95 duration-150 holographic-border active-glow bg-[#1A0F2E]/30">
+<span class="font-technical-mono text-technical-mono lowercase text-[#CCFF00]">sarcasm, iğneli</span>
+<span class="material-symbols-outlined text-[#CCFF00]" style="font-variation-settings: 'FILL' 1;">check</span>
+</button>
+<button class="w-full text-left rounded-full border border-[#2D1B4E] px-6 py-4 flex items-center justify-between group hover:border-[#CCFF00] transition-colors active:scale-95 duration-150">
+<span class="font-technical-mono text-technical-mono lowercase">absurd, saçma</span>
+</button>
+<button class="w-full text-left rounded-full border border-[#2D1B4E] px-6 py-4 flex items-center justify-between group hover:border-[#CCFF00] transition-colors active:scale-95 duration-150">
+<span class="font-technical-mono text-technical-mono lowercase">wholesome, şirin</span>
+</button>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<div class="fixed bottom-0 left-0 w-full px-edge_padding pb-stack_md pt-stack_md bg-gradient-to-t from-background to-transparent z-40">
+<button class="w-full bg-[#CCFF00] text-background rounded-full py-4 flex justify-center items-center font-headline-md text-headline-md uppercase tracking-wider hover:brightness-110 active:scale-[0.98] transition-transform">
+            devam
+        </button>
+</div>
+</body></html>

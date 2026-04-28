@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gıcık - Welcome</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&amp;family=Space+Grotesk:wght@700;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#e9ddff",
+                        "surface-dim": "#141218",
+                        "tertiary-container": "#c9a74d",
+                        "tertiary": "#e7c365",
+                        "surface-variant": "#36343a",
+                        "surface": "#141218",
+                        "surface-container-lowest": "#0f0d13",
+                        "tertiary-fixed": "#ffdf93",
+                        "surface-container": "#211f24",
+                        "secondary": "#cdc0e9",
+                        "on-tertiary-fixed": "#241a00",
+                        "surface-container-highest": "#36343a",
+                        "on-secondary-container": "#bfb2da",
+                        "on-primary": "#381e72",
+                        "on-primary-fixed": "#22005d",
+                        "on-secondary-fixed-variant": "#4b4263",
+                        "surface-bright": "#3b383e",
+                        "on-surface": "#e6e0e9",
+                        "outline-variant": "#494551",
+                        "on-background": "#e6e0e9",
+                        "surface-container-low": "#1d1b20",
+                        "background": "#141218",
+                        "secondary-fixed-dim": "#cdc0e9",
+                        "on-primary-container": "#e0d2ff",
+                        "inverse-surface": "#e6e0e9",
+                        "primary": "#cfbcff",
+                        "secondary-fixed": "#e9ddff",
+                        "on-secondary-fixed": "#1f1635",
+                        "outline": "#948e9c",
+                        "on-surface-variant": "#cbc4d2",
+                        "on-tertiary-container": "#503d00",
+                        "tertiary-fixed-dim": "#e7c365",
+                        "surface-tint": "#cfbcff",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#4f378a",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#6750a4",
+                        "inverse-on-surface": "#322f35",
+                        "error": "#ffb4ab",
+                        "primary-container": "#6750a4",
+                        "secondary-container": "#4d4465",
+                        "primary-fixed-dim": "#cfbcff",
+                        "on-secondary": "#342b4b",
+                        "surface-container-high": "#2b292f",
+                        "on-error": "#690005",
+                        "on-tertiary": "#3e2e00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack_sm": "8px",
+                        "edge_padding": "24px",
+                        "stack_md": "20px",
+                        "stack_lg": "40px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Space Grotesk", "sans-serif"],
+                        "technical-mono": ["Inter", "monospace"],
+                        "headline-md": ["Space Grotesk", "sans-serif"],
+                        "body-main": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "technical-mono": ["13px", { "lineHeight": "1.4", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "700" }],
+                        "body-main": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface h-screen w-screen overflow-hidden relative flex flex-col selection:bg-primary selection:text-on-primary">
+<!-- Cosmic Background Elements -->
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-colors-surface-container-high)_0%,_var(--tw-colors-background)_70%)] pointer-events-none z-0"></div>
+<div class="absolute top-[20%] left-[50%] -translate-x-1/2 w-[80vw] h-[80vw] md:w-[40vw] md:h-[40vw] bg-primary/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col items-center justify-center relative z-10 px-edge_padding w-full h-full">
+<!-- Hero Logo Section -->
+<div class="relative flex flex-col items-center justify-center mb-stack_lg">
+<!-- Soft pink-to-purple glow halo behind logo -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[150px] bg-gradient-to-r from-primary to-secondary opacity-40 blur-[60px] rounded-[100%] pointer-events-none"></div>
+<!-- Gıcık Logo Structure -->
+<h1 class="relative font-display-lg text-display-lg text-on-surface tracking-tighter flex items-end scale-[1.5] md:scale-[2] origin-center z-10">
+<span>g</span>
+<!-- Custom 'ı' with holographic dot -->
+<span class="relative inline-flex flex-col items-center mx-[2px]">
+<!-- Holographic Dot -->
+<span class="absolute -top-[12px] w-[10px] h-[10px] rounded-full bg-gradient-to-tr from-primary via-tertiary to-primary shadow-[0_0_12px_var(--tw-colors-primary)]"></span>
+<span>ı</span>
+</span>
+<span>c</span>
+<span>ı</span>
+<span>k</span>
+</h1>
+<!-- Tagline -->
+<p class="font-body-main text-body-main text-on-surface-variant mt-stack_lg text-center tracking-wide z-10 opacity-80">
+                yazma. gıcık yazsın.
+            </p>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<div class="absolute bottom-0 left-0 w-full px-edge_padding pb-[40px] z-20">
+<!-- Primary Button - Ultra Premium Holographic Style -->
+<button class="w-full h-[56px] relative group overflow-hidden rounded-xl flex items-center justify-center bg-surface-container border border-outline/20 active:scale-95 transition-transform duration-200">
+<!-- Holographic Gradient Background -->
+<div class="absolute inset-0 bg-gradient-to-r from-primary via-tertiary to-primary opacity-90 group-hover:opacity-100 transition-opacity"></div>
+<!-- Button Text -->
+<span class="relative z-10 font-headline-md text-headline-md text-on-primary-fixed uppercase tracking-widest">
+                başla
+            </span>
+<!-- Inner Premium Glow/Highlight -->
+<div class="absolute inset-0 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] pointer-events-none"></div>
+</button>
+</div>
+</body></html>

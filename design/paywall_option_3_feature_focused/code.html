@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GICIK_PRO - Paywall</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&amp;family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#594400",
+                        "primary-fixed-dim": "#cfbcff",
+                        "primary": "#cfbcff",
+                        "inverse-primary": "#6750a4",
+                        "surface-tint": "#cfbcff",
+                        "on-primary-fixed-variant": "#4f378a",
+                        "on-background": "#e6e0e9",
+                        "tertiary-container": "#c9a74d",
+                        "surface-bright": "#3b383e",
+                        "on-secondary": "#342b4b",
+                        "tertiary-fixed": "#ffdf93",
+                        "surface-container-high": "#2b292f",
+                        "on-primary-fixed": "#22005d",
+                        "surface-container-low": "#1d1b20",
+                        "secondary-fixed": "#e9ddff",
+                        "secondary-fixed-dim": "#cdc0e9",
+                        "on-tertiary-container": "#503d00",
+                        "on-secondary-fixed-variant": "#4b4263",
+                        "primary-fixed": "#e9ddff",
+                        "tertiary-fixed-dim": "#e7c365",
+                        "surface-container-highest": "#36343a",
+                        "secondary": "#cdc0e9",
+                        "on-secondary-container": "#bfb2da",
+                        "surface-dim": "#141218",
+                        "error-container": "#93000a",
+                        "surface-variant": "#36343a",
+                        "on-surface": "#e6e0e9",
+                        "error": "#ffb4ab",
+                        "tertiary": "#e7c365",
+                        "surface-container-lowest": "#0f0d13",
+                        "on-primary": "#381e72",
+                        "secondary-container": "#4d4465",
+                        "surface-container": "#211f24",
+                        "outline-variant": "#494551",
+                        "on-tertiary": "#3e2e00",
+                        "inverse-surface": "#e6e0e9",
+                        "on-secondary-fixed": "#1f1635",
+                        "on-primary-container": "#e0d2ff",
+                        "inverse-on-surface": "#322f35",
+                        "background": "#141218",
+                        "surface": "#141218",
+                        "on-error-container": "#ffdad6",
+                        "on-error": "#690005",
+                        "primary-container": "#6750a4",
+                        "on-surface-variant": "#cbc4d2",
+                        "outline": "#948e9c",
+                        "on-tertiary-fixed": "#241a00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "edge_padding": "24px",
+                        "stack_lg": "40px",
+                        "gutter": "16px",
+                        "stack_sm": "8px",
+                        "stack_md": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Space Grotesk"],
+                        "body-main": ["Inter"],
+                        "technical-mono": ["Inter"],
+                        "display-lg": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "700" }],
+                        "body-main": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "technical-mono": ["13px", { "lineHeight": "1.4", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "0.05em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .holographic-border {
+            position: relative;
+        }
+        .holographic-border::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(45deg, #FF0080, #CCFF00, #FF0080);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .holographic-bg {
+            background: linear-gradient(135deg, #FF0080, #CCFF00);
+        }
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(255, 0, 128, 0.2);
+        }
+        .glass-panel {
+            background-color: rgba(26, 15, 46, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-main text-body-main relative overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-6 py-4 bg-transparent border-b border-[#2D1B4E] docked full-width top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#CCFF00] hover:opacity-80 transition-opacity active:scale-95 duration-100 cursor-pointer">close</span>
+<span class="text-xl font-black text-[#CCFF00] italic font-['Space_Grotesk'] uppercase tracking-tighter">GICIK_PRO</span>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 px-edge_padding py-stack_lg flex flex-col gap-stack_lg max-w-lg mx-auto w-full relative z-10">
+<!-- Header Text -->
+<div class="text-center space-y-stack_sm">
+<h1 class="font-display-lg text-display-lg text-on-background">UNLOCK PRO</h1>
+<p class="font-body-main text-body-main text-on-surface-variant">Don't be basic. Master the art of the response.</p>
+</div>
+<!-- Features Glass Panel -->
+<div class="glass-panel rounded-[20px] p-edge_padding border border-[#2D1B4E] space-y-stack_md">
+<h2 class="font-headline-md text-headline-md text-[#CCFF00] mb-stack_md">AHA MOMENTS</h2>
+<ul class="space-y-stack_sm">
+<li class="flex items-start gap-gutter border-b border-[#2D1B4E] pb-stack_sm">
+<span class="material-symbols-outlined text-[#FF0080] mt-1" style="font-variation-settings: 'FILL' 1;">electric_bolt</span>
+<div>
+<span class="block font-bold text-on-background">Instant Roasts</span>
+<span class="block text-sm text-on-surface-variant">AI-generated comebacks faster than they type.</span>
+</div>
+</li>
+<li class="flex items-start gap-gutter border-b border-[#2D1B4E] pb-stack_sm">
+<span class="material-symbols-outlined text-[#FF0080] mt-1" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<div>
+<span class="block font-bold text-on-background">Tone Analysis</span>
+<span class="block text-sm text-on-surface-variant">We decode their passive-aggression.</span>
+</div>
+</li>
+<li class="flex items-start gap-gutter border-b border-[#2D1B4E] pb-stack_sm">
+<span class="material-symbols-outlined text-[#FF0080] mt-1" style="font-variation-settings: 'FILL' 1;">history</span>
+<div>
+<span class="block font-bold text-on-background">Unlimited History</span>
+<span class="block text-sm text-on-surface-variant">Never lose a winning argument template.</span>
+</div>
+</li>
+<li class="flex items-start gap-gutter">
+<span class="material-symbols-outlined text-[#FF0080] mt-1" style="font-variation-settings: 'FILL' 1;">shield</span>
+<div>
+<span class="block font-bold text-on-background">Ghost Mode</span>
+<span class="block text-sm text-on-surface-variant">Read receipts off, confidence on.</span>
+</div>
+</li>
+</ul>
+</div>
+<!-- Plan Selection -->
+<div class="grid grid-cols-2 gap-gutter mt-stack_md">
+<!-- Plan A (Holographic) -->
+<div class="glass-panel rounded-[20px] p-gutter text-center cursor-pointer holographic-border glow-effect relative overflow-hidden group">
+<div class="absolute inset-0 bg-[#FF0080]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="font-headline-md text-headline-md text-on-background mb-1">Yıllık</div>
+<div class="font-body-main text-sm text-on-surface-variant line-through mb-1">₺999/yıl</div>
+<div class="font-display-lg text-2xl text-[#CCFF00] font-bold">₺499/yıl</div>
+<div class="mt-2 inline-block px-2 py-1 rounded-full border border-[#CCFF00] text-[#CCFF00] font-technical-mono text-[10px] uppercase">En İyi Değer</div>
+</div>
+<!-- Plan B (Standard) -->
+<div class="glass-panel rounded-[20px] p-gutter text-center cursor-pointer border border-[#2D1B4E] hover:border-outline-variant transition-colors group">
+<div class="absolute inset-0 bg-surface-variant/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-[20px]"></div>
+<div class="font-headline-md text-headline-md text-on-background mb-1">Aylık</div>
+<div class="font-body-main text-sm text-transparent select-none mb-1">-</div>
+<div class="font-display-lg text-2xl text-on-background font-bold mt-6">₺99/ay</div>
+</div>
+</div>
+</main>
+<!-- Fixed Bottom CTA -->
+<div class="fixed bottom-0 left-0 w-full p-edge_padding bg-gradient-to-t from-background via-background to-transparent z-40 pb-12">
+<button class="w-full h-14 rounded-[16px] holographic-bg text-surface-container-lowest font-headline-md text-headline-md tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all glow-effect shadow-[0_0_30px_rgba(204,255,0,0.3)]">
+            ÜCRETSİZ BAŞLAT
+        </button>
+<p class="text-center mt-4 font-technical-mono text-[10px] text-on-surface-variant">3 gün ücretsiz deneme, sonra seçilen plandan yenilenir. İstediğin zaman iptal et.</p>
+</div>
+<!-- Ambient Background Effects -->
+<div class="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#FF0080]/20 blur-[120px] rounded-full pointer-events-none z-0"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[#CCFF00]/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
+</body></html>

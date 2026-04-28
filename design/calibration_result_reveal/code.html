@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CALIBRATION RESULT REVEAL</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&amp;family=Space+Grotesk:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#4d4465",
+                      "surface-bright": "#3b383e",
+                      "outline-variant": "#494551",
+                      "on-tertiary-fixed": "#241a00",
+                      "inverse-primary": "#6750a4",
+                      "secondary-fixed-dim": "#cdc0e9",
+                      "on-surface": "#e6e0e9",
+                      "surface-container-low": "#1d1b20",
+                      "error": "#ffb4ab",
+                      "error-container": "#93000a",
+                      "primary-fixed-dim": "#cfbcff",
+                      "inverse-surface": "#e6e0e9",
+                      "secondary-fixed": "#e9ddff",
+                      "on-tertiary": "#3e2e00",
+                      "surface-container-high": "#2b292f",
+                      "primary-fixed": "#e9ddff",
+                      "surface-variant": "#36343a",
+                      "surface-tint": "#cfbcff",
+                      "surface-container": "#211f24",
+                      "on-primary-fixed": "#22005d",
+                      "surface-container-highest": "#36343a",
+                      "on-tertiary-fixed-variant": "#594400",
+                      "tertiary-fixed-dim": "#e7c365",
+                      "tertiary-container": "#c9a74d",
+                      "primary": "#cfbcff",
+                      "on-primary-container": "#e0d2ff",
+                      "outline": "#948e9c",
+                      "on-primary": "#381e72",
+                      "on-tertiary-container": "#503d00",
+                      "on-primary-fixed-variant": "#4f378a",
+                      "surface-container-lowest": "#0f0d13",
+                      "primary-container": "#6750a4",
+                      "on-secondary": "#342b4b",
+                      "on-background": "#e6e0e9",
+                      "inverse-on-surface": "#322f35",
+                      "secondary": "#cdc0e9",
+                      "on-surface-variant": "#cbc4d2",
+                      "on-secondary-container": "#bfb2da",
+                      "on-secondary-fixed-variant": "#4b4263",
+                      "surface": "#141218",
+                      "on-secondary-fixed": "#1f1635",
+                      "background": "#141218",
+                      "tertiary-fixed": "#ffdf93",
+                      "on-error-container": "#ffdad6",
+                      "surface-dim": "#141218",
+                      "tertiary": "#e7c365",
+                      "on-error": "#690005",
+                      "brand-pink": "#FF0080",
+                      "brand-lime": "#CCFF00"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack_lg": "40px",
+                      "gutter": "16px",
+                      "stack_sm": "8px",
+                      "stack_md": "20px",
+                      "edge_padding": "24px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "technical-mono": [
+                              "Inter"
+                      ],
+                      "body-main": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "technical-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-main": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0612; /* Deep cosmic black override for this specific screen vibe */
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background min-h-screen flex flex-col relative overflow-hidden font-body-main text-body-main selection:bg-brand-lime selection:text-background">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-950/70 backdrop-blur-xl border-b border-[#2D1B4E] shadow-[0_0_15px_rgba(255,0,128,0.2)] docked full-width top-0 border-b">
+<div class="text-[#FF0080] text-xl font-black tracking-widest font-['Space_Grotesk'] uppercase">CALIBRATION</div>
+<button class="text-[#CCFF00] font-bold font-['Space_Grotesk'] tracking-tighter uppercase hover:text-[#CCFF00] transition-colors active:scale-95 duration-200">
+            tamam
+        </button>
+</header>
+<!-- Main Canvas -->
+<main class="flex-grow flex flex-col px-edge_padding pt-24 pb-edge_padding z-10 relative">
+<!-- Background Ambient Glow -->
+<div class="absolute top-[20%] left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-brand-pink/20 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+<!-- Hero Zone (Top 40%) -->
+<section class="flex flex-col items-center justify-center flex-grow mb-stack_lg mt-stack_md text-center">
+<!-- Orbital Visual Placeholder -->
+<div aria-label="Orbital ring system with archetype emoji materializing" class="relative w-48 h-48 mb-stack_md flex items-center justify-center group" data-alt="Abstract 3D rendering of glowing neon pink orbital rings surrounding a dark void, with sharp holographic light flares and cosmic dust in a deep black space environment." role="img">
+<!-- Outer Rings Simulation -->
+<div class="absolute inset-0 border border-brand-pink/30 rounded-full shadow-[0_0_30px_rgba(255,0,128,0.4)] animate-[spin_10s_linear_infinite]"></div>
+<div class="absolute inset-4 border border-[#2D1B4E] rounded-full"></div>
+<div class="absolute inset-8 border border-brand-lime/10 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+<!-- Core Emoji -->
+<div class="text-6xl relative z-10 drop-shadow-[0_0_20px_rgba(255,0,128,0.8)] transition-transform duration-700 ease-out scale-110">
+                    🥀
+                </div>
+</div>
+<!-- Labels -->
+<div class="flex flex-col items-center gap-stack_sm">
+<span class="font-technical-mono text-technical-mono text-brand-lime uppercase tracking-widest">SENİN TARZIN...</span>
+<h1 class="font-display-lg text-display-lg text-on-background drop-shadow-[0_0_15px_rgba(255,0,128,0.5)]">
+                    GICIK
+                </h1>
+</div>
+</section>
+<!-- Description Zone (Middle 35%) -->
+<section class="flex flex-col gap-stack_md w-full mb-stack_lg">
+<!-- Card 1 -->
+<div class="bg-[#1A0F2E]/70 backdrop-blur-[20px] rounded-[20px] p-6 border border-[#2D1B4E] relative overflow-hidden group hover:border-brand-lime/30 transition-colors">
+<div class="absolute left-0 top-0 bottom-0 w-[3px] bg-brand-lime"></div>
+<p class="italic text-white/90 text-body-main font-body-main pl-2">spesifik gözlem yaparsın, klişe sevmezsin</p>
+</div>
+<!-- Card 2 -->
+<div class="bg-[#1A0F2E]/70 backdrop-blur-[20px] rounded-[20px] p-6 border border-[#2D1B4E] relative overflow-hidden group hover:border-brand-lime/30 transition-colors">
+<div class="absolute left-0 top-0 bottom-0 w-[3px] bg-brand-lime"></div>
+<p class="italic text-white/90 text-body-main font-body-main pl-2">kısa cümle, nokta dostusun</p>
+</div>
+<!-- Card 3 -->
+<div class="bg-[#1A0F2E]/70 backdrop-blur-[20px] rounded-[20px] p-6 border border-[#2D1B4E] relative overflow-hidden group hover:border-brand-lime/30 transition-colors">
+<div class="absolute left-0 top-0 bottom-0 w-[3px] bg-brand-lime"></div>
+<p class="italic text-white/90 text-body-main font-body-main pl-2">soğuk değilsin ama mesafe seversin</p>
+</div>
+</section>
+<!-- Footer Zone (Bottom 25%) -->
+<footer class="mt-auto flex flex-col items-center w-full gap-stack_md pb-safe">
+<p class="font-technical-mono text-technical-mono text-white/40 text-center">
+                her zaman değişebilir. ayarlardan.
+            </p>
+<div class="w-full flex flex-col gap-stack_sm">
+<button class="w-full bg-gradient-to-r from-[#2D1B4E] to-brand-pink/20 border border-brand-pink/50 rounded-[16px] py-4 px-6 font-display-lg text-[16px] leading-[1.2] tracking-[0.05em] uppercase text-on-background shadow-[0_0_15px_rgba(255,0,128,0.2)] active:scale-95 transition-transform duration-200">
+                    devam et
+                </button>
+<button class="w-full py-3 px-6 font-body-main text-body-main text-white/60 lowercase hover:text-white transition-colors active:scale-95 duration-200">
+                    yeniden kalibre et
+                </button>
+</div>
+</footer>
+</main>
+</body></html>

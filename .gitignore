@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Env / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Xcode (ileride iOS projesi için)
+*.xcuserstate
+xcuserdata/
+DerivedData/
+build/
+*.xcworkspace/xcuserdata/
+
+# Local agent caches
+.agents/cache/
