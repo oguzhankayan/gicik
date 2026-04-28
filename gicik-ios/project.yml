@@ -25,6 +25,10 @@ configs:
   Debug: debug
   Release: release
 
+configFiles:
+  Debug: Debug.xcconfig
+  Release: Release.xcconfig
+
 targets:
   Gicik:
     type: application
@@ -35,6 +39,9 @@ targets:
       - path: Gicik/Resources
         excludes:
           - "design-source/**/*"   # design-source build'e dahil değil
+    configFiles:
+      Debug: Debug.xcconfig
+      Release: Release.xcconfig
     info:
       path: Gicik/Info.plist
       properties:

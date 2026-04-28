@@ -1,27 +1,33 @@
 import Foundation
 
-/// Environment configuration. Reads from Info.plist (which xcconfig populates).
-/// xcconfig dosyaları repo'da değil — `.xcconfig.template` ile çoğalt, gerçek key'ler local.
+/// Environment configuration.
+///
+/// Supabase URL + anon key are PUBLIC — anyone calling the public API can see them
+/// in network traffic, and Row Level Security on every table is what actually protects
+/// user data. Embedding them here is intentional and matches industry practice
+/// (Firebase / Supabase / Amplify all embed public client config in app binaries).
+///
+/// Real secrets (SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY) live ONLY in
+/// Supabase secrets / edge function env — never in this binary.
+///
+/// Optional analytics keys are read from Info.plist (xcconfig populated). Empty = no-op.
 enum Configuration {
-    static let supabaseURL: URL = {
-        guard let s = infoString("SUPABASE_URL"), let url = URL(string: s) else {
-            fatalError("SUPABASE_URL missing in Info.plist (set via xcconfig)")
-        }
-        return url
-    }()
+    // MARK: - Supabase (public client config)
 
-    static let supabaseAnonKey: String = {
-        guard let s = infoString("SUPABASE_ANON_KEY"), !s.isEmpty else {
-            fatalError("SUPABASE_ANON_KEY missing in Info.plist")
-        }
-        return s
-    }()
+    static let supabaseURL: URL = URL(string: "https://ftjdfcvlsqrjlvebbsqi.supabase.co")!
+
+    static let supabaseAnonKey: String =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0amRmY3Zsc3Fyamx2ZWJic3FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTg5NjEsImV4cCI6MjA5MjkzNDk2MX0.xG2rWj4ee_rxiIM0RdJShMcW2dkaI0l-OMBcpfTzwNc"
+
+    // MARK: - Optional vendor keys (xcconfig → Info.plist)
 
     static let revenueCatAPIKey: String = infoString("REVENUECAT_API_KEY") ?? ""
     static let posthogAPIKey: String = infoString("POSTHOG_API_KEY") ?? ""
     static let posthogHost: String = infoString("POSTHOG_HOST") ?? "https://eu.posthog.com"
     static let mixpanelToken: String = infoString("MIXPANEL_TOKEN") ?? ""
     static let sentryDSN: String = infoString("SENTRY_DSN") ?? ""
+
+    // MARK: - Build info
 
     static var bundleID: String {
         Bundle.main.bundleIdentifier ?? "to.tikla.gicik"
@@ -44,6 +50,7 @@ enum Configuration {
     }
 
     private static func infoString(_ key: String) -> String? {
-        Bundle.main.object(forInfoDictionaryKey: key) as? String
+        let s = Bundle.main.object(forInfoDictionaryKey: key) as? String
+        return (s?.isEmpty == true) ? nil : s
     }
 }
