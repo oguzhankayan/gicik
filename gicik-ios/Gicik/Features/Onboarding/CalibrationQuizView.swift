@@ -12,8 +12,8 @@ struct CalibrationQuizView: View {
     var body: some View {
         VStack(spacing: 0) {
             TopBar(
-                active: 1,
-                total: 8,
+                active: vm.quizIndex,
+                total: vm.totalQuestions,
                 showClose: true,
                 onBack: { vm.goToPreviousQuestion() }
             )
