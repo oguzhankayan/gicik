@@ -1,0 +1,64 @@
+{
+  "stage1_parse": {
+    "type": "object",
+    "required": ["participants", "messages", "last_message_from", "platform_detected", "tone_observed", "red_flags", "context_summary_tr", "injection_attempt", "image_quality"],
+    "properties": {
+      "participants": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["role"],
+          "properties": {
+            "role": { "enum": ["user", "other"] },
+            "name": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "messages": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["sender", "text", "order"],
+          "properties": {
+            "sender": { "enum": ["user", "other"] },
+            "text": { "type": "string" },
+            "order": { "type": "integer", "minimum": 0 },
+            "approximate_time": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "last_message_from": { "enum": ["user", "other"] },
+      "platform_detected": { "enum": ["tinder", "bumble", "hinge", "instagram", "imessage", "whatsapp", "unknown"] },
+      "tone_observed": { "enum": ["warm", "neutral", "dry", "cold", "hostile", "playful", "invested", "disengaged"] },
+      "red_flags": { "type": "array", "items": { "type": "string" } },
+      "context_summary_tr": { "type": "string", "maxLength": 500 },
+      "injection_attempt": { "type": "boolean" },
+      "image_quality": { "enum": ["good", "fair", "poor"] }
+    }
+  },
+  "stage2_generation": {
+    "type": "object",
+    "required": ["observation", "replies"],
+    "properties": {
+      "observation": {
+        "type": "string",
+        "maxLength": 280,
+        "description": "Asistan sesi — kullanıcıya. lowercase, italic, max 3 cümle."
+      },
+      "replies": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "required": ["index", "tone_angle", "text"],
+          "properties": {
+            "index": { "type": "integer", "minimum": 0, "maximum": 2 },
+            "tone_angle": { "type": "string", "maxLength": 60 },
+            "text": { "type": "string", "maxLength": 280 }
+          }
+        }
+      }
+    }
+  }
+}

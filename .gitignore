@@ -18,12 +18,28 @@
 node_modules/
 npm-debug.log*
 
-# Xcode (ileride iOS projesi için)
+# Xcode
 *.xcuserstate
 xcuserdata/
 DerivedData/
 build/
 *.xcworkspace/xcuserdata/
+gicik-ios/Gicik.xcodeproj/
+gicik-ios/Gicik.xcworkspace/
+
+# xcconfig — secrets
+*.xcconfig
+!*.xcconfig.template
+
+# SPM
+.build/
+Package.resolved
+
+# Supabase local
+gicik-backend/.env
+gicik-backend/.env.local
+gicik-backend/.branches/
+gicik-backend/.temp/
 
 # Local agent caches
 .agents/cache/
