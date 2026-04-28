@@ -15,8 +15,8 @@ struct Logo: View {
                 Circle()
                     .fill(AppColor.holographic)
                     .frame(width: size * 0.14, height: size * 0.14)
-                    .shadow(color: Color(hex: 0xFF0080, alpha: 0.7), radius: 6)
-                    .shadow(color: Color(hex: 0x8000FF, alpha: 0.5), radius: 12)
+                    .shadow(color: AppColor.pink.opacity(0.7), radius: 6)
+                    .shadow(color: AppColor.purple.opacity(0.5), radius: 12)
                     .offset(y: size * 0.07)
             }
             Text("cık")
@@ -24,6 +24,8 @@ struct Logo: View {
         .font(AppFont.display(size, weight: .bold))
         .tracking(-size * 0.04)
         .foregroundColor(.white)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("gıcık")
     }
 }
 

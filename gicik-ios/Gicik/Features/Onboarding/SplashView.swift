@@ -12,8 +12,8 @@ struct SplashView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color(hex: 0xFF0080, alpha: 0.5),
-                            Color(hex: 0x8000FF, alpha: 0.3),
+                            AppColor.pink.opacity(0.5),
+                            AppColor.purple.opacity(0.3),
                             .clear,
                         ],
                         center: .center,

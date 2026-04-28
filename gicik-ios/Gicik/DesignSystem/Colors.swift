@@ -25,8 +25,16 @@ enum AppColor {
     static let pink = Color(hex: 0xFF0080)
     static let lime = Color(hex: 0xCCFF00)
     static let blue = Color(hex: 0x0080FF)
+    static let purple = Color(hex: 0x8000FF)   // holographic mid-stop
+    static let cyan = Color(hex: 0x00FFFF)     // holographic mid-stop 2
+    static let green = Color(hex: 0x00FF80)    // holographic end-stop
     static let danger = Color(hex: 0xFF3366)
     static let warning = Color(hex: 0xFFAA00)
+
+    // Glow seti (shadow renkleri için)
+    static let pinkGlow = Color(hex: 0xFF0080, alpha: 0.45)
+    static let purpleGlow = Color(hex: 0x8000FF, alpha: 0.35)
+    static let pinkGlowSoft = Color(hex: 0xFF0080, alpha: 0.30)
 
     // Holographic gradient — pink → purple → cyan → lime
     static let holographic = LinearGradient(

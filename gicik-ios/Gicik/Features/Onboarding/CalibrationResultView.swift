@@ -122,8 +122,8 @@ struct CalibrationResultView: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color(hex: 0xFF0080, alpha: 0.55),
-                                 Color(hex: 0x8000FF, alpha: 0.30),
+                        colors: [AppColor.pink.opacity(0.55),
+                                 AppColor.purple.opacity(0.30),
                                  .clear],
                         center: .center,
                         startRadius: 0,
@@ -145,7 +145,7 @@ struct CalibrationResultView: View {
             // Arketip emoji center
             Text(emojiFromArchetype())
                 .font(.system(size: 80))
-                .shadow(color: Color(hex: 0xFF0080, alpha: 0.7), radius: 22)
+                .shadow(color: AppColor.pink.opacity(0.7), radius: 22)
         }
         .frame(width: 240, height: 240)
     }

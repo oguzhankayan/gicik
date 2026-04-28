@@ -24,6 +24,10 @@ struct RootView: View {
         }
         .animation(AppAnimation.standard, value: auth.isSignedIn)
         .animation(AppAnimation.standard, value: onboardingCompleted)
+        // Y2K / kompakt UI tasarımı çok büyük accessibility size'larda dağılır.
+        // Cap büyük accessibility level'lere (XL3'e kadar). Phase 5 polish'te
+        // her text style ayrı kalibre edilebilir.
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
     }
 }
 

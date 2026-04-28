@@ -156,7 +156,7 @@ struct DemoUploadView: View {
                 .scaleEffect(isLast && !msg.isMine && pulseEmphasis ? 1.02 : 1.0)
                 .shadow(
                     color: isLast && !msg.isMine
-                        ? Color(hex: 0xFF0080, alpha: pulseEmphasis ? 0.35 : 0.15)
+                        ? AppColor.pink.opacity(pulseEmphasis ? 0.35 : 0.15)
                         : .clear,
                     radius: 14
                 )
@@ -178,7 +178,7 @@ struct DemoUploadView: View {
         } else if isMine {
             // User's reply bubble — pink fill
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(hex: 0xFF0080, alpha: 0.5))
+                .fill(AppColor.pink.opacity(0.5))
         } else {
             // Their bubble — neutral glass
             RoundedRectangle(cornerRadius: 14, style: .continuous)

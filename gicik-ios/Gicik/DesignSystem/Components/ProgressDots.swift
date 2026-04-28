@@ -14,5 +14,8 @@ struct ProgressDots: View {
                     .animation(AppAnimation.standard, value: active)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("ilerleme")
+        .accessibilityValue("\(active + 1) / \(total)")
     }
 }

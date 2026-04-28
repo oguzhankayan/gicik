@@ -109,45 +109,34 @@ struct ScreenshotPickerView: View {
     }
 
     private var uploadingState: some View {
-        ZStack(alignment: .bottomLeading) {
+        VStack(spacing: 18) {
             if let data = vm.pickedScreenshot, let img = UIImage(data: data) {
                 Image(uiImage: img)
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .blur(radius: 4)
-                    .clipped()
-            } else {
-                Rectangle().fill(AppColor.bg1)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(AppColor.text10, lineWidth: 1)
+                    )
+                    .opacity(0.75)
+                    .accessibilityLabel("yüklenen ekran görüntüsü")
             }
 
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .opacity(0.6)
-                .shimmer(cornerRadius: 18)
-
-            HStack(spacing: 8) {
-                Circle().fill(AppColor.lime).frame(width: 8, height: 8)
-                Text("yorumlanıyor…")
-                    .font(AppFont.body(14))
-                    .foregroundColor(.white)
+            HStack(spacing: 10) {
+                ProgressView()
+                    .tint(AppColor.lime)
+                    .scaleEffect(0.9)
+                Text("yorumlanıyor")
+                    .font(AppFont.body(14, weight: .medium))
+                    .foregroundColor(AppColor.text60)
             }
-            .padding(16)
-            .padding(.bottom, 4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                LinearGradient(
-                    colors: [Color(hex: 0x0A0612, alpha: 0.95), .clear],
-                    startPoint: .bottom,
-                    endPoint: .top
-                )
-            )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("ekran görüntüsü yorumlanıyor")
         }
-        .frame(height: 280)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(AppColor.text10, lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
     }
 
     private func doneState(thumbnail data: Data) -> some View {
@@ -183,7 +172,7 @@ struct ScreenshotPickerView: View {
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(AppColor.holographic, lineWidth: 1.5)
+                    .strokeBorder(AppColor.lime, lineWidth: 1.5)
             )
         }
     }

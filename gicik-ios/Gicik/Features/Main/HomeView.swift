@@ -66,14 +66,18 @@ struct HomeView: View {
                 }
                 .frame(width: 36, height: 36)
             }
+            .accessibilityLabel("tarz değiştir, şu an \(archetypeShortLabel)")
+
             Spacer()
             Logo(size: 26)
             Spacer()
+
             Button { showProfile = true } label: {
                 Image(systemName: "gearshape")
                     .font(.system(size: 20))
                     .foregroundColor(AppColor.text60)
             }
+            .accessibilityLabel("ayarlar")
         }
         .padding(.horizontal, 24)
         .padding(.top, 58)

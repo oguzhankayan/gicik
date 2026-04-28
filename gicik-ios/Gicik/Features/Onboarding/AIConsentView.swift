@@ -152,9 +152,8 @@ struct AIConsentView: View {
         } label: {
             ZStack(alignment: consentToggle ? .trailing : .leading) {
                 Capsule()
-                    .fill(consentToggle ? AnyShapeStyle(AppColor.holographic) : AnyShapeStyle(AppColor.text20))
+                    .fill(consentToggle ? AppColor.pink : AppColor.text20)
                     .frame(width: 46, height: 28)
-                    .shadow(color: consentToggle ? Color(hex: 0xFF0080, alpha: 0.4) : .clear, radius: 8)
                 Circle()
                     .fill(.white)
                     .frame(width: 24, height: 24)

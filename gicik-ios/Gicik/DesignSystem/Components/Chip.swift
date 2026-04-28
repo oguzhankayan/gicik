@@ -43,25 +43,13 @@ struct Chip: View {
                         .fill(isSelected ? AppColor.bgGlass : AppColor.bg1)
                     Capsule()
                         .strokeBorder(
-                            isSelected ? AnyShapeStyle(AppColor.holographic) : AnyShapeStyle(AppColor.text10),
-                            lineWidth: 1
+                            isSelected ? AppColor.pink : AppColor.text10,
+                            lineWidth: isSelected ? 1.5 : 1
                         )
                 }
             )
-            .modifier(HoloChipGlow(active: isSelected))
         }
         .sensoryFeedback(.selection, trigger: isSelected)
     }
 }
 
-private struct HoloChipGlow: ViewModifier {
-    let active: Bool
-
-    func body(content: Content) -> some View {
-        if active {
-            content.shadow(color: Color(hex: 0xFF0080, alpha: 0.30), radius: 10)
-        } else {
-            content
-        }
-    }
-}

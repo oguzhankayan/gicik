@@ -68,6 +68,7 @@ struct ResultView: View {
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(AppColor.text60)
             }
+            .accessibilityLabel("geri")
             Spacer()
             Button {
                 vm.regenerate()
@@ -76,6 +77,7 @@ struct ResultView: View {
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(AppColor.text60)
             }
+            .accessibilityLabel("yeniden üret")
         }
         .padding(.horizontal, 20)
         .padding(.top, 60)
@@ -95,7 +97,7 @@ struct ResultView: View {
     private var actionFooter: some View {
         VStack(spacing: 12) {
             PrimaryButton("yeni cevap üret") {
-                vm.stage = .generation(result.mode, screenshot: vm.pickedScreenshot ?? Data())
+                vm.regenerate()
             }
             Button("konuşmayı bitir") {
                 vm.backToHome()
@@ -128,15 +130,23 @@ struct ResultView: View {
         struct FeedbackResp: Decodable { let ok: Bool }
 
         Task {
-            _ = try? await APIClient.shared.invokeJSON(
-                .promptFeedback,
-                body: FeedbackBody(
-                    conversation_id: conversationId,
-                    selected_reply_index: reply.index,
-                    feedback: positive ? "positive" : "negative"
-                ),
-                as: FeedbackResp.self
-            )
+            do {
+                _ = try await APIClient.shared.invokeJSON(
+                    .promptFeedback,
+                    body: FeedbackBody(
+                        conversation_id: conversationId,
+                        selected_reply_index: reply.index,
+                        feedback: positive ? "positive" : "negative"
+                    ),
+                    as: FeedbackResp.self
+                )
+            } catch {
+                // Silent failure'i Sentry'e log et — non-blocking
+                AnalyticsService.shared.track(.generationFailed, properties: [
+                    "context": "prompt_feedback",
+                    "error": error.localizedDescription,
+                ])
+            }
         }
     }
 }

@@ -85,6 +85,7 @@ struct ReplyCard: View {
                     )
             )
         }
+        .accessibilityLabel(isCopied ? "kopyalandı" : "kopyala")
         .sensoryFeedback(.success, trigger: isCopied)
     }
 
@@ -95,11 +96,13 @@ struct ReplyCard: View {
                     .font(.system(size: 16))
                     .foregroundColor(AppColor.text40)
             }
+            .accessibilityLabel("beğen")
             Button(action: onThumbsDown) {
                 Image(systemName: "hand.thumbsdown")
                     .font(.system(size: 16))
                     .foregroundColor(AppColor.text40)
             }
+            .accessibilityLabel("beğenme")
         }
     }
 }

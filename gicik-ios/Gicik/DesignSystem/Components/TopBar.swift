@@ -32,6 +32,7 @@ struct TopBar: View {
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(AppColor.text60)
             }
+            .accessibilityLabel("geri")
             .opacity(showBack ? 1 : 0)
             .disabled(!showBack)
             .frame(width: 28, alignment: .leading)
@@ -47,6 +48,7 @@ struct TopBar: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(AppColor.text40)
             }
+            .accessibilityLabel("kapat")
             .opacity(showClose ? 1 : 0)
             .disabled(!showClose)
             .frame(width: 28, alignment: .trailing)

@@ -156,14 +156,11 @@ struct CalibrationQuizView: View {
                     .frame(height: cardHeight)
 
                 if stacked {
-                    HStack(spacing: 16) {
-                        Capsule()
-                            .fill(isSelected ? AnyShapeStyle(AppColor.holographic) : AnyShapeStyle(AppColor.lime.opacity(0.6)))
-                            .frame(width: 3)
-                            .padding(.vertical, 18)
+                    HStack(spacing: 14) {
                         Text(opt.text)
                             .font(AppFont.body(18, weight: .medium))
                             .foregroundColor(.white)
+                            .fixedSize(horizontal: false, vertical: true)
                         Spacer()
                         if isSelected {
                             Circle()
@@ -174,10 +171,10 @@ struct CalibrationQuizView: View {
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(AppColor.bg0)
                                 )
+                                .accessibilityHidden(true)
                         }
                     }
-                    .padding(.leading, 16)
-                    .padding(.trailing, 20)
+                    .padding(.horizontal, 18)
                 } else {
                     VStack(alignment: .leading) {
                         if let e = opt.emoji {
@@ -241,7 +238,7 @@ struct CalibrationQuizView: View {
                             Circle()
                                 .fill(AppColor.holographic)
                                 .frame(width: 28, height: 28)
-                                .shadow(color: Color(hex: 0xFF0080, alpha: 0.4), radius: 8)
+                                .shadow(color: AppColor.pink.opacity(0.4), radius: 8)
                                 .opacity(likertValue == n ? 1 : 0)
                                 .scaleEffect(likertValue == n ? 1.0 : 0.5)
                         }
@@ -282,7 +279,7 @@ struct CalibrationQuizView: View {
                     Circle()
                         .fill(Color.white)
                         .frame(width: 28, height: 28)
-                        .shadow(color: Color(hex: 0xFF0080, alpha: 0.5), radius: 8)
+                        .shadow(color: AppColor.pink.opacity(0.5), radius: 8)
                         .position(x: geo.size.width * sliderValue, y: 2)
                         .gesture(
                             DragGesture(minimumDistance: 0)

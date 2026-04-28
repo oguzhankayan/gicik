@@ -18,9 +18,9 @@ enum AppFont {
         .system(size: size, weight: weight, design: .default)
     }
 
-    /// Mono — JetBrains Mono. Sadece Regular + Medium destekleniyor.
+    /// Mono — JetBrains Mono. Dynamic Type'a duyarlı (relativeTo: .body).
     static func mono(_ size: CGFloat, weight: Font.Weight = .medium) -> Font {
         let face = weight == .medium ? "JetBrainsMono-Medium" : "JetBrainsMono-Regular"
-        return .custom(face, size: size)
+        return .custom(face, size: size, relativeTo: .body)
     }
 }

@@ -17,7 +17,7 @@ struct NotificationPermissionView: View {
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Color(hex: 0xFF0080, alpha: 0.5), .clear],
+                            colors: [AppColor.pink.opacity(0.5), .clear],
                             center: .center,
                             startRadius: 0,
                             endRadius: 100

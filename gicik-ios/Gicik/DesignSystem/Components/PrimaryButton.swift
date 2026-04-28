@@ -84,8 +84,8 @@ private struct HoloFillGlow: ViewModifier {
     func body(content: Content) -> some View {
         if active {
             content
-                .shadow(color: Color(hex: 0xFF0080, alpha: 0.45), radius: 28)
-                .shadow(color: Color(hex: 0x8000FF, alpha: 0.35), radius: 56)
+                .shadow(color: AppColor.pink.opacity(0.45), radius: 28)
+                .shadow(color: AppColor.purple.opacity(0.35), radius: 56)
         } else {
             content
         }

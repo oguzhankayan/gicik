@@ -51,7 +51,7 @@ struct CalibrationIntroView: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color(hex: 0xFF0080, alpha: 0.35), .clear],
+                        colors: [AppColor.pink.opacity(0.35), .clear],
                         center: .center,
                         startRadius: 0,
                         endRadius: 140
@@ -73,8 +73,8 @@ struct CalibrationIntroView: View {
             Circle()
                 .fill(Color.white)
                 .frame(width: 18, height: 18)
-                .shadow(color: Color(hex: 0xFF0080), radius: 20)
-                .shadow(color: Color(hex: 0x8000FF), radius: 40)
+                .shadow(color: AppColor.pink, radius: 20)
+                .shadow(color: AppColor.purple, radius: 40)
         }
         .frame(width: 280, height: 280)
     }
