@@ -45,10 +45,7 @@ targets:
         NSPhotoLibraryUsageDescription: "mesaj ekran görüntülerini analiz etmek için fotoğraflara erişim."
         NSCameraUsageDescription: "şu an kamera kullanmıyoruz; ileride."
         UIAppFonts:
-          - SpaceGrotesk-Regular.ttf
-          - SpaceGrotesk-Medium.ttf
-          - SpaceGrotesk-SemiBold.ttf
-          - SpaceGrotesk-Bold.ttf
+          - SpaceGrotesk-VariableFont_wght.ttf
           - JetBrainsMono-Regular.ttf
           - JetBrainsMono-Medium.ttf
         # xcconfig'den gelen env vars (Debug.xcconfig / Release.xcconfig):

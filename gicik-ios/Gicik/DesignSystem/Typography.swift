@@ -1,39 +1,26 @@
 import SwiftUI
 
 // gıcık — typography
-// Display: Space Grotesk (Y2K, başlık + display momenti)
+// Display: Space Grotesk (variable font, weight axis)
 // Body: SF Pro (sistem)
-// Mono: JetBrains Mono (label, etiket, technical)
+// Mono: JetBrains Mono (Regular + Medium static weights)
 
 enum AppFont {
+    /// Display — Space Grotesk variable font. iOS 16+ `.weight()` modifier
+    /// variable font weight axis'ini otomatik aktive eder.
+    /// PostScript name "SpaceGrotesk-Light" base, weight axis ile değişir.
     static func display(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
-        .custom("SpaceGrotesk-\(weight.spaceGrotesk)", size: size)
+        .custom("SpaceGrotesk-Light", size: size).weight(weight)
     }
 
+    /// Body — SF Pro
     static func body(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .default)
     }
 
+    /// Mono — JetBrains Mono. Sadece Regular + Medium destekleniyor.
     static func mono(_ size: CGFloat, weight: Font.Weight = .medium) -> Font {
-        .custom("JetBrainsMono-\(weight.jetBrainsMono)", size: size)
-    }
-}
-
-private extension Font.Weight {
-    var spaceGrotesk: String {
-        switch self {
-        case .regular: return "Regular"
-        case .medium: return "Medium"
-        case .semibold: return "SemiBold"
-        case .bold: return "Bold"
-        default: return "Regular"
-        }
-    }
-
-    var jetBrainsMono: String {
-        switch self {
-        case .medium: return "Medium"
-        default: return "Regular"
-        }
+        let face = weight == .medium ? "JetBrainsMono-Medium" : "JetBrainsMono-Regular"
+        return .custom(face, size: size)
     }
 }

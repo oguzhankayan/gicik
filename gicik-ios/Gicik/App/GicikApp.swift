@@ -27,7 +27,6 @@ struct GicikApp: App {
             options.dsn = Configuration.sentryDSN
             options.debug = Configuration.isDebug
             options.tracesSampleRate = Configuration.isDebug ? 1.0 : 0.2
-            options.profilesSampleRate = Configuration.isDebug ? 1.0 : 0.1
             options.environment = Configuration.isDebug ? "development" : "production"
             options.releaseName = "gicik@\(Configuration.appVersion)+\(Configuration.buildNumber)"
         }
