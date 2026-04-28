@@ -64,9 +64,6 @@ targets:
       configs:
         Debug:
           OTHER_SWIFT_FLAGS: $(inherited) -DDEBUG
-          CODE_SIGN_IDENTITY: "Apple Development"
-        Release:
-          CODE_SIGN_IDENTITY: "Apple Distribution"
     entitlements:
       path: Gicik/Gicik.entitlements
       properties:

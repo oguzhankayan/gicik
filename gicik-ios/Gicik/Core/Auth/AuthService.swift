@@ -54,4 +54,22 @@ final class AuthService {
         KeychainManager.delete(.appleSignInUserID)
         KeychainManager.delete(.supabaseSession)
     }
+
+    // MARK: - Email (test path; Apple SSO kalır)
+
+    func signInWithEmail(email: String, password: String) async throws {
+        isLoading = true
+        defer { isLoading = false }
+        let session = try await SupabaseService.shared.auth.signIn(email: email, password: password)
+        self.session = session
+    }
+
+    func signUpWithEmail(email: String, password: String) async throws {
+        isLoading = true
+        defer { isLoading = false }
+        let response = try await SupabaseService.shared.auth.signUp(email: email, password: password)
+        if let session = response.session {
+            self.session = session
+        }
+    }
 }

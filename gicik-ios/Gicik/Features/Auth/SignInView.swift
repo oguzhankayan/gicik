@@ -7,6 +7,7 @@ struct SignInView: View {
     @State private var auth = AuthService.shared
     @State private var currentNonce: String?
     @State private var error: String?
+    @State private var showEmailSheet = false
 
     var body: some View {
         VStack {
@@ -24,6 +25,17 @@ struct SignInView: View {
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.button, style: .continuous))
                 .padding(.horizontal, 24)
 
+            // Test path (Phase 2). Phase 6'da gizlenir.
+            Button {
+                showEmailSheet = true
+            } label: {
+                Text("e-posta ile giriş")
+                    .font(AppFont.body(13))
+                    .foregroundColor(AppColor.text40)
+                    .underline()
+            }
+            .padding(.top, 14)
+
             if let error {
                 Text(error)
                     .font(AppFont.body(13))
@@ -40,6 +52,11 @@ struct SignInView: View {
                 .padding(.bottom, 48)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .sheet(isPresented: $showEmailSheet) {
+            EmailSignInSheet(onSuccess: { showEmailSheet = false })
+                .presentationDetents([.medium])
+                .presentationBackground(AppColor.bg0)
+        }
     }
 
     private func prepare(_ request: ASAuthorizationAppleIDRequest) {
