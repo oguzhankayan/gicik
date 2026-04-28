@@ -43,6 +43,10 @@ struct CalibrationQuizView: View {
                     .tracking(-0.02 * 26)
                     .foregroundColor(.white)
                     .lineSpacing(26 * 0.10)
+                    .multilineTextAlignment(.leading)
+                    .minimumScaleFactor(0.75)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if let sub = q.subtitle, !sub.isEmpty {
                     Text(sub)

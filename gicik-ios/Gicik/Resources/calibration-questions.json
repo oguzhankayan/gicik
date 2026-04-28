@@ -2,8 +2,8 @@
   {
     "id": "context_weight",
     "type": "multi_select_with_priority",
-    "title": "GICIK SENİ NEREDE EN ÇOK YORUYOR",
-    "subtitle": "ilk 3'ü seç, en çok zorlandığın ilk olsun",
+    "title": "MESAJDA EN ÇOK NEREDE ZORLANIYORSUN",
+    "subtitle": "ilk 3'ü seç, en çok zorlananın ilk olsun",
     "options": [
       { "text": "tinder, bumble vb" },
       { "text": "instagram dm" },
@@ -66,10 +66,10 @@
   {
     "id": "vibe_scenario_1",
     "type": "image_binary",
-    "title": "hangisi senin gibi",
+    "title": "karşıdaki uzun mesaj attı.\nsen?",
     "options": [
-      { "id": "photo", "text": "fotoğraf çekerim" },
-      { "id": "leave", "text": "kibarca ortamı terk ederim" }
+      { "id": "photo", "text": "hemen aynı uzunlukta\ncevap atarım" },
+      { "id": "leave", "text": "birkaç saat sonra\ndüşünüp yazarım" }
     ]
   },
   {
