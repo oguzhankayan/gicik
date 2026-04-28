@@ -27,7 +27,7 @@ struct DemoUploadView: View {
     /// (kadıköy boğa = boğa heykeli, klasik buluşma noktası — yer değil.)
     private let demoReplies: [(label: String, text: String)] = [
         ("01 — FLÖRTÖZ", "8 erken. 9'da boğa'nın orada ol, beni biraz beklersin."),
-        ("02 — ESPRİLİ", "boğa'nın altında buluşmak film başlangıcı gibi. 8 olur."),
+        ("02 — ESPRİLİ", "boğa'nın orda buluşmak film başlangıcı gibi. 8 olur."),
         ("03 — DİREKT",  "8 boğa, geliyorum. sonra moda mı, akmar mı?"),
     ]
 
