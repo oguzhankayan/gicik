@@ -101,19 +101,36 @@ Her view'ı yazarken önce `design/<klasör>/screen.png` ve `code.html`'e bak, r
 - **Commit:** `feat(ios): xcode project + dependencies`
 
 ### 0.4 Design System tokens
-Dosyalar (master prompt §4'te kod hazır, kopyala):
-- [ ] `Gicik/DesignSystem/Colors.swift` — `AppColor` enum
-- [ ] `Gicik/DesignSystem/Typography.swift` — `AppFont` enum
-- [ ] `Gicik/DesignSystem/Spacing.swift` — `AppSpacing` enum
-- [ ] `Gicik/DesignSystem/Animations.swift` — `AppAnimation` enum (`.spring(0.4, 0.7)`, ease-out-quart timing)
-- [ ] `Gicik/DesignSystem/Modifiers/HapticFeedback.swift` — `.haptic(.medium)` view modifier
-- [ ] `Gicik/DesignSystem/Modifiers/SoftGlow.swift` — shadow + blur compose
-- [ ] `Color+Hex.swift` — `Color(hex: "FF0080")` extension
-- [ ] `Gicik/DesignSystem/Components/PrimaryButton.swift` — gradient bg, lowercase text, haptic on tap
-- [ ] `Gicik/DesignSystem/Components/HolographicCard.swift` — 1.5px holographic border, glass bg
-- [ ] `Gicik/DesignSystem/Components/LoadingShimmer.swift` — skeleton shimmer
-- [ ] **DesignSystemPreview.swift** — tüm token'lar tek ekranda preview (canlı katalog)
-- **Commit:** `feat(ios): design system tokens + base components`
+
+> **Önbelleklenmiş başlangıç:** `design-source/swiftui/DesignTokens.swift` ve `Primitives.swift` zaten `tokens.css` ve `parts/shared.jsx`'ten çevrilmiş halde repo'da. Phase 0.4'ün ilk işi bunları `gicik-ios/Gicik/DesignSystem/` altına böl + Xcode target'a ekle.
+
+Adımlar:
+- [ ] `design-source/swiftui/DesignTokens.swift` → `Gicik/DesignSystem/` altına böl:
+  - `Colors.swift` (AppColor + Color hex extension)
+  - `Typography.swift` (AppFont)
+  - `Spacing.swift` (AppSpacing)
+  - `Radius.swift` (AppRadius)
+  - `Shadow.swift` (AppShadow + ShadowSpec)
+  - `Animations.swift` (AppAnimation)
+  - `CosmicBackground.swift` (View + modifier)
+- [ ] `design-source/swiftui/Primitives.swift` → `Gicik/DesignSystem/Components/` altına böl:
+  - `Logo.swift`
+  - `PrimaryButton.swift` (3 style: solid / holoBorder / holoFill)
+  - `SecondaryButton.swift`
+  - `Chip.swift`
+  - `ProgressDots.swift`
+  - `TopBar.swift`
+  - `ObservationCard.swift` (asistan sesi — italik, lime stripe)
+  - `ReplyCard.swift` (output sesi — mono label + copy/feedback)
+  - `GlassCard.swift` (modifier)
+- [ ] `Gicik/DesignSystem/Modifiers/HapticFeedback.swift` — `.haptic(.medium)` modifier (Primitives'te `sensoryFeedback` kullanıyoruz, eski iOS fallback için)
+- [ ] `Gicik/DesignSystem/Components/LoadingShimmer.swift` — skeleton shimmer (tokens.css'teki `@keyframes shimmer`)
+- [ ] **Fonts:**
+  - Space Grotesk (Regular, Medium, SemiBold, Bold) — `Resources/Fonts/`
+  - JetBrains Mono (Regular, Medium) — `Resources/Fonts/`
+  - Info.plist `UIAppFonts` array
+- [ ] **DesignSystemCatalogView.swift** — tüm token'lar + primitives tek ekranda preview (Primitives.swift'teki `#Preview` block'unu canlı view'a çevir)
+- **Commit:** `feat(ios): design system tokens + base components (from design-source)`
 
 ### 0.5 Configuration & networking
 - [ ] `Gicik/App/Configuration.swift` — env değişkenleri

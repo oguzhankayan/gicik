@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<title>gıcık — design</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  html, body { margin: 0; background: #08060d; color: #fff; font-family: -apple-system, system-ui, sans-serif; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="parts/shared.jsx"></script>
+<script type="text/babel" src="parts/onboarding.jsx"></script>
+<script type="text/babel" src="parts/quiz.jsx"></script>
+<script type="text/babel" src="parts/onboard2.jsx"></script>
+<script type="text/babel" src="parts/main.jsx"></script>
+<script type="text/babel" src="parts/result.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+
+const App = () => (
+  <DesignCanvas title="gıcık — communication coach" subtitle="Y2K cyberbrutalism × Linear polish · 24 ekran · iOS dark">
+    <DCSection id="onboarding" title="01 — onboarding">
+      <DCArtboard id="splash" label="splash" width={393} height={852}><SplashScreen/></DCArtboard>
+      <DCArtboard id="demo-graph" label="demographic" width={393} height={852}><DemographicScreen/></DCArtboard>
+      <DCArtboard id="cal-intro" label="calibration intro" width={393} height={852}><CalibrationIntro/></DCArtboard>
+      <DCArtboard id="cal-result" label="calibration result" width={393} height={852}><CalibrationResult/></DCArtboard>
+      <DCArtboard id="demo-upload" label="demo / aha moment" width={393} height={852}><DemoUpload/></DCArtboard>
+      <DCArtboard id="notif" label="notification permission" width={393} height={852}><NotificationPermission/></DCArtboard>
+      <DCArtboard id="paywall" label="paywall" width={393} height={852}><Paywall/></DCArtboard>
+    </DCSection>
+
+    <DCSection id="quiz" title="02 — kalibrasyon · 6 quiz variants">
+      <DCArtboard id="qa" label="A · single select" width={393} height={852}><QuizSingleSelect/></DCArtboard>
+      <DCArtboard id="qb" label="B · binary scenario" width={393} height={852}><QuizBinary/></DCArtboard>
+      <DCArtboard id="qc" label="C · likert 1-5" width={393} height={852}><QuizLikert/></DCArtboard>
+      <DCArtboard id="qd" label="D · slider" width={393} height={852}><QuizSlider/></DCArtboard>
+      <DCArtboard id="qe" label="E · stacked binary" width={393} height={852}><QuizImageBinary/></DCArtboard>
+      <DCArtboard id="qf" label="F · free text" width={393} height={852}><QuizFreeText/></DCArtboard>
+    </DCSection>
+
+    <DCSection id="main" title="03 — ana akış">
+      <DCArtboard id="home" label="home" width={393} height={852}><Home/></DCArtboard>
+      <DCArtboard id="pick-empty" label="picker · empty" width={393} height={852}><PickerEmpty/></DCArtboard>
+      <DCArtboard id="pick-prog" label="picker · uploading" width={393} height={852}><PickerProgress/></DCArtboard>
+      <DCArtboard id="pick-done" label="picker · complete" width={393} height={852}><PickerComplete/></DCArtboard>
+      <DCArtboard id="tone" label="tone selector" width={393} height={852}><ToneSelector/></DCArtboard>
+      <DCArtboard id="gen" label="generation streaming" width={393} height={852}><Generation/></DCArtboard>
+      <DCArtboard id="result" label="result · 3 replies" width={393} height={852}><Result/></DCArtboard>
+    </DCSection>
+
+    <DCSection id="settings" title="04 — profil & sistem">
+      <DCArtboard id="profile" label="profile" width={393} height={852}><Profile/></DCArtboard>
+      <DCArtboard id="ai-consent" label="ai consent" width={393} height={852}><AIConsent/></DCArtboard>
+    </DCSection>
+
+    <DCSection id="empty" title="05 — empty & error states">
+      <DCArtboard id="e-history" label="no history" width={393} height={852}><EmptyState kind="history"/></DCArtboard>
+      <DCArtboard id="e-network" label="network error" width={393} height={852}><EmptyState kind="network"/></DCArtboard>
+      <DCArtboard id="e-rate" label="rate limited" width={393} height={852}><EmptyState kind="rate"/></DCArtboard>
+      <DCArtboard id="e-unsupp" label="unsupported image" width={393} height={852}><EmptyState kind="unsupported"/></DCArtboard>
+    </DCSection>
+  </DesignCanvas>
+);
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
