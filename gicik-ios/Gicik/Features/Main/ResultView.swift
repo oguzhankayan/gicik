@@ -23,7 +23,7 @@ struct ResultView: View {
                     VStack(spacing: 12) {
                         ForEach(result.replies) { reply in
                             ReplyCard(
-                                toneAngle: "\(String(format: "%02d", reply.index + 1)) — \(reply.toneAngle)",
+                                toneAngle: "\(String(format: "%02d", reply.index + 1)) — \(reply.toneLabel)",
                                 text: reply.text,
                                 isCopied: copiedIndex == reply.index,
                                 onCopy: { copy(reply) },
@@ -72,7 +72,7 @@ struct ResultView: View {
             Button {
                 // Regenerate
                 if case .result = vm.stage {
-                    vm.stage = .generation(result.mode, result.tone, screenshot: vm.pickedScreenshot ?? Data())
+                    vm.stage = .generation(result.mode, screenshot: vm.pickedScreenshot ?? Data())
                 }
             } label: {
                 Image(systemName: "arrow.clockwise")
@@ -86,7 +86,7 @@ struct ResultView: View {
     }
 
     private var header: some View {
-        Text("\(result.mode.label) › \(result.tone.label)")
+        Text(result.mode.label)
             .font(AppFont.mono(11))
             .tracking(0.04 * 11)
             .foregroundColor(AppColor.text40)
@@ -97,13 +97,8 @@ struct ResultView: View {
 
     private var actionFooter: some View {
         VStack(spacing: 12) {
-            HStack(spacing: 10) {
-                SecondaryButton(title: "farklı ton dene") {
-                    vm.stage = .tone(result.mode, screenshot: vm.pickedScreenshot ?? Data())
-                }
-                PrimaryButton("yeni cevap üret") {
-                    vm.stage = .generation(result.mode, result.tone, screenshot: vm.pickedScreenshot ?? Data())
-                }
+            PrimaryButton("yeni cevap üret") {
+                vm.stage = .generation(result.mode, screenshot: vm.pickedScreenshot ?? Data())
             }
             Button("konuşmayı bitir") {
                 vm.backToHome()

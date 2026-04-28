@@ -205,7 +205,7 @@ struct ScreenshotPickerView: View {
         switch vm.pickerState {
         case .done:
             PrimaryButton("devam") {
-                vm.proceedToToneSelector()
+                vm.proceedToGeneration()
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 32)

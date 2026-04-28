@@ -22,13 +22,13 @@ struct DemoUploadView: View {
         .init(isMine: false, text: "8'de kadıköy boğa uyar mı?"),  // last, unanswered
     ]
 
-    /// Demo'da 6 arketipten 3'ünü gösteriyoruz: en kontrastlı uçlar
-    /// (kuru-zekice / soğukkanlı-stratejik / sıcak-samimi) ki kullanıcı
-    /// kalibrasyonun çıktıyı nasıl etkilediğini hisseden.
+    /// Production'la birebir: tek arketipin (örnekte HAVALI) 3 farklı tonda
+    /// üretilmiş cevapları. Kullanıcı gerçek deneyimde de aynısını görür.
+    /// (kadıköy boğa = boğa heykeli, klasik buluşma noktası — yer değil.)
     private let demoReplies: [(label: String, text: String)] = [
-        ("🥀 GICIK olsa",  "8 erken ama gelirim. nereye otursak, boğa'nın orda mı dikilelim?"),
-        ("✨ HAVALI olsa", "8 ok, yola çıkmadan önce haber veririm. bir yerlerden yer ayarlarsın."),
-        ("🍬 TATLI olsa",  "olur, geliyorum. seni görmek iyi gelecek."),
+        ("01 — FLÖRTÖZ", "8 erken. 9'da boğa'nın orada ol, beni biraz beklersin."),
+        ("02 — ESPRİLİ", "boğa'nın altında buluşmak film başlangıcı gibi. 8 olur."),
+        ("03 — DİREKT",  "8 boğa, geliyorum. sonra moda mı, akmar mı?"),
     ]
 
     var body: some View {
@@ -41,7 +41,7 @@ struct DemoUploadView: View {
                     .tracking(0.04 * 11)
                     .foregroundColor(AppColor.text40)
 
-                Text("son mesaj cevapsız.\ngıcık olsa ne yazardı?")
+                Text("son mesaj cevapsız.\ngıcık 3 farklı tonda yazsa?")
                     .font(AppFont.display(22, weight: .bold))
                     .tracking(-0.02 * 22)
                     .foregroundColor(.white)

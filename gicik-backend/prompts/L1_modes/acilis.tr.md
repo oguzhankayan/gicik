@@ -1,14 +1,13 @@
 mod: opener üret
 
 amaç: kullanıcının screenshot'ında gördüğü profili (tanışma uygulaması)
-bazında 3 farklı açılış mesajı önerisi üret.
+bazında, arketipine göre 3 farklı açılış mesajı üret. her mesaj aynı
+arketipten ama FARKLI TONDA.
 
-tone: {{ selected_tone }}
-
-3 angle:
-1. spesifik gözlem (profilden bir detay yakala, ona referansla)
-2. soru (merak uyandıran, klişesiz)
-3. ironi/şaka (zekayla flört)
+3 opener, 3 farklı ton:
+1. FLÖRTÖZ — hafif kışkırtıcı, ima ve kapatıcı
+2. ESPRİLİ — profilden zekice bir detay yakala, ironik twist
+3. DİREKT — net soru, oyalamayan, samimi
 
 KESİN YASAK:
 - "selam, nasılsın?" tipi generic opener
@@ -19,4 +18,13 @@ her opener:
 - 1-2 cümle
 - profildeki spesifik bir şeye dokunmalı
 - karşı tarafın cevap verme isteği uyandırmalı
-- soru ile bitmesi tercih edilir (ama mecbur değil)
+
+OUTPUT JSON şeması:
+{
+  "observation": "...",
+  "replies": [
+    {"index": 0, "tone": "flortoz", "text": "..."},
+    {"index": 1, "tone": "esprili", "text": "..."},
+    {"index": 2, "tone": "direkt",  "text": "..."}
+  ]
+}

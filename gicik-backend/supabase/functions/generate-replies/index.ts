@@ -20,7 +20,7 @@
 
 import { preflightOk, errorResponse, corsHeaders } from "../_shared/cors.ts";
 import { requireAuth, AuthError } from "../_shared/auth.ts";
-import { loadFullPromptStack } from "../_shared/prompt-loader.ts";
+import { loadPrompt } from "../_shared/prompt-loader.ts";
 import {
   buildSystemBlocks,
   streamAnthropic,
@@ -34,8 +34,14 @@ const FREE_DAILY_LIMIT = 3;
 
 interface RequestBody {
   conversation_id: string;
-  tone: Tone;
+  // Ton kullanıcıdan alınmıyor — backend 3 ton birden seçer ve injektion yapar.
+  // Geriye uyumluluk için opsiyonel: verilirse 3 reply de bu tek tonda üretilir
+  // ('advanced mode' için bekleniyor).
+  tone?: Tone;
 }
+
+/// Default 3-ton kombosu (mode başına ileride özelleştirilebilir).
+const DEFAULT_TONES: Tone[] = ["flortoz", "esprili", "direkt"];
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return preflightOk();
@@ -45,13 +51,15 @@ Deno.serve(async (req: Request) => {
     const { userId, client, serviceClient } = await requireAuth(req);
 
     const body = (await req.json().catch(() => null)) as RequestBody | null;
-    if (!body?.conversation_id || !body?.tone) {
-      return errorResponse("invalid_input", "conversation_id + tone required");
+    if (!body?.conversation_id) {
+      return errorResponse("invalid_input", "conversation_id required");
     }
-    const tone = body.tone;
-    if (!["flortoz", "esprili", "direkt", "sicak", "gizemli"].includes(tone)) {
-      return errorResponse("invalid_input", "invalid tone");
-    }
+
+    // Advanced mode: kullanıcı tek bir ton zorlamak istediyse o tonu kullan.
+    // Default: 3 farklı ton ile çeşitlendir.
+    const tonesToUse: Tone[] = body.tone
+      ? [body.tone, body.tone, body.tone]
+      : DEFAULT_TONES;
 
     // ─── load conversation + profile ───
     const { data: conv, error: convErr } = await client
@@ -93,19 +101,32 @@ Deno.serve(async (req: Request) => {
     }
 
     // ─── prompt stack ───
-    const promptStack = await loadFullPromptStack(client, mode, tone);
-    const L4Filled = fillL4Template(promptStack.L4.content, {
+    // 3 ton'u beraber inject et — model her reply için ayrı ton kullanacak.
+    const [L0, L1, L2, L4Raw, tonePrompts] = await Promise.all([
+      loadPrompt(client, { layer: "L0" }),
+      loadPrompt(client, { layer: "L1", mode }),
+      loadPrompt(client, { layer: "L2" }),
+      loadPrompt(client, { layer: "L4" }),
+      Promise.all(tonesToUse.map(t => loadPrompt(client, { layer: "tone", tone: t }))),
+    ]);
+
+    const tonesBlock = tonesToUse.map((t, i) =>
+      `--- TON ${i + 1} (${t}) ---\n${tonePrompts[i].content}`
+    ).join("\n\n");
+
+    const L4Filled = fillL4Template(L4Raw.content, {
       profile: profile ?? {},
       parseResult,
       mode,
-      tone,
+      tone: tonesToUse[0],   // L4'te en çok ilk tonu referans alır; gerçek 3 ton aşağıda
     });
+
     const systemBlocks = buildSystemBlocks({
-      L0: promptStack.L0.content,
-      L1: promptStack.L1.content,
-      L2: promptStack.L2.content,
+      L0: L0.content,
+      L1: L1.content,
+      L2: L2.content,
       L4: L4Filled,
-      tone: promptStack.tone.content,
+      tone: tonesBlock,
     });
 
     // ─── streaming response ───
@@ -120,7 +141,7 @@ Deno.serve(async (req: Request) => {
         let assembled = "";
         let finalUsage: AnthropicUsage = { input_tokens: 0, output_tokens: 0 };
 
-        const userMessage = buildUserPrompt(parseResult);
+        const userMessage = buildUserPrompt(parseResult, tonesToUse);
 
         try {
           for await (const evt of streamAnthropic({
@@ -150,7 +171,7 @@ Deno.serve(async (req: Request) => {
         // Parse structured output (model returns JSON in assembled string)
         let structured: GenerationResult | null = null;
         try {
-          structured = parseModelJSON(assembled, mode, tone);
+          structured = parseModelJSON(assembled, mode, tonesToUse);
         } catch (e) {
           send({ type: "error", message: `parse output failed: ${e instanceof Error ? e.message : e}` });
           controller.close();
@@ -180,7 +201,7 @@ Deno.serve(async (req: Request) => {
 
         // Emit replies
         for (const r of structured.replies) {
-          send({ type: "reply", index: r.index, tone_angle: r.tone_angle, text: r.text });
+          send({ type: "reply", index: r.index, tone: r.tone, text: r.text });
         }
 
         // Persist
@@ -190,12 +211,13 @@ Deno.serve(async (req: Request) => {
         await serviceClient
           .from("conversations")
           .update({
-            tone,
+            // 'tone' col DB schema'sında tek değer; varyasyonlar reply içinde duruyor
+            tone: tonesToUse[0],
             generation_result: structured,
-            generation_model: Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-4-5",
+            generation_model: Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-4-6",
             generation_cost_usd: cost,
             generation_duration_ms: durationMs,
-            prompt_version_id: promptStack.L1.id, // representative; multi-layer refs in calibration_data later
+            prompt_version_id: L1.id,
           })
           .eq("id", conv.id);
 
@@ -233,7 +255,8 @@ Deno.serve(async (req: Request) => {
 // Helpers
 // ──────────────────────────────────────────────────────────
 
-function buildUserPrompt(parse: ParseResult): string {
+function buildUserPrompt(parse: ParseResult, tones: Tone[]): string {
+  const tonesList = tones.map((t, i) => `  ${i}: ${t}`).join("\n");
   const lines = [
     "konuşma çözümü:",
     JSON.stringify({
@@ -245,14 +268,18 @@ function buildUserPrompt(parse: ParseResult): string {
       context_summary: parse.context_summary_tr,
     }, null, 2),
     "",
-    "JSON üret. observation alanı asistan sesi (lowercase, italik için işaretleme yok). replies 3 tane, farklı angle.",
+    "kullanılacak tonlar (her reply için sırayla):",
+    tonesList,
+    "",
+    "3 cevap üret, hepsi aynı arketipten ama yukarıdaki sıraya göre 3 farklı tonda.",
+    "observation alanı asistan sesi (lowercase, kısa, gözlem).",
     "schema:",
     `{
   "observation": "string (max 280 char, asistan sesi)",
   "replies": [
-    {"index": 0, "tone_angle": "string", "text": "string (max 280 char, kullanıcının atacağı mesaj)"},
-    {"index": 1, "tone_angle": "string", "text": "string"},
-    {"index": 2, "tone_angle": "string", "text": "string"}
+    {"index": 0, "tone": "${tones[0]}", "text": "string (max 280 char)"},
+    {"index": 1, "tone": "${tones[1]}", "text": "string"},
+    {"index": 2, "tone": "${tones[2]}", "text": "string"}
   ]
 }`,
     "Sadece JSON dön, başka metin yok.",
@@ -260,21 +287,20 @@ function buildUserPrompt(parse: ParseResult): string {
   return lines.join("\n");
 }
 
-function parseModelJSON(raw: string, mode: Mode, tone: Tone): GenerationResult {
-  // Strip code fences if model wrapped output
+function parseModelJSON(raw: string, _mode: Mode, fallbackTones: Tone[]): GenerationResult {
   let s = raw.trim();
   if (s.startsWith("```")) {
     s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
   }
   const j = JSON.parse(s);
-  if (typeof j.observation !== "string" || !Array.isArray(j.replies) || j.replies.length !== 3) {
+  if (typeof j.observation !== "string" || !Array.isArray(j.replies)) {
     throw new Error("unexpected schema");
   }
   return {
     observation: j.observation,
-    replies: j.replies.map((r: { index: number; tone_angle: string; text: string }, i: number) => ({
+    replies: j.replies.map((r: { index: number; tone?: string; text: string }, i: number) => ({
       index: typeof r.index === "number" ? r.index : i,
-      tone_angle: String(r.tone_angle ?? ""),
+      tone: (r.tone as Tone | "silence") ?? fallbackTones[i] ?? fallbackTones[0],
       text: String(r.text ?? ""),
     })),
     duration_ms: 0,

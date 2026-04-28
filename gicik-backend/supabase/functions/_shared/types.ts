@@ -41,7 +41,7 @@ export interface ParseResult {
 // ──────────────────────────────────────────────────────────
 export interface ReplyOption {
   index: number;
-  tone_angle: string;  // "doğrudan engage" | "yön çevirme" | "ileri taşıma"
+  tone: Tone | "silence";   // her reply farklı tonda. 'silence' sadece hayalet modu için.
   text: string;
 }
 

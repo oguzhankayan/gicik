@@ -14,10 +14,8 @@ struct HomeView: View {
                 homeContent
             case .picker(let mode):
                 ScreenshotPickerView(vm: vm, mode: mode)
-            case .tone(let mode, _):
-                ToneSelectorView(vm: vm, mode: mode)
-            case .generation(let mode, let tone, _):
-                GenerationView(vm: vm, mode: mode, tone: tone)
+            case .generation(let mode, _):
+                GenerationView(vm: vm, mode: mode)
             case .result(let result):
                 ResultView(vm: vm, result: result)
             }
@@ -30,8 +28,7 @@ struct HomeView: View {
         switch vm.stage {
         case .home: "home"
         case .picker(let m): "picker-\(m.rawValue)"
-        case .tone(let m, _): "tone-\(m.rawValue)"
-        case .generation(let m, let t, _): "gen-\(m.rawValue)-\(t.rawValue)"
+        case .generation(let m, _): "gen-\(m.rawValue)"
         case .result: "result"
         }
     }

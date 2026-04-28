@@ -181,16 +181,13 @@ final class APIClient {
 
 enum SSEEvent: Decodable, Sendable {
     case observation(text: String)
-    case reply(index: Int, toneAngle: String, text: String)
+    case reply(index: Int, tone: String, text: String)
     case done(durationMs: Int, conversationId: String)
     case error(message: String)
     case unknown
 
     private enum CodingKeys: String, CodingKey {
-        case type
-        case text
-        case index
-        case toneAngle = "tone_angle"
+        case type, text, index, tone
         case durationMs = "duration_ms"
         case conversationId = "conversation_id"
         case message
@@ -205,9 +202,9 @@ enum SSEEvent: Decodable, Sendable {
             self = .observation(text: text)
         case "reply":
             let index = (try? c.decode(Int.self, forKey: .index)) ?? 0
-            let angle = (try? c.decode(String.self, forKey: .toneAngle)) ?? ""
+            let tone = (try? c.decode(String.self, forKey: .tone)) ?? ""
             let text = (try? c.decode(String.self, forKey: .text)) ?? ""
-            self = .reply(index: index, toneAngle: angle, text: text)
+            self = .reply(index: index, tone: tone, text: text)
         case "done":
             let ms = (try? c.decode(Int.self, forKey: .durationMs)) ?? 0
             let id = (try? c.decode(String.self, forKey: .conversationId)) ?? ""

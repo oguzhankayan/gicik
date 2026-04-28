@@ -5,7 +5,6 @@ import SwiftUI
 struct GenerationView: View {
     @Bindable var vm: HomeViewModel
     let mode: Mode
-    let tone: Tone
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,7 +21,7 @@ struct GenerationView: View {
                 ForEach(0..<3, id: \.self) { idx in
                     if let r = vm.streamingReplies[idx] {
                         ReplyCard(
-                            toneAngle: "\(String(format: "%02d", idx + 1)) — \(r.toneAngle)",
+                            toneAngle: "\(String(format: "%02d", idx + 1)) — \(r.toneLabel)",
                             text: r.text,
                             onCopy: {}
                         )
@@ -58,7 +57,7 @@ struct GenerationView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(mode.label) MODU / \(tone.label) TON")
+            Text("\(mode.label) MODU")
                 .font(AppFont.mono(11))
                 .tracking(0.04 * 11)
                 .foregroundColor(AppColor.text60)

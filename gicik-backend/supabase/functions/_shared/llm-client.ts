@@ -16,7 +16,7 @@ import type { ParseResult } from "./types.ts";
 // ──────────────────────────────────────────────────────────
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
-const ANTHROPIC_MODEL = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-4-5";
+const ANTHROPIC_MODEL = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-4-6";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";

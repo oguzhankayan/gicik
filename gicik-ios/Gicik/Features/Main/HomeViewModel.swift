@@ -7,8 +7,7 @@ import PhotosUI
 enum FlowStage: Equatable {
     case home
     case picker(Mode)
-    case tone(Mode, screenshot: Data)
-    case generation(Mode, Tone, screenshot: Data)
+    case generation(Mode, screenshot: Data)
     case result(GenerationResult)
 }
 
@@ -51,16 +50,12 @@ final class HomeViewModel {
         stage = .home
     }
 
-    func proceedToToneSelector() {
+    /// Picker'dan generation'a doğrudan geç — ton seçimi yok.
+    func proceedToGeneration() {
         guard case .picker(let mode) = stage,
               let data = pickedScreenshot else { return }
-        stage = .tone(mode, screenshot: data)
-    }
-
-    func selectTone(_ tone: Tone) {
-        guard case .tone(let mode, let data) = stage else { return }
-        stage = .generation(mode, tone, screenshot: data)
-        Task { await runRealGeneration(mode: mode, tone: tone, imageData: data) }
+        stage = .generation(mode, screenshot: data)
+        Task { await runRealGeneration(mode: mode, imageData: data) }
     }
 
     /// Streaming partial result — GenerationView reads this for live UI.
@@ -99,7 +94,7 @@ final class HomeViewModel {
 
     // MARK: - Real generation (Phase 2.3 + 2.4 wired)
 
-    private func runRealGeneration(mode: Mode, tone: Tone, imageData: Data) async {
+    private func runRealGeneration(mode: Mode, imageData: Data) async {
         streamingObservation = ""
         streamingReplies = [:]
         conversationId = nil
@@ -128,19 +123,17 @@ final class HomeViewModel {
                 observation: "bağlantı sorunu. tekrar dene.",
                 replies: [],
                 conversationId: nil,
-                mode: mode,
-                tone: tone
+                mode: mode
             ))
             return
         }
 
-        // Stage 2: generate-replies (SSE)
+        // Stage 2: generate-replies (SSE) — backend 3 ton seçer
         struct GenBody: Encodable {
             let conversation_id: String
-            let tone: String
         }
 
-        let body = GenBody(conversation_id: parseResp.conversation_id, tone: tone.rawValue)
+        let body = GenBody(conversation_id: parseResp.conversation_id)
         var finalReplies: [ReplyOption] = []
         var observation = ""
 
@@ -150,8 +143,8 @@ final class HomeViewModel {
                 case .observation(let text):
                     observation = text
                     streamingObservation = text
-                case .reply(let index, let toneAngle, let text):
-                    let r = ReplyOption(index: index, toneAngle: toneAngle, text: text)
+                case .reply(let index, let tone, let text):
+                    let r = ReplyOption(index: index, tone: tone, text: text)
                     streamingReplies[index] = r
                 case .done:
                     break
@@ -172,8 +165,7 @@ final class HomeViewModel {
                 observation: observation.isEmpty ? "üretim başarısız." : observation,
                 replies: [],
                 conversationId: conversationId,
-                mode: mode,
-                tone: tone
+                mode: mode
             ))
             return
         }
@@ -182,8 +174,7 @@ final class HomeViewModel {
             observation: observation,
             replies: finalReplies,
             conversationId: conversationId,
-            mode: mode,
-            tone: tone
+            mode: mode
         ))
 
         // Append to history
@@ -202,7 +193,8 @@ final class HomeViewModel {
         let context_summary_tr: String?
     }
 
-    // ─── legacy mock helpers retained for previews / offline fallback ───
+    // ─── mock helpers retired (backend gerçek üretim yapıyor) ───
+    /*
 
     private func mockObservation(for mode: Mode) -> String {
         switch mode {
@@ -241,17 +233,10 @@ final class HomeViewModel {
         }
     }
 
+    */
+
     private func loadMockHistory() {
-        history = [
-            .init(id: "1", mode: .cevap, platform: "tinder",
-                  createdAt: Date().addingTimeInterval(-720),
-                  snippet: "\"huysuzluğun ortak özelliği...\""),
-            .init(id: "2", mode: .acilis, platform: "bumble",
-                  createdAt: Date().addingTimeInterval(-7200),
-                  snippet: "\"profilin bana fazla iyi...\""),
-            .init(id: "3", mode: .hayalet, platform: "instagram",
-                  createdAt: Date().addingTimeInterval(-90000),
-                  snippet: "\"3 gün cevap yok, sonra...\""),
-        ]
+        // Boş başla — gerçek conversations DB'den yüklenecek (Phase 3'te).
+        history = []
     }
 }
