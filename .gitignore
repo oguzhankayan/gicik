@@ -40,6 +40,8 @@ gicik-backend/.env
 gicik-backend/.env.local
 gicik-backend/.branches/
 gicik-backend/.temp/
+gicik-backend/supabase/.temp/
+gicik-backend/supabase/.branches/
 
 # Local agent caches
 .agents/cache/
