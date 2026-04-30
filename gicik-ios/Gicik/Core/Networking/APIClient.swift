@@ -11,6 +11,17 @@ final class APIClient {
 
     private var supabase: SupabaseClient { SupabaseService.shared.client }
 
+    /// Ephemeral session — disk cache yok, çerez yok. Edge function
+    /// response'ları yerelde tutulmaz; "screenshot 24h, conversation 30g"
+    /// retention sözünü cihaz tarafında da onurlandırır.
+    /// `URLSession.shared` default cache (Caches/Cache.db) ile çelişiyordu.
+    private static let session: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 60
+        return URLSession(configuration: config)
+    }()
+
     // ──────────────────────────────────────────────────────────
     // JSON request → JSON response
     // ──────────────────────────────────────────────────────────
@@ -33,7 +44,7 @@ final class APIClient {
             req.httpBody = try JSONEncoder().encode(AnyEncodable(body))
         }
 
-        let (data, response) = try await URLSession.shared.data(for: req)
+        let (data, response) = try await APIClient.session.data(for: req)
         guard let http = response as? HTTPURLResponse else {
             throw APIError.unknown("invalid response")
         }
@@ -51,7 +62,7 @@ final class APIClient {
 
     func invokeMultipart<Response: Decodable>(
         _ endpoint: Endpoint,
-        imageData: Data,
+        imageData: Data?,
         imageMimeType: String = "image/jpeg",
         formFields: [String: String] = [:],
         as: Response.Type = Response.self,
@@ -76,16 +87,20 @@ final class APIClient {
             body.append(crlf.data(using: .utf8)!)
         }
 
-        body.append("--\(boundary)\(crlf)".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"screenshot\"; filename=\"screenshot.jpg\"\(crlf)".data(using: .utf8)!)
-        body.append("Content-Type: \(imageMimeType)\(crlf)\(crlf)".data(using: .utf8)!)
-        body.append(imageData)
-        body.append(crlf.data(using: .utf8)!)
+        // Image dosyası opsiyonel — manuel giriş akışında nil gelir, sadece
+        // form fields gönderilir (manual_input JSON içinde).
+        if let imageData {
+            body.append("--\(boundary)\(crlf)".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"screenshot\"; filename=\"screenshot.jpg\"\(crlf)".data(using: .utf8)!)
+            body.append("Content-Type: \(imageMimeType)\(crlf)\(crlf)".data(using: .utf8)!)
+            body.append(imageData)
+            body.append(crlf.data(using: .utf8)!)
+        }
         body.append("--\(boundary)--\(crlf)".data(using: .utf8)!)
 
         req.httpBody = body
 
-        let (respData, response) = try await URLSession.shared.data(for: req)
+        let (respData, response) = try await APIClient.session.data(for: req)
         guard let http = response as? HTTPURLResponse else {
             throw APIError.unknown("invalid response")
         }
@@ -118,7 +133,7 @@ final class APIClient {
                     req.setValue(Configuration.supabaseAnonKey, forHTTPHeaderField: "apikey")
                     req.httpBody = try JSONEncoder().encode(AnyEncodable(body))
 
-                    let (bytes, response) = try await URLSession.shared.bytes(for: req)
+                    let (bytes, response) = try await APIClient.session.bytes(for: req)
                     guard let http = response as? HTTPURLResponse else {
                         continuation.finish(throwing: APIError.unknown("invalid response"))
                         return
@@ -182,7 +197,9 @@ final class APIClient {
 enum SSEEvent: Decodable, Sendable {
     case observation(text: String)
     case reply(index: Int, tone: String, text: String)
-    case done(durationMs: Int, conversationId: String)
+    /// `remaining_today`: free user için kalan üretim (server-truth).
+    /// Premium ise nil (sınırsız). Client quota chip bunu kullanır.
+    case done(durationMs: Int, conversationId: String, remainingToday: Int?, isPremium: Bool)
     case error(message: String)
     case unknown
 
@@ -190,6 +207,8 @@ enum SSEEvent: Decodable, Sendable {
         case type, text, index, tone
         case durationMs = "duration_ms"
         case conversationId = "conversation_id"
+        case remainingToday = "remaining_today"
+        case isPremium = "is_premium"
         case message
     }
 
@@ -208,7 +227,9 @@ enum SSEEvent: Decodable, Sendable {
         case "done":
             let ms = (try? c.decode(Int.self, forKey: .durationMs)) ?? 0
             let id = (try? c.decode(String.self, forKey: .conversationId)) ?? ""
-            self = .done(durationMs: ms, conversationId: id)
+            let remaining = try? c.decodeIfPresent(Int.self, forKey: .remainingToday)
+            let prem = (try? c.decodeIfPresent(Bool.self, forKey: .isPremium)) ?? false
+            self = .done(durationMs: ms, conversationId: id, remainingToday: remaining, isPremium: prem)
         case "error":
             let msg = (try? c.decode(String.self, forKey: .message)) ?? ""
             self = .error(message: msg)

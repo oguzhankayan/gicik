@@ -6,13 +6,20 @@ import SwiftUI
 /// 3. İkisi de tamam → MainShellView
 struct RootView: View {
     @State private var auth = AuthService.shared
-    @AppStorage("gicik.onboarding.completed") private var onboardingCompleted: Bool = false
+    // String literal yerine UDKey case'i — drift riski sıfır, tek doğru kaynak.
+    @AppStorage(UDKey.onboardingCompleted.rawValue) private var onboardingCompleted: Bool = false
 
     var body: some View {
         ZStack {
             CosmicBackground()
 
-            if !auth.isSignedIn {
+            // Cold-launch: restoreSession bitene kadar minimal brand
+            // bekleme ekranı. Aksi halde 1 frame SignInView flash ediyor,
+            // sonra Home'a atlıyordu. SplashView onboarding-spesifik
+            // (cinematic + onContinue) olduğu için reuse etmiyoruz.
+            if auth.isRestoring {
+                AuthRestoreSplash()
+            } else if !auth.isSignedIn {
                 SignInView()
             } else if !onboardingCompleted {
                 OnboardingFlowView {
@@ -23,6 +30,7 @@ struct RootView: View {
             }
         }
         .animation(AppAnimation.standard, value: auth.isSignedIn)
+        .animation(AppAnimation.standard, value: auth.isRestoring)
         .animation(AppAnimation.standard, value: onboardingCompleted)
         // Y2K / kompakt UI tasarımı çok büyük accessibility size'larda dağılır.
         // Cap büyük accessibility level'lere (XL3'e kadar). Phase 5 polish'te
@@ -35,5 +43,18 @@ struct RootView: View {
 struct MainShellView: View {
     var body: some View {
         HomeView()
+    }
+}
+
+/// Auth restore sırasında gösterilen statik brand splash.
+/// Cinematic SplashView'dan farklı: onContinue beklemez, sadece marka.
+private struct AuthRestoreSplash: View {
+    var body: some View {
+        VStack {
+            Spacer()
+            Logo(size: 36)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

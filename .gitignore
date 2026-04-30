@@ -45,3 +45,6 @@ gicik-backend/supabase/.branches/
 
 # Local agent caches
 .agents/cache/
+
+# Scratch — audit reports, handoff drafts
+scratch/

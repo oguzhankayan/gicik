@@ -77,7 +77,7 @@ struct DesignSystemCatalogView: View {
     @ViewBuilder
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title.uppercased())
+            Text(title.trUpper)
                 .font(AppFont.mono(11))
                 .tracking(0.08 * 11)
                 .foregroundColor(AppColor.lime)

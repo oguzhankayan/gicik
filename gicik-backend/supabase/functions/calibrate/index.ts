@@ -25,6 +25,17 @@ Deno.serve(async (req: Request) => {
     // Deterministic derivation — same answers, same archetype.
     const result: ArchetypeResult = deriveArchetype(answers);
 
+    // "bize biraz kendinden bahset" cevabı — eskiden writing_style_sample.
+    // free_text answer'dan çekilip dedicated voice_sample kolonuna yazılır.
+    // LLM prompt'una L4'te <user_voice> block olarak inject edilir.
+    const voiceAnswer = answers.find(
+      (a) => a.question_id === "writing_style_sample" || a.question_id === "voice_sample"
+    );
+    const voiceSample =
+      typeof voiceAnswer?.free_text === "string"
+        ? voiceAnswer.free_text.trim().slice(0, 500) || null
+        : null;
+
     const { error } = await client
       .from("profiles")
       .update({
@@ -32,6 +43,7 @@ Deno.serve(async (req: Request) => {
         archetype_secondary: result.archetype_secondary,
         calibration_data: result.full_profile,
         calibration_completed_at: new Date().toISOString(),
+        voice_sample: voiceSample,
       })
       .eq("id", userId);
 

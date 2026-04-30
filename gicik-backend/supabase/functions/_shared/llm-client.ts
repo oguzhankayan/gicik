@@ -294,16 +294,23 @@ export function hasToxicPositivity(text: string): boolean {
 // ──────────────────────────────────────────────────────────
 
 /// L0 + L2 + L4 (rarely change) → single cached block.
-/// L1 (mode-specific) + tone → uncached block (changes per request).
+/// L1 (mode-specific) + archetype + tone → uncached block (changes per request).
+///
+/// Archetype prompt buraya inject ediliyor (2026-04-30); öncesinde tarz sadece
+/// L4 runtime template'inde bir satır olarak vardı, LLM çıkışında tone'un
+/// altında ezilirdi. Şimdi tone gibi kendi fragmentıyla geliyor.
 export function buildSystemBlocks(args: {
   L0: string;
   L1: string;
   L2: string;
   L4: string;
   tone: string;
+  archetype?: string;
 }): AnthropicSystemBlock[] {
-  // Combine the stable layers into one cache-eligible block.
   const stableContent = [args.L0, args.L2, args.L4].join("\n\n---\n\n");
+  const archetypeBlock = args.archetype
+    ? `\n--- archetype prompt (kullanıcı kim, NASIL yazar) ---\n${args.archetype}`
+    : "";
   return [
     {
       type: "text",
@@ -312,7 +319,7 @@ export function buildSystemBlocks(args: {
     },
     {
       type: "text",
-      text: `\n--- mode prompt ---\n${args.L1}\n\n--- tone prompt ---\n${args.tone}`,
+      text: `\n--- mode prompt ---\n${args.L1}${archetypeBlock}\n\n--- tone prompt (her reply için ayrı) ---\n${args.tone}`,
     },
   ];
 }

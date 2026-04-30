@@ -1,10 +1,12 @@
 // Shared types — Edge Functions across gıcık backend
 
-// Bio / Hayalet / Davet MVP'den çıkarıldı — gerek olursa geri eklenir.
-export type Mode = "cevap" | "acilis";
+// Tonla = kullanıcı taslağını seçilen tona çevirir (ss yok, text input).
+// Bio Phase 7+'a ertelendi.
+export type Mode = "cevap" | "acilis" | "tonla" | "davet";
 export type Tone = "flortoz" | "esprili" | "direkt" | "sicak" | "gizemli";
 export type Platform =
   | "tinder" | "bumble" | "hinge" | "instagram"
+  | "twitter" | "linkedin"
   | "imessage" | "whatsapp" | "unknown";
 
 export type Gender = "male" | "female" | "unspecified";
@@ -18,7 +20,25 @@ export type ArchetypePrimary =
 // ──────────────────────────────────────────────────────────
 // Stage 1 — Parse result
 // ──────────────────────────────────────────────────────────
+export type ScreenshotType = "chat" | "profile";
+
+export interface ProfileExtract {
+  name?: string | null;
+  handle?: string | null;        // @username (insta/twitter/etc)
+  age?: number | null;
+  bio?: string | null;
+  prompts?: Array<{ question: string; answer: string }>;
+  interests?: string[];
+  job?: string | null;
+  school?: string | null;
+  location?: string | null;
+  photo_count?: number;
+  photo_descriptions?: string[];
+  posts?: string[];              // post/tweet/caption alıntıları
+}
+
 export interface ParseResult {
+  screenshot_type?: ScreenshotType;
   participants: Array<{ role: "user" | "other"; name?: string | null }>;
   messages: Array<{
     sender: "user" | "other";
@@ -26,7 +46,8 @@ export interface ParseResult {
     order: number;
     approximate_time?: string | null;
   }>;
-  last_message_from: "user" | "other";
+  last_message_from: "user" | "other" | null;
+  profile?: ProfileExtract;
   platform_detected: Platform;
   tone_observed:
     | "warm" | "neutral" | "dry" | "cold" | "hostile"

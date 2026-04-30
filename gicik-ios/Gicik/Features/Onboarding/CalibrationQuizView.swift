@@ -8,6 +8,7 @@ struct CalibrationQuizView: View {
     @State private var likertValue: Int = 3
     @State private var sliderValue: Double = 0.5
     @State private var freeText: String = ""
+    @FocusState private var freeTextFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,6 +28,12 @@ struct CalibrationQuizView: View {
         .animation(AppAnimation.standard, value: vm.quizIndex)
         .onChange(of: vm.quizIndex) { _, _ in resetCellState() }
         .onAppear { resetCellState() }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("bitti") { freeTextFocused = false }
+            }
+        }
     }
 
     @ViewBuilder
@@ -160,8 +167,10 @@ struct CalibrationQuizView: View {
                         Text(opt.text)
                             .font(AppFont.body(18, weight: .medium))
                             .foregroundColor(.white)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .fixedSize(horizontal: false, vertical: true)
-                        Spacer()
+                        Spacer(minLength: 0)
                         if isSelected {
                             Circle()
                                 .fill(AppColor.lime)
@@ -306,7 +315,7 @@ struct CalibrationQuizView: View {
         VStack(alignment: .trailing, spacing: 8) {
             ZStack(alignment: .topLeading) {
                 if freeText.isEmpty {
-                    Text("son flört ettiğin uzun mesajdan bir parça…")
+                    Text("ne yapıyorsun, neden buradasın, ne tarz mesajlar atıyorsun. ne hissediyorsan yaz.")
                         .font(AppFont.body(16))
                         .italic()
                         .foregroundColor(AppColor.text30)
@@ -314,6 +323,7 @@ struct CalibrationQuizView: View {
                         .padding(.top, 16)
                 }
                 TextEditor(text: $freeText)
+                    .focused($freeTextFocused)
                     .font(AppFont.body(16))
                     .foregroundColor(.white)
                     .scrollContentBackground(.hidden)

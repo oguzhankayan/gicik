@@ -3,14 +3,15 @@
 // Tablo: prompt_versions WHERE is_active = TRUE.
 
 import { SupabaseClient } from "jsr:@supabase/supabase-js@2";
-import type { Mode, Tone } from "./types.ts";
+import type { Mode, Tone, ArchetypePrimary } from "./types.ts";
 
-export type Layer = "L0" | "L1" | "L2" | "L3" | "L4" | "tone" | "stage1";
+export type Layer = "L0" | "L1" | "L2" | "L3" | "L4" | "tone" | "archetype" | "stage1";
 
 interface CacheKey {
   layer: Layer;
   mode?: Mode;
   tone?: Tone;
+  archetype?: ArchetypePrimary;
 }
 
 interface CachedPrompt {
@@ -23,7 +24,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000;  // 5dk
 const cache = new Map<string, CachedPrompt>();
 
 function keyFor(k: CacheKey): string {
-  return `${k.layer}:${k.mode ?? ""}:${k.tone ?? ""}`;
+  return `${k.layer}:${k.mode ?? ""}:${k.tone ?? ""}:${k.archetype ?? ""}`;
 }
 
 /// Active prompt version'ı çek, cache'le.
@@ -51,6 +52,9 @@ export async function loadPrompt(
   }
   if (k.tone !== undefined) {
     query = query.eq("tone", k.tone);
+  }
+  if (k.archetype !== undefined) {
+    query = query.eq("archetype", k.archetype);
   }
 
   const { data, error } = await query.maybeSingle();

@@ -17,7 +17,7 @@ struct ReplyOption: Identifiable, Codable, Equatable, Sendable {
     var toneLabel: String {
         if let t = toneEnum { return t.label }
         if tone == "silence" { return "SESSİZLİK" }
-        return tone.uppercased()
+        return tone.trUpper
     }
 }
 

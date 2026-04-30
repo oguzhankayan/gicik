@@ -31,7 +31,7 @@ struct Chip: View {
                 if let emoji {
                     Text(emoji).font(.system(size: 14))
                 }
-                Text(label.lowercased())
+                Text(label.trLower)
             }
             .font(AppFont.body(size == .large ? 15 : 14))
             .foregroundColor(isSelected ? .white : AppColor.text60)

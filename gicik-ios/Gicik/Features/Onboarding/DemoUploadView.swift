@@ -33,7 +33,7 @@ struct DemoUploadView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(active: 5, total: 8, showBack: false)
+            TopBar(active: 5, total: 12, showBack: false)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("DEMO / DENEME")
@@ -60,6 +60,7 @@ struct DemoUploadView: View {
             inlineHint("davet karşıdan. uzun cevap istemiyor — gel ya da kontra teklif et.")
                 .padding(.horizontal, 24)
                 .padding(.top, 12)
+                .padding(.bottom, 18)
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 10) {
@@ -68,7 +69,10 @@ struct DemoUploadView: View {
                             ReplyCard(
                                 toneAngle: item.label,
                                 text: item.text,
-                                onCopy: {}
+                                onCopy: {
+                                    UIPasteboard.general.string = item.text
+                                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                                }
                             )
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
                         } else {

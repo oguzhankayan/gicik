@@ -7,7 +7,7 @@ struct DemographicView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            TopBar(active: 0, total: 8, onBack: { vm.goBack() })
+            TopBar(active: 4, total: 12, onBack: { vm.goBack() })
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("01 / KISA TANIŞMA")

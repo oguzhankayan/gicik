@@ -8,7 +8,7 @@ struct CalibrationIntroView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(active: 1, total: 8)
+            TopBar(active: 1, total: 12)
             Spacer()
             orbital
             Text("gıcık'ı kalibre et")
@@ -47,36 +47,11 @@ struct CalibrationIntroView: View {
     }
 
     private var orbital: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [AppColor.pink.opacity(0.35), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 140
-                    )
-                )
-                .frame(width: 280, height: 280)
-                .blur(radius: 30)
-
-            ForEach(0..<4) { i in
-                let size = [260, 200, 140, 90][i]
-                Circle()
-                    .strokeBorder(AppColor.holographic, lineWidth: 1)
-                    .frame(width: CGFloat(size), height: CGFloat(size))
-                    .opacity(0.7 - Double(i) * 0.1)
-                    .rotationEffect(.degrees(i % 2 == 0 ? rotation : -rotation))
-            }
-
-            // Center pulsing dot
-            Circle()
-                .fill(Color.white)
-                .frame(width: 18, height: 18)
-                .shadow(color: AppColor.pink, radius: 20)
-                .shadow(color: AppColor.purple, radius: 40)
-        }
-        .frame(width: 280, height: 280)
+        Image("calibration-orbital")
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 280, height: 280)
+            .rotationEffect(.degrees(rotation * 0.05)) // hafif drift
     }
 
     private func statItem(_ label: String) -> some View {

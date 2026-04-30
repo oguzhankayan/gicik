@@ -17,13 +17,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>MIXPANEL_TOKEN</key>
 	<string>$(MIXPANEL_TOKEN)</string>
-	<key>NSCameraUsageDescription</key>
-	<string>şu an kamera kullanmıyoruz; ileride.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>mesaj ekran görüntülerini analiz etmek için fotoğraflara erişim.</string>
 	<key>POSTHOG_API_KEY</key>
@@ -46,10 +46,6 @@
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>armv7</string>
-	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

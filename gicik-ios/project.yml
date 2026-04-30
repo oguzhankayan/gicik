@@ -46,11 +46,21 @@ targets:
       path: Gicik/Info.plist
       properties:
         CFBundleDisplayName: Gıcık
+        # Version'ı build settings'ten al (project.yml MARKETING_VERSION).
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
-        UIRequiredDeviceCapabilities: [armv7]
+        # iOS 17+ arm64-only; armv7 Apple build sistemi tarafından
+        # "incompatible" sayar. Kaldırıldı (S1).
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # TestFlight external testing için zorunlu — encryption export
+        # compliance declaration (S2). Sadece HTTPS standard cryption
+        # kullanıyoruz; non-exempt yok.
+        ITSAppUsesNonExemptEncryption: false
         NSPhotoLibraryUsageDescription: "mesaj ekran görüntülerini analiz etmek için fotoğraflara erişim."
-        NSCameraUsageDescription: "şu an kamera kullanmıyoruz; ileride."
+        # NSCameraUsageDescription kaldırıldı (S7) — şu an kamera
+        # kullanmıyoruz, "kullanmadığını söyleyen" purpose string'leri
+        # Apple reddediyor. İleride gerekirse o zaman ekleyeceğiz.
         UIAppFonts:
           - SpaceGrotesk-VariableFont_wght.ttf
           - JetBrainsMono-Regular.ttf
@@ -67,10 +77,19 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: to.tikla.gicik
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: "0.1.0"
+        # 0.1.0 → 1.0.0 (App Store sürüm semantiği). Info.plist'te
+        # $(MARKETING_VERSION) placeholder ile bu değer substitute olur.
+        MARKETING_VERSION: "1.0.0"
       configs:
         Debug:
           OTHER_SWIFT_FLAGS: $(inherited) -DDEBUG
+          # Debug build'de development push environment.
+          CODE_SIGN_ENTITLEMENTS: Gicik/Gicik.entitlements
+        Release:
+          # Release/TestFlight/App Store build'de production push.
+          # `aps-environment = development` Production push'u sessizce
+          # kırardı; her config'in kendi entitlements dosyası olmalı.
+          CODE_SIGN_ENTITLEMENTS: Gicik/Gicik.Release.entitlements
     entitlements:
       path: Gicik/Gicik.entitlements
       properties:
@@ -100,24 +119,27 @@ targets:
       - target: Gicik
 
 packages:
+  # Apple Privacy Manifest (PrivacyInfo.xcprivacy) ekleyen minimum sürümlere
+  # pinleme. Eski sürümler manifest taşımıyor; submission'da Apple eksik
+  # 3rd-party manifest uyarısı veriyor.
   Supabase:
     url: https://github.com/supabase/supabase-swift
-    from: 2.0.0
+    from: 2.21.0
   RevenueCat:
     url: https://github.com/RevenueCat/purchases-ios
-    from: 5.0.0
+    from: 5.20.0
   PostHog:
     url: https://github.com/PostHog/posthog-ios
-    from: 3.0.0
+    from: 3.16.0
   Sentry:
     url: https://github.com/getsentry/sentry-cocoa
-    from: 8.0.0
+    from: 8.36.0
   Mixpanel:
     url: https://github.com/mixpanel/mixpanel-swift
-    from: 4.0.0
+    from: 4.3.0
   Lottie:
     url: https://github.com/airbnb/lottie-ios
-    from: 4.0.0
+    from: 4.5.0
 
 schemes:
   Gicik:

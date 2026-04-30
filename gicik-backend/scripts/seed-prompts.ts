@@ -22,9 +22,10 @@ const client = createClient(SUPABASE_URL, SERVICE_KEY, {
 });
 
 interface Seed {
-  layer: "L0" | "L1" | "L2" | "L3" | "L4" | "tone" | "stage1";
+  layer: "L0" | "L1" | "L2" | "L3" | "L4" | "tone" | "archetype" | "stage1";
   mode?: string;
   tone?: string;
+  archetype?: string;
   name: string;
   path: string;
 }
@@ -37,15 +38,27 @@ const seeds: Seed[] = [
   { layer: "L3", name: "L3 output schemas", path: "L3_output_schemas.json" },
   { layer: "L4", name: "L4 runtime template", path: "L4_runtime_template.tr.md" },
   { layer: "stage1", name: "stage1 vision parser", path: "stage1_parser.md" },
-  // L1 modes (MVP: cevap + acilis; bio/hayalet/davet kaldırıldı)
+  // L1 modes (cevap + acilis + tonla + davet)
+  // hayalet çıkarıldı (DB'de inactive bırakıldı, mode listesi backward-compat).
+  // bio Phase 7+'a ertelendi.
   { layer: "L1", mode: "cevap", name: "L1 mode cevap", path: "L1_modes/cevap.tr.md" },
   { layer: "L1", mode: "acilis", name: "L1 mode acilis", path: "L1_modes/acilis.tr.md" },
+  { layer: "L1", mode: "tonla", name: "L1 mode tonla", path: "L1_modes/tonla.tr.md" },
+  { layer: "L1", mode: "davet", name: "L1 mode davet", path: "L1_modes/davet.tr.md" },
   // tones
   { layer: "tone", tone: "flortoz", name: "tone flortoz", path: "tones/flortoz.tr.md" },
   { layer: "tone", tone: "esprili", name: "tone esprili", path: "tones/esprili.tr.md" },
   { layer: "tone", tone: "direkt", name: "tone direkt", path: "tones/direkt.tr.md" },
   { layer: "tone", tone: "sicak", name: "tone sicak", path: "tones/sicak.tr.md" },
   { layer: "tone", tone: "gizemli", name: "tone gizemli", path: "tones/gizemli.tr.md" },
+  // archetypes — tarz inject'i (2026-04-30 — tarz LLM çıkışında zayıf
+  // görünüyordu, tone'un altında eziliyordu; her archetype için ayrı prompt).
+  { layer: "archetype", archetype: "dryroaster",         name: "archetype dryroaster",         path: "archetypes/dryroaster.tr.md" },
+  { layer: "archetype", archetype: "observer",           name: "archetype observer",           path: "archetypes/observer.tr.md" },
+  { layer: "archetype", archetype: "softie_with_edges",  name: "archetype softie_with_edges",  path: "archetypes/softie_with_edges.tr.md" },
+  { layer: "archetype", archetype: "chaos_agent",        name: "archetype chaos_agent",        path: "archetypes/chaos_agent.tr.md" },
+  { layer: "archetype", archetype: "strategist",         name: "archetype strategist",         path: "archetypes/strategist.tr.md" },
+  { layer: "archetype", archetype: "romantic_pessimist", name: "archetype romantic_pessimist", path: "archetypes/romantic_pessimist.tr.md" },
 ];
 
 async function seed(item: Seed): Promise<void> {
@@ -69,6 +82,8 @@ async function seed(item: Seed): Promise<void> {
   else q = q.is("mode", null);
   if (item.tone !== undefined) q = q.eq("tone", item.tone);
   else q = q.is("tone", null);
+  if (item.archetype !== undefined) q = q.eq("archetype", item.archetype);
+  else q = q.is("archetype", null);
 
   const { data: existing, error: selErr } = await q.maybeSingle();
   if (selErr) {
@@ -101,6 +116,7 @@ async function seed(item: Seed): Promise<void> {
     layer: item.layer,
     mode: item.mode ?? null,
     tone: item.tone ?? null,
+    archetype: item.archetype ?? null,
     content,
     is_active: true,
     rollout_percentage: 100,

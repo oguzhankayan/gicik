@@ -1,52 +1,88 @@
 import SwiftUI
 import UserNotifications
 
-/// Notification permission — envelope hero + "izin ver" / "şimdi değil"
-/// design-source/parts/onboard2.jsx → NotificationPermission
+/// Notification permission — cinematic 3D bell + shake.
+/// Rizz playbook: tek hareketli element, drama, kısa copy.
 struct NotificationPermissionView: View {
     @Bindable var vm: OnboardingViewModel
-    @State private var isPulsing = false
+
+    @State private var bellPulse = false
+    @State private var shake: CGFloat = 0
+    @State private var badgeIn = false
 
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(active: 6, total: 8, showBack: false)
+            TopBar(active: 7, total: 12, showBack: false)
 
             Spacer()
 
             ZStack {
+                // glow
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [AppColor.pink.opacity(0.5), .clear],
+                            colors: [AppColor.pink.opacity(0.55), AppColor.purple.opacity(0.35), .clear],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 100
+                            endRadius: 160
                         )
                     )
-                    .frame(width: 240, height: 240)
-                    .blur(radius: 24)
-                    .scaleEffect(isPulsing ? 1.06 : 1.0)
-                    .opacity(isPulsing ? 1.0 : 0.65)
+                    .frame(width: 320, height: 320)
+                    .blur(radius: 40)
+                    .scaleEffect(bellPulse ? 1.08 : 0.92)
 
-                envelope
-                    .frame(width: 120, height: 90)
+                // 3D bell — symbol katmanları ile fake depth
+                ZStack {
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 110, weight: .black))
+                        .foregroundStyle(AppColor.purple.opacity(0.55))
+                        .blur(radius: 18)
+                        .offset(y: 12)
+
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 96, weight: .heavy))
+                        .foregroundStyle(.white.opacity(0.16))
+                        .offset(y: 6)
+
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 92, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .shadow(color: AppColor.pink.opacity(0.7), radius: 18)
+                }
+                .rotationEffect(.degrees(shake))
+                .scaleEffect(bellPulse ? 1.0 : 0.96)
+
+                // unread badge
+                Circle()
+                    .fill(AppColor.pink)
+                    .frame(width: 26, height: 26)
+                    .overlay(
+                        Text("1")
+                            .font(AppFont.body(13, weight: .bold))
+                            .foregroundColor(.white)
+                    )
+                    .shadow(color: AppColor.pink.opacity(0.7), radius: 12)
+                    .offset(x: 38, y: -42)
+                    .scaleEffect(badgeIn ? 1 : 0)
+                    .opacity(badgeIn ? 1 : 0)
             }
+            .frame(width: 240, height: 240)
 
-            Text("gıcık sana\nhaber versin")
-                .font(AppFont.display(28, weight: .bold))
-                .tracking(-0.02 * 28)
+            Text("haber\nverelim mi?")
+                .font(AppFont.display(30, weight: .bold))
+                .tracking(-0.02 * 30)
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .lineSpacing(28 * 0.05)
-                .padding(.top, 36)
+                .lineSpacing(30 * 0.05)
+                .padding(.top, 32)
 
-            Text("yeni mod geldiğinde, cevap stilleri tazelendiğinde,\nya da tarzına bir şey eklediğimizde.\nseyrek. sıkıcı değil.")
+            Text("yeni mod, taze ton, tarzına eklenen şey.\nseyrek. sıkıcı değil.")
                 .font(AppFont.body(15))
                 .foregroundColor(AppColor.text60)
                 .multilineTextAlignment(.center)
-                .lineSpacing(15 * 0.45)
-                .padding(.horizontal, 28)
-                .padding(.top, 14)
+                .lineSpacing(15 * 0.4)
+                .padding(.horizontal, 32)
+                .padding(.top, 12)
 
             Spacer()
 
@@ -66,20 +102,27 @@ struct NotificationPermissionView: View {
             .padding(.bottom, 32)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            withAnimation(AppAnimation.pulseGlow) {
-                isPulsing = true
-            }
+        .task {
+            await runIntro()
         }
     }
 
-    private var envelope: some View {
-        // Simple envelope SVG-like
-        Image(systemName: "envelope")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .foregroundStyle(.white.opacity(0.8))
-            .symbolRenderingMode(.monochrome)
+    private func runIntro() async {
+        withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+            bellPulse = true
+        }
+        try? await Task.sleep(for: .milliseconds(300))
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) {
+            badgeIn = true
+        }
+        try? await Task.sleep(for: .milliseconds(150))
+        // shake sequence
+        for delta in [-12.0, 10.0, -8.0, 6.0, -4.0, 0.0] {
+            withAnimation(.spring(response: 0.18, dampingFraction: 0.4)) {
+                shake = delta
+            }
+            try? await Task.sleep(for: .milliseconds(90))
+        }
     }
 
     @MainActor

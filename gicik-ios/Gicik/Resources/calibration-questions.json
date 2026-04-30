@@ -20,6 +20,7 @@
     "title": "arkadaşın kötü bir karar\nalmak üzere",
     "subtitle": null,
     "footerLink": "ikisi de değil",
+    "optional": true,
     "options": [
       { "id": "direct", "text": "açıkça\nsöylerim", "emoji": "💬" },
       { "id": "indirect", "text": "soru sorarım,\nkendi görsün", "emoji": "🤔" }
@@ -86,8 +87,8 @@
   {
     "id": "writing_style_sample",
     "type": "free_text",
-    "title": "son flört ettiğin\nmesajdan bir parça",
-    "subtitle": "opsiyonel. atlayabilirsin.",
+    "title": "bize biraz\nkendinden bahset",
+    "subtitle": "kim olduğunu, nasıl yazdığını öğrenelim. opsiyonel.",
     "footerLink": "atla",
     "optional": true,
     "maxLength": 500

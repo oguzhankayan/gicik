@@ -28,7 +28,7 @@ struct ReplyCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(toneAngle.uppercased())
+            Text(toneAngle.trUpper)
                 .font(AppFont.mono(11))
                 .tracking(0.08 * 11)
                 .foregroundColor(AppColor.text40)

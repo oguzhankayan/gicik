@@ -66,8 +66,29 @@ enum ArchetypePrimary: String, Codable {
         }
     }
 
+    /// Tek karakter emoji — label başındaki emoji glyph'i.
+    /// Önceden `prefix(1) + dropFirst().first` ile her erişimde hesaplanıyordu.
     var emoji: String {
-        String(label.prefix(1)) + (label.dropFirst().first.map(String.init) ?? "")
+        switch self {
+        case .dryroaster: "🥀"
+        case .observer: "🪨"
+        case .softie_with_edges: "🍬"
+        case .chaos_agent: "🔥"
+        case .strategist: "✨"
+        case .romantic_pessimist: "🎀"
+        }
+    }
+
+    /// Asset catalog adı — ArchetypeSwitcherSheet, HomeView avatar, ProfileView card.
+    var iconAssetName: String {
+        switch self {
+        case .dryroaster: "arch-dryroaster"
+        case .observer: "arch-observer"
+        case .softie_with_edges: "arch-softie"
+        case .chaos_agent: "arch-chaos"
+        case .strategist: "arch-strategist"
+        case .romantic_pessimist: "arch-romantic"
+        }
     }
 
     var description: [String] {

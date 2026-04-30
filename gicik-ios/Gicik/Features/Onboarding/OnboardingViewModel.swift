@@ -1,18 +1,22 @@
 import Foundation
 import Observation
 
-/// Onboarding flow state machine — splash to paywall.
-/// Master prompt §5: 12 ekran (skip yok, paywall hariç).
+/// Onboarding flow state machine — Rizz playbook (2026-04-30 reorder).
+/// Yeni sıra: value önce, demographic sona. Calibration ortada (kullanıcı zaten içeride).
+/// Paywall öncesi value carousel + star prime ile commitment ramping.
 enum OnboardingStep: Int, CaseIterable {
-    case splash
-    case demographic
+    case splash               // cinematic, auto-advance
+    case valueIntro           // 3-page swipeable carousel
     case calibrationIntro
     case calibrationQuiz
     case calibrationResult
+    case demographic          // sona alındı, kullanıcı zaten ısındı
     case demoUpload
-    case notification
+    case notification         // cinematic 3D bell
+    case starRating           // SKStoreReview prime
+    case prePaywallValue      // archetype-aware reinforcement
     case aiConsent
-    case paywall            // Phase 4'te aktif
+    case paywall              // single tier weekly + carousel
     case completed
 }
 
@@ -65,8 +69,7 @@ final class OnboardingViewModel {
         if quizIndex < questions.count - 1 {
             quizIndex += 1
         } else {
-            // Quiz tamam, sonuca geç
-            advance()  // calibrationQuiz → calibrationResult
+            advance()
         }
     }
 
@@ -79,13 +82,12 @@ final class OnboardingViewModel {
         if quizIndex > 0 {
             quizIndex -= 1
         } else {
-            goBack() // back to calibrationIntro
+            goBack()
         }
     }
 
     // MARK: - Calibration submission
 
-    /// Phase 1.4 — backend `/calibrate` endpoint'ini çağırır.
     func submitCalibration() async {
         isSubmitting = true
         defer { isSubmitting = false }
@@ -105,8 +107,6 @@ final class OnboardingViewModel {
             self.archetype = result
             self.lastError = nil
         } catch {
-            // Hata yüzeye çıkar — silent fallback bug'ını gizliyordu.
-            // CalibrationResultView retry UI gösterir.
             self.lastError = error.localizedDescription
             self.archetype = nil
         }

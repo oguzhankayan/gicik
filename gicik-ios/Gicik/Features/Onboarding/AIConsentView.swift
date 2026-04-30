@@ -68,6 +68,7 @@ struct AIConsentView: View {
 
                 PrimaryButton("kaydet", isEnabled: consentToggle) {
                     vm.aiConsentGiven = consentToggle
+                    UserDefaults.standard.set(consentToggle, .aiConsentGiven)
                     vm.advance()
                 }
                 .padding(.horizontal, 24)

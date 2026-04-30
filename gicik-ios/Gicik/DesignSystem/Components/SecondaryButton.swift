@@ -6,7 +6,7 @@ struct SecondaryButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title.lowercased())
+            Text(title.trLower)
                 .font(AppFont.body(17, weight: .medium))
                 .foregroundColor(.white.opacity(0.85))
                 .frame(maxWidth: .infinity)

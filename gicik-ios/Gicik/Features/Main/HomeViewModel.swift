@@ -1,23 +1,51 @@
 import Foundation
 import SwiftUI
 import PhotosUI
+import Sentry
 
 /// Main flow state machine: Home → Picker → Tone → Generation → Result.
 /// Phase 2'de mock data kullanır. Phase 2.4'te gerçek backend bağlanır.
 enum FlowStage: Equatable {
     case home
     case picker(Mode)
-    case generation(Mode, screenshot: Data)
+    /// Generation aşamasında input kaynağı vm state'inden okunur (screenshot
+    /// veya draft). Stage sadece mode taşır.
+    case generation(Mode)
     case result(GenerationResult)
 }
 
 @Observable
 @MainActor
 final class HomeViewModel {
+    /// ISO formatter'lar pahalı; loadHistory başına 2 alloc yerine class-level
+    /// tek instance. Thread-safety: ISO8601DateFormatter Sendable (Apple docs).
+    nonisolated(unsafe) static let isoFractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    nonisolated(unsafe) static let isoPlain: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+
     var stage: FlowStage = .home
     var pickerState: PickerState = .empty
     var lastError: String?
     var history: [ConversationHistoryItem] = []
+    /// Cold-launch'ta history bir kez yüklenene kadar `false`. Free quota
+    /// chip lokal `history`'den hesaplar — yüklenmeden chip "0/3" gösterip
+    /// sonra server'dan 402 dönerse kafa karışır. Bu flag chip'i gate'ler.
+    var historyLoadedOnce: Bool = false
+    /// Server-truth quota — generate-replies done event'inden gelir.
+    /// nil = henüz bilinmiyor (cold launch) veya premium (sınırsız).
+    /// `serverIsPremium` ile beraber okunur.
+    var remainingToday: Int?
+    var serverIsPremium: Bool = false
+
+    /// Backend free_tier_exceeded → paywall trigger. HomeView sheet observes.
+    var paywallTrigger: EntitlementGate.LockReason?
 
     // For picker
     var pickedItem: PhotosPickerItem? {
@@ -28,6 +56,56 @@ final class HomeViewModel {
     // Profile cache (set after onboarding)
     var archetype: ArchetypePrimary? = .dryroaster
 
+    /// Kullanıcının seçtiği ton. nil = backend default (mode'a özgü 3 farklı ton).
+    /// Setlendiğinde 3 cevap aynı tonda farklı açılardan üretilir.
+    /// tonla modunda zorunlu (UI tarafında enforce edilir).
+    var selectedTone: Tone?
+
+    /// Tonla modu için kullanıcı taslağı + opsiyonel karşı tarafın son mesajı.
+    var draftText: String = ""
+    var contextText: String = ""
+
+    /// "bilmem gereken bir şey?" — picker ekranındaki opsiyonel kullanıcı notu.
+    /// parse-screenshot edge function'ına multipart `extra_context` field'ı
+    /// olarak gönderilir, conversations.extra_context'e yazılır, generate'te
+    /// L4 prompt'una <extra_context> block olarak inject edilir.
+    var extraContext: String = ""
+
+    // MARK: - Manuel giriş state
+    //
+    // Kullanıcı ekran görüntüsü atmadan konuşmayı/profili elle yazdığında
+    // bu alanlar dolar. Submit'te `manual_input` JSON'u parse-screenshot
+    // edge function'ına gider, vision call atlanır, synthetic ParseResult
+    // kurulur.
+    //
+    // - cevap/davet: manualMessages + otherName.
+    // - açılış: manualBio, manualHandle, manualPosts, manualPhotoDescriptions.
+
+    /// Bir konuşma turu — sender + text. UI alternating bubble olarak gösterir.
+    struct ManualMessage: Identifiable, Equatable {
+        let id: UUID
+        var sender: ManualSender
+        var text: String
+        init(id: UUID = UUID(), sender: ManualSender, text: String = "") {
+            self.id = id
+            self.sender = sender
+            self.text = text
+        }
+    }
+    enum ManualSender: String, Codable { case user, other }
+
+    var manualMessages: [ManualMessage] = []
+    var manualOtherName: String = ""
+    /// açılış için: manuel profil alanları
+    var manualBio: String = ""
+    var manualHandle: String = ""
+    var manualPosts: [String] = []
+    var manualPhotoDescriptions: [String] = []
+
+    /// `true` iken picker yerine ManualChatComposer / ManualProfileEntry açılır.
+    /// Picker'daki "elle yaz" butonu set eder. Mode değişiminde resetlenir.
+    var isManualMode: Bool = false
+
     enum PickerState: Equatable {
         case empty
         case uploading(progress: Double)
@@ -35,13 +113,15 @@ final class HomeViewModel {
     }
 
     init() {
-        loadMockHistory()
+        Task { await loadHistory() }
     }
 
     // MARK: - Stage transitions
 
     func selectMode(_ mode: Mode) {
         resetFlowState()
+        // Ton seçimi her yeni session'da temiz başlar — sürpriz lock-in olmasın.
+        selectedTone = nil
         stage = .picker(mode)
     }
 
@@ -52,42 +132,123 @@ final class HomeViewModel {
 
     /// Picker'a dön (done state'ten 'değiştir').
     func resetPicker() {
-        if case .picker(let mode) = stage {
-            resetFlowState()
-            stage = .picker(mode)
-        } else if case .generation(let mode, _) = stage {
-            resetFlowState()
-            stage = .picker(mode)
-        }
+        let currentMode: Mode? = {
+            switch stage {
+            case .picker(let m): return m
+            case .generation(let m): return m
+            default: return nil
+            }
+        }()
+        guard let currentMode else { return }
+        resetFlowState()
+        stage = .picker(currentMode)
     }
 
     private func resetFlowState() {
         pickerState = .empty
         pickedScreenshot = nil
         pickedItem = nil
+        draftText = ""
+        contextText = ""
+        extraContext = ""
+        manualMessages = []
+        manualOtherName = ""
+        manualBio = ""
+        manualHandle = ""
+        manualPosts = []
+        manualPhotoDescriptions = []
+        isManualMode = false
         streamingObservation = ""
         streamingReplies = [:]
         conversationId = nil
+        generationPhase = .idle
+        lastError = nil
     }
 
-    /// Aynı screenshot ile yeniden üret (Result'ta 'yeni cevap üret').
-    func regenerate() {
-        // Result stage'inde önceki screenshot mevcut.
-        guard case .result(let prev) = stage,
-              let data = pickedScreenshot else { return }
-        // Streaming state'i temizle, generation'a dön, yeniden başlat.
+    /// Aynı input ile yeniden üret. tone parametresi verilirse seçilen tonu
+    /// günceller (ResultView'daki ton switcher buradan geçer).
+    /// `setTone: true` ile nil verirse "üç farklı ton" default'una döner.
+    func regenerate(tone: Tone? = nil, setTone: Bool = false) {
+        let mode: Mode? = {
+            switch stage {
+            case .result(let r): return r.mode
+            case .generation(let m): return m
+            default: return nil
+            }
+        }()
+        guard let mode else { return }
+        if setTone { selectedTone = tone }
         streamingObservation = ""
         streamingReplies = [:]
-        stage = .generation(prev.mode, screenshot: data)
-        Task { await runRealGeneration(mode: prev.mode, imageData: data) }
+        lastError = nil
+        generationPhase = .parsing
+        stage = .generation(mode)
+
+        if mode == .tonla {
+            Task { await runTonlaGeneration() }
+        } else {
+            guard let data = pickedScreenshot else { return }
+            Task { await runRealGeneration(mode: mode, imageData: data) }
+        }
     }
 
-    /// Picker'dan generation'a doğrudan geç — ton seçimi yok.
+    /// Screenshot picker'dan generation'a geçiş (cevap/açılış/davet).
     func proceedToGeneration() {
         guard case .picker(let mode) = stage,
               let data = pickedScreenshot else { return }
-        stage = .generation(mode, screenshot: data)
+        stage = .generation(mode)
         Task { await runRealGeneration(mode: mode, imageData: data) }
+    }
+
+    /// Manuel giriş ekranından generation'a geçiş (cevap/açılış/davet).
+    /// Validasyon: chat modlarında ≥1 mesaj + son mesaj other; profile
+    /// modunda en az 1 alan dolu.
+    func proceedToManualGeneration() {
+        guard case .picker(let mode) = stage else { return }
+
+        // Validate
+        if mode == .acilis {
+            let hasSignal = !manualBio.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || !manualHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || manualPosts.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                || manualPhotoDescriptions.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            guard hasSignal else {
+                lastError = "en az bir alan doldur (bio, handle, post veya foto açıklaması)"
+                return
+            }
+        } else {
+            let cleaned = manualMessages
+                .map { ManualMessage(id: $0.id, sender: $0.sender, text: $0.text.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                .filter { !$0.text.isEmpty }
+            guard !cleaned.isEmpty else {
+                lastError = "en az bir mesaj gir"
+                return
+            }
+            guard cleaned.last?.sender == .other else {
+                lastError = "son mesaj karşı taraftan olmalı (sen cevap üreteceksin)"
+                return
+            }
+            manualMessages = cleaned
+        }
+
+        stage = .generation(mode)
+        Task { await runManualGeneration(mode: mode) }
+    }
+
+    /// Tonla draft view'dan generation'a geçiş.
+    func proceedToTonlaGeneration() {
+        guard case .picker(.tonla) = stage else { return }
+        let trimmed = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            lastError = "taslak boş"
+            return
+        }
+        guard selectedTone != nil else {
+            lastError = "ton seç"
+            return
+        }
+        stage = .generation(.tonla)
+        Task { await runTonlaGeneration() }
     }
 
     /// Streaming partial result — GenerationView reads this for live UI.
@@ -95,6 +256,19 @@ final class HomeViewModel {
     var streamingObservation: String = ""
     var streamingReplies: [Int: ReplyOption] = [:]
     var conversationId: String?
+
+    /// İki aşamalı pipeline'ın hangi adımında olduğumuzu UI'ya bildirir.
+    /// `.idle` generation dışında. `.parsing` Stage 1 (vision). `.streaming`
+    /// SSE'den ilk event geldikten sonra. `.finishing` 3/3 reply de elimizde.
+    /// `.failed` parse veya stream hata vermişse — view retry chip gösterir.
+    enum GenerationPhase: Equatable {
+        case idle
+        case parsing
+        case streaming
+        case finishing
+        case failed
+    }
+    var generationPhase: GenerationPhase = .idle
 
     func reset() {
         stage = .home
@@ -104,6 +278,19 @@ final class HomeViewModel {
     }
 
     // MARK: - Picker handling
+
+    /// PhotosPicker dışındaki yollar (recent strip tap, paste from clipboard)
+    /// için ortak entry. Picker state machine'e tek yerden besler.
+    func acceptScreenshotData(_ data: Data) {
+        pickerState = .uploading(progress: 0.6)
+        pickedScreenshot = data
+        // Küçük gecikme — UI'nin uploading state'ini frame atlamadan
+        // gösterebilmesi için. Sadece hissel feedback amaçlı.
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            pickerState = .done(thumbnail: data)
+        }
+    }
 
     private func handlePickedItem() async {
         guard let item = pickedItem else { return }
@@ -124,14 +311,102 @@ final class HomeViewModel {
         }
     }
 
-    // MARK: - Real generation (Phase 2.3 + 2.4 wired)
+    // MARK: - Manual generation (kullanıcı ekran görüntüsü atmaz, elle yazar)
 
-    private func runRealGeneration(mode: Mode, imageData: Data) async {
+    /// Manuel giriş akışı — `manual_input` JSON'u parse-screenshot'a multipart
+    /// form field olarak yollanır, vision call atlanır, synthetic ParseResult
+    /// kurulur. Sonrası runRealGeneration ile aynı: generate-replies SSE.
+    private func runManualGeneration(mode: Mode) async {
+        let json: String
+        do {
+            json = try buildManualInputJSON(mode: mode)
+        } catch {
+            lastError = "manuel giriş: \(error.localizedDescription)"
+            generationPhase = .failed
+            return
+        }
+        var formFields: [String: String] = [
+            "mode": mode.rawValue,
+            "manual_input": json,
+        ]
+        let trimmedExtra = extraContext.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedExtra.isEmpty {
+            formFields["extra_context"] = trimmedExtra
+        }
+        await runGenerationFromMultipart(mode: mode, imageData: nil, formFields: formFields)
+    }
+
+    /// `manual_input` JSON serializer. Mode'a göre chat veya profile shape.
+    private func buildManualInputJSON(mode: Mode) throws -> String {
+        struct ChatPayload: Encodable {
+            let messages: [ChatMsg]
+            let other_name: String?
+            let platform: String
+        }
+        struct ChatMsg: Encodable {
+            let sender: String
+            let text: String
+        }
+        struct ProfilePayload: Encodable {
+            let profile: ProfileBody
+            let platform: String
+        }
+        struct ProfileBody: Encodable {
+            let bio: String?
+            let handle: String?
+            let posts: [String]
+            let photo_descriptions: [String]
+        }
+
+        let encoder = JSONEncoder()
+        if mode == .acilis {
+            let bio = manualBio.trimmingCharacters(in: .whitespacesAndNewlines)
+            let handle = manualHandle.trimmingCharacters(in: .whitespacesAndNewlines)
+            let posts = manualPosts
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            let photos = manualPhotoDescriptions
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            let payload = ProfilePayload(
+                profile: .init(
+                    bio: bio.isEmpty ? nil : bio,
+                    handle: handle.isEmpty ? nil : handle,
+                    posts: posts,
+                    photo_descriptions: photos
+                ),
+                platform: "unknown"
+            )
+            let data = try encoder.encode(payload)
+            return String(data: data, encoding: .utf8) ?? ""
+        } else {
+            let msgs = manualMessages
+                .map { ChatMsg(sender: $0.sender.rawValue,
+                               text: $0.text.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                .filter { !$0.text.isEmpty }
+            let other = manualOtherName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let payload = ChatPayload(
+                messages: msgs,
+                other_name: other.isEmpty ? nil : other,
+                platform: "unknown"
+            )
+            let data = try encoder.encode(payload)
+            return String(data: data, encoding: .utf8) ?? ""
+        }
+    }
+
+    /// runRealGeneration + runManualGeneration ortak gövdesi.
+    /// imageData nil ise manuel akış (form fields'ta manual_input olmalı).
+    private func runGenerationFromMultipart(
+        mode: Mode,
+        imageData: Data?,
+        formFields: [String: String]
+    ) async {
         streamingObservation = ""
         streamingReplies = [:]
         conversationId = nil
+        generationPhase = .parsing
 
-        // Stage 1: parse-screenshot (multipart)
         struct ParseResp: Decodable {
             let conversation_id: String
             let parse_result: ParseResultDTO
@@ -144,28 +419,151 @@ final class HomeViewModel {
                 .parseScreenshot,
                 imageData: imageData,
                 imageMimeType: "image/jpeg",
-                formFields: ["mode": mode.rawValue],
+                formFields: formFields,
                 as: ParseResp.self
             )
             conversationId = parseResp.conversation_id
         } catch {
+            if isFreeTierError(error) {
+                paywallTrigger = .dailyLimit
+                stage = .home
+                return
+            }
             lastError = "parse: \(error.localizedDescription)"
-            // Show error state on result screen so user can retry
-            stage = .result(GenerationResult(
-                observation: "bağlantı sorunu. tekrar dene.",
-                replies: [],
-                conversationId: nil,
-                mode: mode
-            ))
+            generationPhase = .failed
             return
         }
 
-        // Stage 2: generate-replies (SSE) — backend 3 ton seçer
+        await streamGenerateReplies(conversationId: parseResp.conversation_id, mode: mode)
+    }
+
+    /// generate-replies SSE bölümü (parse-screenshot sonrası ortak).
+    private func streamGenerateReplies(conversationId: String, mode: Mode) async {
         struct GenBody: Encodable {
             let conversation_id: String
+            let tone: String?
+        }
+        let body = GenBody(conversation_id: conversationId, tone: selectedTone?.rawValue)
+        var finalReplies: [ReplyOption] = []
+        var observation = ""
+        do {
+            for try await event in APIClient.shared.invokeStream(.generateReplies, body: body) {
+                switch event {
+                case .observation(let text):
+                    observation = text
+                    streamingObservation = text
+                    if generationPhase == .parsing { generationPhase = .streaming }
+                case .reply(let index, let tone, let text):
+                    let r = ReplyOption(index: index, tone: tone, text: text)
+                    streamingReplies[index] = r
+                    if generationPhase == .parsing { generationPhase = .streaming }
+                    if streamingReplies.count == 3 { generationPhase = .finishing }
+                case .done(_, _, let remaining, let isPrem):
+                    self.remainingToday = remaining
+                    self.serverIsPremium = isPrem
+                    break
+                case .unknown:
+                    break
+                case .error(let msg):
+                    if msg.trLower.contains("free_tier")
+                        || msg.contains("402")
+                        || msg.trLower.contains("limit")
+                        || msg.trLower.contains("doldu") {
+                        paywallTrigger = .dailyLimit
+                        stage = .home
+                        return
+                    }
+                    lastError = "üretim: \(msg)"
+                    generationPhase = .failed
+                    return
+                }
+            }
+            // SSE drop detection: stream sessizce biterse partial result
+            // ResultView'a gitmemeli (kullanıcı bozuk üretim için kota
+            // harcardı). 3 reply gelmediyse fail.
+            finalReplies = (0..<3).compactMap { streamingReplies[$0] }
+            guard finalReplies.count == 3 else {
+                lastError = "üretim yarıda kaldı. tekrar dene."
+                generationPhase = .failed
+                SentrySDK.capture(message:
+                    "SSE drop: \(finalReplies.count)/3 reply, mode=\(mode.rawValue)"
+                )
+                return
+            }
+            generationPhase = .idle
+            stage = .result(GenerationResult(
+                observation: observation,
+                replies: finalReplies,
+                conversationId: conversationId,
+                mode: mode
+            ))
+            await loadHistory()
+        } catch {
+            if isFreeTierError(error) {
+                paywallTrigger = .dailyLimit
+                stage = .home
+                return
+            }
+            lastError = "üretim: \(error.localizedDescription)"
+            generationPhase = .failed
+        }
+    }
+
+    // MARK: - Real generation (Phase 2.3 + 2.4 wired)
+
+    private func runRealGeneration(mode: Mode, imageData: Data) async {
+        streamingObservation = ""
+        streamingReplies = [:]
+        conversationId = nil
+        generationPhase = .parsing
+
+        // Stage 1: parse-screenshot (multipart)
+        struct ParseResp: Decodable {
+            let conversation_id: String
+            let parse_result: ParseResultDTO
+            let duration_ms: Int
         }
 
-        let body = GenBody(conversation_id: parseResp.conversation_id)
+        let parseResp: ParseResp
+        do {
+            // Form fields: mode (zorunlu) + opsiyonel extra_context.
+            // Boş trim'lenmiş not gönderilmez — backend zaten null kabul ediyor.
+            var formFields: [String: String] = ["mode": mode.rawValue]
+            let trimmedExtra = extraContext.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedExtra.isEmpty {
+                formFields["extra_context"] = trimmedExtra
+            }
+            parseResp = try await APIClient.shared.invokeMultipart(
+                .parseScreenshot,
+                imageData: imageData,
+                imageMimeType: "image/jpeg",
+                formFields: formFields,
+                as: ParseResp.self
+            )
+            conversationId = parseResp.conversation_id
+        } catch {
+            if isFreeTierError(error) {
+                paywallTrigger = .dailyLimit
+                stage = .home
+                return
+            }
+            lastError = "parse: \(error.localizedDescription)"
+            generationPhase = .failed
+            return
+        }
+
+        // Stage 2: generate-replies (SSE).
+        // tone nil → backend mode'a özgü 3 farklı tonu kullanır.
+        // tone set → 3 reply de o tonda farklı açılarla üretilir.
+        struct GenBody: Encodable {
+            let conversation_id: String
+            let tone: String?
+        }
+
+        let body = GenBody(
+            conversation_id: parseResp.conversation_id,
+            tone: selectedTone?.rawValue
+        )
         var finalReplies: [ReplyOption] = []
         var observation = ""
 
@@ -175,32 +573,55 @@ final class HomeViewModel {
                 case .observation(let text):
                     observation = text
                     streamingObservation = text
+                    if generationPhase == .parsing { generationPhase = .streaming }
                 case .reply(let index, let tone, let text):
                     let r = ReplyOption(index: index, tone: tone, text: text)
                     streamingReplies[index] = r
-                case .done:
+                    if generationPhase == .parsing { generationPhase = .streaming }
+                    if streamingReplies.count == 3 { generationPhase = .finishing }
+                case .done(_, _, let remaining, let isPrem):
+                    self.remainingToday = remaining
+                    self.serverIsPremium = isPrem
                     break
                 case .error(let msg):
+                    if msg.trLower.contains("free_tier")
+                        || msg.contains("402")
+                        || msg.trLower.contains("limit")
+                        || msg.trLower.contains("doldu") {
+                        paywallTrigger = .dailyLimit
+                        // Stage'i home'a çek ki paywall sheet root'tan açılırken
+                        // generation view kalmasın altta — kullanıcı dönünce
+                        // skeleton yerine ana ekranı görsün.
+                        stage = .home
+                        return
+                    }
                     lastError = "generate: \(msg)"
                 case .unknown:
                     continue
                 }
             }
         } catch {
+            // Stream throw'unda da free-tier check; APIError.freeTierExceeded
+            // burada landed olabilir (APIClient'ın 402 mapping'ine bağlı).
+            if isFreeTierError(error) {
+                paywallTrigger = .dailyLimit
+                stage = .home
+                return
+            }
             lastError = "generate: \(error.localizedDescription)"
         }
 
+        // SSE drop detection — partial result kullanıcıya gitmesin.
         finalReplies = (0..<3).compactMap { streamingReplies[$0] }
-
-        if finalReplies.isEmpty {
-            stage = .result(GenerationResult(
-                observation: observation.isEmpty ? "üretim başarısız." : observation,
-                replies: [],
-                conversationId: conversationId,
-                mode: mode
-            ))
+        guard finalReplies.count == 3 else {
+            lastError = "üretim yarıda kaldı. tekrar dene."
+            generationPhase = .failed
+            SentrySDK.capture(message:
+                "SSE drop (cevap path): \(finalReplies.count)/3, mode=\(mode.rawValue)"
+            )
             return
         }
+        generationPhase = .idle
 
         stage = .result(GenerationResult(
             observation: observation,
@@ -223,6 +644,131 @@ final class HomeViewModel {
     private struct ParseResultDTO: Decodable {
         let platform_detected: String?
         let context_summary_tr: String?
+    }
+
+    /// 402 Payment Required → free tier limit aşıldı.
+    private func isFreeTierError(_ error: Error) -> Bool {
+        if let api = error as? APIError, case .freeTierExceeded = api { return true }
+        let s = error.localizedDescription.trLower
+        return s.contains("free_tier") || s.contains("402")
+    }
+
+    // MARK: - Tonla generation (text input, ss yok)
+
+    private func runTonlaGeneration() async {
+        streamingObservation = ""
+        streamingReplies = [:]
+        conversationId = nil
+        generationPhase = .parsing
+
+        // 1) Conversation row aç (ss + parse yok)
+        struct CreateBody: Encodable {
+            let mode: String
+            let draft: String
+            let context_message: String?
+        }
+        struct CreateResp: Decodable { let conversation_id: String }
+
+        let trimmedDraft = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedContext = contextText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let createResp: CreateResp
+        do {
+            createResp = try await APIClient.shared.invokeJSON(
+                .createTextConversation,
+                body: CreateBody(
+                    mode: Mode.tonla.rawValue,
+                    draft: trimmedDraft,
+                    context_message: trimmedContext.isEmpty ? nil : trimmedContext
+                ),
+                as: CreateResp.self
+            )
+            conversationId = createResp.conversation_id
+        } catch {
+            if isFreeTierError(error) {
+                paywallTrigger = .dailyLimit
+                stage = .home
+                return
+            }
+            lastError = "tonla: \(error.localizedDescription)"
+            generationPhase = .failed
+            return
+        }
+
+        // 2) generate-replies stream — tone REQUIRED for tonla
+        struct GenBody: Encodable {
+            let conversation_id: String
+            let tone: String?
+        }
+        let body = GenBody(
+            conversation_id: createResp.conversation_id,
+            tone: selectedTone?.rawValue
+        )
+
+        var observation = ""
+        do {
+            for try await event in APIClient.shared.invokeStream(.generateReplies, body: body) {
+                switch event {
+                case .observation(let text):
+                    observation = text
+                    streamingObservation = text
+                    if generationPhase == .parsing { generationPhase = .streaming }
+                case .reply(let index, let tone, let text):
+                    streamingReplies[index] = ReplyOption(index: index, tone: tone, text: text)
+                    if generationPhase == .parsing { generationPhase = .streaming }
+                    if streamingReplies.count == 3 { generationPhase = .finishing }
+                case .done(_, _, let remaining, let isPrem):
+                    self.remainingToday = remaining
+                    self.serverIsPremium = isPrem
+                case .unknown:
+                    continue
+                case .error(let msg):
+                    if msg.trLower.contains("free_tier")
+                        || msg.contains("402")
+                        || msg.trLower.contains("limit")
+                        || msg.trLower.contains("doldu") {
+                        paywallTrigger = .dailyLimit
+                        stage = .home
+                        return
+                    }
+                    lastError = "generate: \(msg)"
+                }
+            }
+        } catch {
+            if isFreeTierError(error) {
+                paywallTrigger = .dailyLimit
+                stage = .home
+                return
+            }
+            lastError = "generate: \(error.localizedDescription)"
+        }
+
+        // SSE drop detection — tonla için de partial result reject.
+        let finalReplies = (0..<3).compactMap { streamingReplies[$0] }
+        guard finalReplies.count == 3 else {
+            lastError = "üretim yarıda kaldı. tekrar dene."
+            generationPhase = .failed
+            SentrySDK.capture(message:
+                "SSE drop (tonla): \(finalReplies.count)/3"
+            )
+            return
+        }
+        generationPhase = .idle
+
+        stage = .result(GenerationResult(
+            observation: observation,
+            replies: finalReplies,
+            conversationId: conversationId,
+            mode: .tonla
+        ))
+
+        history.insert(.init(
+            id: conversationId ?? UUID().uuidString,
+            mode: .tonla,
+            platform: "draft",
+            createdAt: Date(),
+            snippet: "\"\(trimmedDraft.prefix(40))...\""
+        ), at: 0)
     }
 
     // ─── mock helpers retired (backend gerçek üretim yapıyor) ───
@@ -267,8 +813,66 @@ final class HomeViewModel {
 
     */
 
-    private func loadMockHistory() {
-        // Boş başla — gerçek conversations DB'den yüklenecek (Phase 3'te).
-        history = []
+    /// Supabase'ten son 20 conversation'ı çekip history listesini doldurur.
+    /// VM init'te ve generation sonrası state senkronizasyonu için çağrılır.
+    /// 30 günlük retention zaten DB tarafında; biz sadece son N tanesini gösteriyoruz.
+    func loadHistory() async {
+        struct ConvRow: Decodable {
+            let id: String
+            let mode: String
+            let created_at: String
+            let parse_result: ParseResultDTO?
+            let generation_result: GenerationResultDTO?
+
+            struct ParseResultDTO: Decodable {
+                let platform_detected: String?
+            }
+            struct GenerationResultDTO: Decodable {
+                let replies: [ReplySnippet]?
+                struct ReplySnippet: Decodable { let text: String }
+            }
+        }
+
+        do {
+            let rows: [ConvRow] = try await SupabaseService.shared
+                .from("conversations")
+                .select("id, mode, created_at, parse_result, generation_result")
+                .order("created_at", ascending: false)
+                .limit(20)
+                .execute()
+                .value
+
+            let items: [ConversationHistoryItem] = rows.compactMap { r in
+                guard let mode = Mode(rawValue: r.mode) else { return nil }
+                // Generation tamamlanmamış (parse OK ama gen NULL) row'ları
+                // history'de göstermenin anlamı yok — kullanıcıya "tutmadı"
+                // satırı boş gösterir, em-dash ban'ını da tetikler.
+                guard let snippetText = r.generation_result?.replies?.first?.text,
+                      !snippetText.isEmpty else { return nil }
+                let date = Self.isoFractional.date(from: r.created_at)
+                    ?? Self.isoPlain.date(from: r.created_at)
+                    ?? Date()
+                // 80 char hard cap; UI lineLimit(2) zaten doğal truncate yapıyor.
+                // Ellipsis eklemiyoruz (brand voice "üç nokta yok").
+                let snippet = "\"\(snippetText.prefix(80))\""
+                return ConversationHistoryItem(
+                    id: r.id,
+                    mode: mode,
+                    platform: r.parse_result?.platform_detected ?? "image",
+                    createdAt: date,
+                    snippet: snippet
+                )
+            }
+            self.history = items
+            self.historyLoadedOnce = true
+        } catch {
+            // History boşa düşmesi geçerli state ama hatayı görünmez bırakma —
+            // Sentry'ye kırp ve uyandır. Eski kod sessiz yutuyordu.
+            self.history = []
+            // Network fail'de bile chip-gate açılsın (sonsuz "—/3" gösterme).
+            // Truth: history boş, ama kullanıcı henüz cold-launch yapmadı varsay.
+            self.historyLoadedOnce = true
+            SentrySDK.capture(message: "loadHistory failed: \(error.localizedDescription)")
+        }
     }
 }

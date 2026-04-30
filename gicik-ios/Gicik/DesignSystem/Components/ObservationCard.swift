@@ -17,7 +17,7 @@ struct ObservationCard: View {
                 .padding(.top, 3)
                 .accessibilityHidden(true)
 
-            Text(text.lowercased())
+            Text(text.trLower)
                 .font(AppFont.body(15))
                 .italic()
                 .foregroundColor(.white.opacity(0.8))

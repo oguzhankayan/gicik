@@ -16,17 +16,33 @@ struct ArchetypeSwitcherSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            topBar
             header
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 18)
+                .background(
+                    LinearGradient(
+                        colors: [AppColor.bg0, AppColor.bg0, AppColor.bg0.opacity(0.0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .ignoresSafeArea(edges: .top)
+                    .allowsHitTesting(false)
+                )
+                .zIndex(1)
+
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     ForEach(ArchetypePrimary.allCases, id: \.self) { arch in
                         archetypeCard(arch)
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 18)
-                .padding(.bottom, 24)
+                .padding(.top, 32)
+                .padding(.bottom, 20)
             }
+
             footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -34,41 +50,53 @@ struct ArchetypeSwitcherSheet: View {
         .preferredColorScheme(.dark)
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Spacer()
-                Button { dismiss() } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(AppColor.text40)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 18)
+    // MARK: - Top bar (X)
 
+    private var topBar: some View {
+        HStack {
+            Spacer()
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(AppColor.text40)
+                    .padding(10)
+            }
+        }
+        .padding(.top, 14)
+        .padding(.trailing, 12)
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 14) {
             Text("ŞU ANKİ TARZIN")
                 .font(AppFont.mono(11))
                 .tracking(0.04 * 11)
                 .foregroundColor(AppColor.lime)
 
-            HStack(spacing: 10) {
-                Text(currentEmoji)
-                    .font(.system(size: 36))
+            HStack(spacing: 12) {
+                Image((vm.archetype ?? .dryroaster).iconAssetName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 56, height: 56)
                 Text(currentLabelOnly)
                     .font(AppFont.display(28, weight: .bold))
                     .tracking(-0.02 * 28)
                     .foregroundColor(.white)
+                Spacer(minLength: 0)
             }
 
-            Text("aşağıdaki tarzlardan istediğini seçebilirsin.")
-                .font(AppFont.body(14))
+            Text("aşağıdaki tarzlardan istediğini seç. değiştirmek istemezsen olduğu gibi kalır.")
+                .font(AppFont.body(13))
                 .foregroundColor(AppColor.text60)
-                .padding(.top, 4)
+                .lineSpacing(13 * 0.4)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 24)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+
+    // MARK: - Card
 
     private func archetypeCard(_ arch: ArchetypePrimary) -> some View {
         let isSelected = selected == arch
@@ -78,52 +106,63 @@ struct ArchetypeSwitcherSheet: View {
             }
         } label: {
             HStack(alignment: .center, spacing: 14) {
-                Text(emojiOf(arch))
-                    .font(.system(size: 28))
+                Image(arch.iconAssetName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 48, height: 48)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(labelOnlyOf(arch))
-                        .font(AppFont.display(18, weight: .bold))
-                        .tracking(-0.02 * 18)
+                        .font(AppFont.display(17, weight: .bold))
+                        .tracking(-0.02 * 17)
                         .foregroundColor(.white)
                     Text(shortDescription(arch))
-                        .font(AppFont.body(13))
+                        .font(AppFont.body(12))
                         .foregroundColor(AppColor.text60)
                         .multilineTextAlignment(.leading)
-                        .lineSpacing(13 * 0.30)
+                        .lineSpacing(12 * 0.30)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer(minLength: 8)
 
-                if isSelected {
-                    Circle()
-                        .fill(AppColor.lime)
-                        .frame(width: 24, height: 24)
-                        .overlay(
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(AppColor.bg0)
-                        )
+                // Sabit slot — seçili/seçili-değil arası genişlik kayması olmasın.
+                ZStack {
+                    if isSelected {
+                        Circle()
+                            .fill(AppColor.lime)
+                            .overlay(
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(AppColor.bg0)
+                            )
+                            .transition(.scale.combined(with: .opacity))
+                    }
                 }
+                .frame(width: 22, height: 22)
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(isSelected ? AppColor.bgGlass : AppColor.bg1.opacity(0.55))
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(isSelected ? AppColor.bgGlass : AppColor.bg1.opacity(0.5))
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .strokeBorder(
-                            isSelected ? AnyShapeStyle(AppColor.holographic) : AnyShapeStyle(AppColor.text08),
+                            isSelected
+                                ? AnyShapeStyle(AppColor.holographic.opacity(0.65))
+                                : AnyShapeStyle(AppColor.text08),
                             lineWidth: 1
                         )
                 }
             )
         }
+        .buttonStyle(.plain)
         .sensoryFeedback(.selection, trigger: selected)
     }
+
+    // MARK: - Footer (save)
 
     private var footer: some View {
         VStack(spacing: 10) {
@@ -132,13 +171,23 @@ struct ArchetypeSwitcherSheet: View {
                     .font(AppFont.body(12))
                     .foregroundColor(AppColor.danger)
                     .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
             }
             PrimaryButton("kaydet", isEnabled: selected != vm.archetype && !saving) {
                 Task { await save() }
             }
             .padding(.horizontal, 24)
         }
-        .padding(.bottom, 32)
+        .padding(.top, 8)
+        .padding(.bottom, 28)
+        .background(
+            LinearGradient(
+                colors: [Color.clear, AppColor.bg0.opacity(0.85), AppColor.bg0],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea(edges: .bottom)
+        )
     }
 
     // MARK: - Save
@@ -148,7 +197,6 @@ struct ArchetypeSwitcherSheet: View {
         defer { saving = false }
         error = nil
 
-        // Local update — opportunistic, UX rollback if backend fails
         let prev = vm.archetype
         vm.archetype = selected
 
@@ -160,7 +208,6 @@ struct ArchetypeSwitcherSheet: View {
                 .execute()
             dismiss()
         } catch {
-            // Rollback
             vm.archetype = prev
             self.error = "kaydedilemedi: \(error.localizedDescription)"
         }
@@ -172,12 +219,10 @@ struct ArchetypeSwitcherSheet: View {
     private var currentLabelOnly: String { labelOnlyOf(vm.archetype ?? .dryroaster) }
 
     private func emojiOf(_ a: ArchetypePrimary) -> String {
-        // Master labels start with emoji + space + name, e.g. "🥀 GICIK"
         String(a.label.first ?? "✨")
     }
 
     private func labelOnlyOf(_ a: ArchetypePrimary) -> String {
-        // Strip emoji + space prefix
         let parts = a.label.split(separator: " ", maxSplits: 1)
         return parts.count == 2 ? String(parts[1]) : a.label
     }

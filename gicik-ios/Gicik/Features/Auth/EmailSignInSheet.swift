@@ -11,6 +11,10 @@ struct EmailSignInSheet: View {
     @State private var isSignUp = false
     let onSuccess: () -> Void
 
+    /// Klavye odak yönetimi — email→password tab order + toolbar dismiss.
+    @FocusState private var focused: Field?
+    private enum Field: Hashable { case email, password }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(isSignUp ? "yeni hesap" : "e-posta ile giriş")
@@ -20,7 +24,11 @@ struct EmailSignInSheet: View {
 
             VStack(spacing: 12) {
                 TextField("", text: $email, prompt: Text("e-posta").foregroundColor(AppColor.text30))
+                    .focused($focused, equals: .email)
+                    .submitLabel(.next)
+                    .onSubmit { focused = .password }
                     .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .padding(.horizontal, 16)
@@ -36,6 +44,13 @@ struct EmailSignInSheet: View {
                     )
 
                 SecureField("", text: $password, prompt: Text("şifre").foregroundColor(AppColor.text30))
+                    .focused($focused, equals: .password)
+                    .submitLabel(.go)
+                    .onSubmit {
+                        focused = nil
+                        Task { await submit() }
+                    }
+                    .textContentType(isSignUp ? .newPassword : .password)
                     .padding(.horizontal, 16)
                     .frame(height: 52)
                     .foregroundColor(.white)
@@ -73,6 +88,12 @@ struct EmailSignInSheet: View {
         .padding(.horizontal, 24)
         .padding(.bottom, 24)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("bitti") { focused = nil }
+            }
+        }
     }
 
     private func submit() async {

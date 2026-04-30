@@ -59,7 +59,7 @@ struct PrimaryButton: View {
     }
 
     private var displayTitle: String {
-        style == .holoFill ? title.uppercased() : title.lowercased()
+        style == .holoFill ? title.trUpper : title.trLower
     }
 
     private var textFont: Font {
