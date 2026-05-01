@@ -98,7 +98,7 @@ struct ScreenshotPickerView: View {
     /// entitlement check'i ile birlikte premium'da gizlenecek.
     private var dailyLimitChip: some View {
         let usedToday = vm.history.filter {
-            Calendar.current.isDateInToday($0.createdAt)
+            Calendar.istanbul.isDateInToday($0.createdAt)
         }.count
         let cap = 3
         let display = "bugün \(min(usedToday, cap))/\(cap)"

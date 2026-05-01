@@ -25,7 +25,10 @@ struct SignInView: View {
                 .clipShape(RoundedRectangle(cornerRadius: AppRadius.button, style: .continuous))
                 .padding(.horizontal, 24)
 
-            // Test path (Phase 2). Phase 6'da gizlenir.
+            // Test path — sadece DEBUG build'de görünür. Apple SSO Production
+            // için yeterli; submission'da bu sheet kullanıcıya açık olmamalı
+            // (CLAUDE.md Phase 6 directive).
+            #if DEBUG
             Button {
                 showEmailSheet = true
             } label: {
@@ -35,6 +38,7 @@ struct SignInView: View {
                     .underline()
             }
             .padding(.top, 14)
+            #endif
 
             if let error {
                 Text(error)

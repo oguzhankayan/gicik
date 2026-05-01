@@ -145,8 +145,28 @@ final class APIClient {
                         return
                     }
 
+                    // Idle watchdog: backend SSE stall ederse (token gelmiyor)
+                    // 30s sonra timeout fail'le. URLSession.timeoutIntervalForRequest
+                    // SSE stream'lerinde tetiklenmiyor (sürekli byte gelmiyor
+                    // diye değil, response başlamadığı için). İçeride manuel.
+                    let watchdogTimeout: UInt64 = 30_000_000_000   // 30s
+                    var watchdog: Task<Void, Never>?
+                    func resetWatchdog() {
+                        watchdog?.cancel()
+                        watchdog = Task {
+                            try? await Task.sleep(nanoseconds: watchdogTimeout)
+                            if !Task.isCancelled {
+                                continuation.finish(throwing: APIError.unknown("üretim zaman aşımı"))
+                            }
+                        }
+                    }
+                    resetWatchdog()
+                    defer { watchdog?.cancel() }
+
                     var buffer = ""
                     for try await line in bytes.lines {
+                        // Her satır geldiğinde watchdog'u yenile.
+                        resetWatchdog()
                         if line.isEmpty {
                             // SSE event terminator (single empty line after "data:")
                             // We accumulate via prefix-stripping per-line below.
@@ -164,6 +184,7 @@ final class APIClient {
                             buffer = ""
                         }
                     }
+                    watchdog?.cancel()
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)

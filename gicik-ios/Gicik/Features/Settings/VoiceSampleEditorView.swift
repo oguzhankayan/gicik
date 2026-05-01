@@ -14,6 +14,10 @@ struct VoiceSampleEditorView: View {
     @State private var loading: Bool = true
     @State private var saving: Bool = false
     @State private var error: String?
+    /// Load fail edip kullanıcı boş editor görürse, "kaydet" basışı
+    /// mevcut sample'ı silebiliyordu (silent overwrite). Bu flag varsa
+    /// editor disabled, save de blocked.
+    @State private var loadFailed: Bool = false
     @FocusState private var focused: Bool
 
     private let maxLength: Int = 500
@@ -106,8 +110,8 @@ struct VoiceSampleEditorView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
                     .frame(minHeight: 200)
-                    .disabled(loading)
-                    .opacity(loading ? 0.4 : 1)
+                    .disabled(loading || loadFailed)
+                    .opacity((loading || loadFailed) ? 0.4 : 1)
                     .onChange(of: sample) { _, new in
                         if new.count > maxLength {
                             sample = String(new.prefix(maxLength))
@@ -161,7 +165,7 @@ struct VoiceSampleEditorView: View {
                                 .fill(isDirty ? AppColor.lime : AppColor.bg1.opacity(0.5))
                         )
                 }
-                .disabled(!isDirty || saving)
+                .disabled(!isDirty || saving || loadFailed)
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 14)
@@ -183,6 +187,7 @@ struct VoiceSampleEditorView: View {
 
     private func load() async {
         loading = true
+        loadFailed = false
         defer { loading = false }
         do {
             let userId = try await SupabaseService.shared.auth.session.user.id
@@ -197,7 +202,8 @@ struct VoiceSampleEditorView: View {
             sample = current
             initialSample = current
         } catch {
-            self.error = "yüklenemedi: \(error.localizedDescription)"
+            self.error = "yüklenemedi: \(error.localizedDescription). tekrar dene."
+            self.loadFailed = true
         }
     }
 

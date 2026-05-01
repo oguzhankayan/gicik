@@ -43,7 +43,7 @@ Bunlar dışında kod tarafı App Store'a archive + submit'e hazır.
 | B3 | RC purchase race | Purchase başarılı sonra 4s grace + refreshCustomerInfo |
 | B4 | Auth cold-launch flicker | `isRestoring` flag + `AuthRestoreSplash` |
 
-### ✅ Faz C kısmen — App Review + Backend correctness
+### ✅ Faz C tamam — App Review + Backend + iOS stability + Settings polish
 | # | Sorun | Fix |
 |---|---|---|
 | C1 | aps-environment dev | Release ayrı entitlements, `production` |
@@ -52,44 +52,18 @@ Bunlar dışında kod tarafı App Store'a archive + submit'e hazır.
 | C4 | $0.50/gün cost ceiling | generate-replies'da `usage_daily.llm_cost_usd >= 0.50` → 429 |
 | C5 | `remaining_today` server-truth | SSE done event'inde, iOS VM track, HomeView chip server'a tercih veriyor |
 | C6 | SDK privacy manifest minimum | Supabase 2.21+, RC 5.20+, PostHog 3.16+, Sentry 8.36+, Mixpanel 4.3+, Lottie 4.5+ |
+| C7 | Calendar Istanbul TZ | iOS `Calendar.istanbul` + backend `todayIstanbulISODate()` — quota reset boundary aynı TZ |
+| C8 | Generation Task cancel | `backToHome()` aktif SSE'yi cancel eder — abandoned stream kotayı ısırmıyor |
+| C9 | SSE idle watchdog | 30s satır gelmezse `APIError.unknown("üretim zaman aşımı")` |
+| C10 | Notification settings toggle | ProfileView'da bell satırı + status pill + iOS Ayarlar deeplink |
+| C11 | EmailSignInSheet hide | `#if DEBUG` gate'i — Release'de Apple SSO only |
+| C12 | PaywallView restore failure | Sessiz fail yerine alert: "aktif aboneliğin görünmüyor..." |
+| C13 | VoiceSample load fail guard | `loadFailed` flag, editor disabled, save blocked — silent overwrite önlendi |
+| C14 | Chip 44pt hit-target | Görsel 36pt, `contentShape` ile hit alanı 44pt |
 
 ---
 
 ## ⏳ Kalan iş
-
-### Faz C — iOS stability (3 fix, ~1 saat)
-
-**Generation Task cancel on backToHome**
-- Şu an: SSE in-flight iken `vm.backToHome()` çağrılırsa Task devam ediyor (kota harcar, kullanıcı home'da).
-- Yapılacak: HomeViewModel'a `private var generationTask: Task<Void, Never>?`, runRealGeneration/runManualGeneration/runTonlaGeneration başında set, `backToHome()`'da cancel.
-
-**SSE idle watchdog**
-- Şu an: `URLSession.bytes` 60s'e kadar stall olabiliyor, UI "yazıyor..." donar.
-- Yapılacak: APIClient.invokeStream'in bytes loop'u içinde her line aralığında resetlenen Task.sleep timer; ör. 30s satır gelmezse `continuation.finish(throwing: APIError.timeout)`.
-
-**Calendar Istanbul TZ pin**
-- Şu an: iOS `Calendar.current.isDateInToday` cihaz TZ; backend `new Date().toISOString().slice(0,10)` UTC. Mismatch.
-- Yapılacak:
-  - `Core/Storage/Calendar+Istanbul.swift` → `static let istanbul = Calendar(...)` Europe/Istanbul.
-  - `HomeView:380` ve `ScreenshotPickerView:101` `Calendar.istanbul` kullansın.
-  - Backend: helper `function todayIstanbulISODate()` → `parse-screenshot` + `generate-replies`'daki `usage_daily` lookup'ları bu helper'a geçsin.
-
-### Faz C — Settings + UX polish (5 fix, ~1.5 saat)
-
-**Notification toggle settings'te**
-- ProfileView "kişisel" section'ına yeni satır: "bildirimler" → state badge (açık/kapalı) + tap iOS Ayarlar'a gönderir (UNUserNotificationCenter.current().getNotificationSettings ile current state oku).
-
-**EmailSignInSheet hide (CLAUDE.md Phase 6 directive)**
-- SignInView:28 yorumda "Phase 6'da gizlenir" diye yazıyor. Apple SSO yeterli; email path Release config'te `#if DEBUG` ile gate.
-
-**PaywallView restore failure UI**
-- `runRestore()` false dönerse şu an sessiz. Alert: "satın alma bulunamadı. mağazadan satın aldığından emin misin?".
-
-**VoiceSampleEditorView load fail guard**
-- `load()` fail olursa editor enabled + boş, kullanıcı save edince mevcut sample'ı silebilir. Fail'de error state göster, save disable.
-
-**Chip 44pt hit-target**
-- `DesignSystem/Components/Chip.swift` şu an ~36pt. `.frame(minHeight: 44)` veya `.contentShape(Rectangle()).frame(minHeight: 44)` ekle.
 
 ### Faz D — TestFlight (~1 saat manuel)
 

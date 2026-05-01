@@ -13,6 +13,7 @@ struct PaywallView: View {
     @State private var carouselIndex = 0
     @State private var showPlanSheet = false
     @State private var showTerms = false
+    @State private var restoreError: String?
     @State private var showPrivacy = false
 
     init(
@@ -181,11 +182,22 @@ struct PaywallView: View {
             LegalSheet(kind: .privacy) { showPrivacy = false }
                 .presentationBackground(AppColor.bg0)
         }
+        .alert("geri yükleme", isPresented: .constant(restoreError != nil)) {
+            Button("tamam", role: .cancel) { restoreError = nil }
+        } message: {
+            Text(restoreError ?? "")
+        }
     }
 
     private func runRestore() async {
         let ok = await subs.restore()
-        if ok { onContinue() }
+        if ok {
+            onContinue()
+        } else {
+            // Sessiz fail user'ı şüpheye düşürüyordu ("ödedim ama olmadı?").
+            // Açık alert: aktif satın alma yok demek.
+            restoreError = "aktif aboneliğin görünmüyor. mağazadan satın aldığından emin misin?"
+        }
     }
 
     /// Carousel auto-advance — `.task` ile bağlandığı için view disappear'da

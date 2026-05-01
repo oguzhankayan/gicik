@@ -1,5 +1,7 @@
 import SwiftUI
 import StoreKit
+import UIKit
+import UserNotifications
 
 /// "sen" hub — eskiden Profile + Settings ayrıydı, kullanıcı iki tap atıyordu.
 /// Birleştirildi (2026-04-30): topBar avatar/profil tap'i direkt buraya açar.
@@ -30,6 +32,7 @@ struct ProfileView: View {
     @State private var showingDeleteConfirm = false
     @State private var deletingAccount = false
     @State private var deleteError: String?
+    @State private var notificationAuthorized: Bool = false
 
     /// AI consent durumunu UD'den oku — AIConsentView'ın yazdığı flag.
     @AppStorage(UDKey.aiConsentGiven.rawValue) private var aiConsentGiven: Bool = false
@@ -360,6 +363,83 @@ struct ProfileView: View {
                 subtitle: "9 soru, 90 saniye.",
                 chevron: true,
                 action: onRecalibrate)
+            divider
+            // Notification toggle — onboarding'de izin alındı, sonradan
+            // değiştirme yolu yoktu. iOS'ta toggle kontrolü Settings.app
+            // dışından mümkün değil; bu satır current state'i göstermek +
+            // Ayarlar'a deeplink açmak için.
+            notificationRow
+        }
+    }
+
+    /// Bildirim durumu satırı — UNUserNotificationCenter'dan async oku,
+    /// "açık/kapalı" pill ile göster, tap iOS Ayarlar'a deeplink.
+    @ViewBuilder
+    private var notificationRow: some View {
+        Button {
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "bell")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white.opacity(0.85))
+                    .frame(width: 24)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("bildirimler")
+                        .font(AppFont.body(14))
+                        .foregroundColor(.white.opacity(0.92))
+                    Text("ayarlar'dan değiştir.")
+                        .font(AppFont.body(11))
+                        .foregroundColor(AppColor.text40)
+                }
+                Spacer()
+                notificationStatusPill
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 12))
+                    .foregroundColor(AppColor.text40)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+        }
+        .buttonStyle(.plain)
+        .task { await refreshNotificationStatus() }
+        .accessibilityLabel("bildirimler, durum: \(notificationStatusLabel). ayarlar'a git.")
+    }
+
+    @ViewBuilder
+    private var notificationStatusPill: some View {
+        let isOn = notificationAuthorized
+        Text(isOn ? "açık" : "kapalı")
+            .font(AppFont.mono(10))
+            .tracking(0.04 * 10)
+            .foregroundColor(isOn ? AppColor.lime : AppColor.text60)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                Capsule()
+                    .fill((isOn ? AppColor.lime : AppColor.text40).opacity(0.12))
+                    .overlay(
+                        Capsule()
+                            .strokeBorder((isOn ? AppColor.lime : AppColor.text40).opacity(0.35),
+                                          lineWidth: 1)
+                    )
+            )
+    }
+
+    private var notificationStatusLabel: String {
+        notificationAuthorized ? "açık" : "kapalı"
+    }
+
+    private func refreshNotificationStatus() async {
+        let s = await UNUserNotificationCenter.current().notificationSettings()
+        await MainActor.run {
+            notificationAuthorized = (s.authorizationStatus == .authorized
+                                      || s.authorizationStatus == .provisional
+                                      || s.authorizationStatus == .ephemeral)
         }
     }
 

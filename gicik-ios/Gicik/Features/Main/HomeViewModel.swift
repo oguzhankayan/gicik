@@ -106,6 +106,11 @@ final class HomeViewModel {
     /// Picker'daki "elle yaz" butonu set eder. Mode değişiminde resetlenir.
     var isManualMode: Bool = false
 
+    /// Aktif generation Task — `backToHome()` veya `regenerate()` çağrılınca
+    /// cancel edilir. Aksi halde abandoned SSE stream'leri kotayı ısırırdı:
+    /// kullanıcı home'a dönmüş olsa bile backend reply üretmeye devam eder.
+    private var generationTask: Task<Void, Never>?
+
     enum PickerState: Equatable {
         case empty
         case uploading(progress: Double)
@@ -126,6 +131,11 @@ final class HomeViewModel {
     }
 
     func backToHome() {
+        // In-flight SSE stream'i iptal et — abandoned generation kotayı
+        // ısırmasın. Task cancel cooperative; URLSession.bytes loop'u
+        // for-try-await'te CancellationError throw eder, finishes.
+        generationTask?.cancel()
+        generationTask = nil
         resetFlowState()
         stage = .home
     }
@@ -185,10 +195,10 @@ final class HomeViewModel {
         stage = .generation(mode)
 
         if mode == .tonla {
-            Task { await runTonlaGeneration() }
+            generationTask = Task { await runTonlaGeneration() }
         } else {
             guard let data = pickedScreenshot else { return }
-            Task { await runRealGeneration(mode: mode, imageData: data) }
+            generationTask = Task { await runRealGeneration(mode: mode, imageData: data) }
         }
     }
 
@@ -197,7 +207,7 @@ final class HomeViewModel {
         guard case .picker(let mode) = stage,
               let data = pickedScreenshot else { return }
         stage = .generation(mode)
-        Task { await runRealGeneration(mode: mode, imageData: data) }
+        generationTask = Task { await runRealGeneration(mode: mode, imageData: data) }
     }
 
     /// Manuel giriş ekranından generation'a geçiş (cevap/açılış/davet).
@@ -232,7 +242,7 @@ final class HomeViewModel {
         }
 
         stage = .generation(mode)
-        Task { await runManualGeneration(mode: mode) }
+        generationTask = Task { await runManualGeneration(mode: mode) }
     }
 
     /// Tonla draft view'dan generation'a geçiş.
@@ -248,7 +258,7 @@ final class HomeViewModel {
             return
         }
         stage = .generation(.tonla)
-        Task { await runTonlaGeneration() }
+        generationTask = Task { await runTonlaGeneration() }
     }
 
     /// Streaming partial result — GenerationView reads this for live UI.

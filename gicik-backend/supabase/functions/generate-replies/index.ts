@@ -21,6 +21,7 @@
 import { preflightOk, errorResponse, corsHeaders } from "../_shared/cors.ts";
 import { requireAuth, AuthError } from "../_shared/auth.ts";
 import { loadPrompt } from "../_shared/prompt-loader.ts";
+import { todayIstanbulISODate } from "../_shared/dates.ts";
 import {
   buildSystemBlocks,
   streamAnthropic,
@@ -131,7 +132,9 @@ Deno.serve(async (req: Request) => {
 
     // Bugünkü usage row'unu hem free tier check'i hem cost ceiling
     // kontrolü hem de response'taki remaining_today için tek seferde çek.
-    const today = new Date().toISOString().slice(0, 10);
+    // "bugün" boundary'si Europe/Istanbul (brand TR-first); UTC ile mismatch
+    // yapardı (sınır saatlerde reset farklı). Bkz. _shared/dates.ts.
+    const today = todayIstanbulISODate();
     const { data: usage } = await client
       .from("usage_daily")
       .select("generation_count, llm_cost_usd")

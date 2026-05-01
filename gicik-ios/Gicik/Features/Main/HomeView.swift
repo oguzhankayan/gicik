@@ -377,7 +377,7 @@ struct HomeView: View {
                 if let remaining = vm.remainingToday {
                     return cap - remaining
                 }
-                return vm.history.filter { Calendar.current.isDateInToday($0.createdAt) }.count
+                return vm.history.filter { Calendar.istanbul.isDateInToday($0.createdAt) }.count
             }()
             let remaining = max(0, cap - usedToday)
             let isLow = remaining == 0
@@ -691,7 +691,7 @@ struct HomeView: View {
     ///   2. mode çeşitliliği varsa → "en çok {mode} modu"
     ///   3. yoksa nil
     private func computeHomeStats() -> HomeStats {
-        let cal = Calendar.current
+        let cal = Calendar.istanbul
         let now = Date()
         let weekAgo = now.addingTimeInterval(-7 * 86400)
         let weekItems = vm.history.filter { $0.createdAt >= weekAgo }
