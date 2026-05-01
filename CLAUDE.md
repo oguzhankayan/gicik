@@ -31,8 +31,8 @@ Dating-first **ama Apple Review için "iletişim koçu" pozisyonlanır**. Demo c
 
 İki repo: `efso-ios/` ve `efso-backend/`.
 
-- iOS dosya organizasyonu: `App/`, `DesignSystem/`, `Features/{Onboarding,Main,Modes,Profile,Settings}/`, `Core/{Networking,Auth,Storage,Subscription,Analytics}/`, `Models/`, `Resources/`.
-- Backend: `supabase/migrations/`, `supabase/functions/{_shared,parse-screenshot,generate-replies,calibrate,prompt-feedback,cleanup-storage}/`, `prompts/` (version-controlled system prompts, L0-L4 + tones + stage1), `eval/`.
+- iOS dosya organizasyonu: `App/`, `DesignSystem/`, `Features/{Auth,HowItWorks,Onboarding,Main,Profile,Settings}/`, `Core/{Networking,Auth,Storage,Subscription,Analytics}/`, `Models/`, `Resources/`. (Tüm 4 mod + manuel composer view'ları `Features/Main/` altında.)
+- Backend: `supabase/migrations/`, `supabase/functions/{_shared,parse-screenshot,generate-replies,calibrate,prompt-feedback,cleanup-storage,delete-account,create-text-conversation,revenuecat-webhook}/`, `prompts/` (L0-L4 + 4 mode + 5 tone + 6 archetype + stage1_parser), `scripts/` (seed-prompts + 6 eval matrix).
 
 Aktif modlar (MVP):
 - **cevap** — ekran görüntüsü ver, 3 cevap dön (primary, hero card)
@@ -74,9 +74,11 @@ Splash → Demographic → CalibrationIntro → CalibrationQuiz (×9) → Calibr
 
 - Onboarding sonu (DemoUpload sonrası).
 - Trial toggle **DEFAULT ON**, ana CTA "ücretsiz başlat".
-- ₺49/hafta veya ₺499/yıl. "İstediğin zaman iptal" footnote, restore visible.
-- Free: 3 cevap/gün, sadece "default" tone, sadece **cevap** modu.
-- Premium: sınırsız + 4 mod + tüm tone.
+- ₺49/hafta. (Yıllık ₺499 wire değil, Phase 7 backlog.) "İstediğin zaman iptal" footnote, restore visible.
+- **Free: 3 üretim/gün** — istediği modda, istediği tonda harcayabilir. Tüm 4 mod açık, tüm 5 ton açık.
+- **Premium: sınırsız.** Tek pitch: throttle kalkar.
+- Mode/tone kilidi yok (2026-05-01 itibariyle kaldırıldı; conversion için kullanıcının tüm değeri denemiş olması gerekli).
+- Server-side $0.50/gün hard cost cap (CLAUDE.md mandate, generate-replies'da enforce).
 
 ---
 
@@ -131,16 +133,24 @@ Aktif version DB'de (`prompt_versions` tablosu, A/B + rollback). `seed-prompts.t
 
 ---
 
-## Phase plan (özet)
+## Phase plan (durum: 2026-05-01)
 
-0. **Bootstrap** — repo init, migration, Apple Sign In, design tokens.
-1. **Onboarding** — 12 ekran, calibrate endpoint, deterministik arketip.
-2. **Vision pipeline** — parse + generate (streaming), prompt cache, failover. Eval: 20 senaryo %80+, 5 injection blocked.
-3. **Modes + Profile** — 4 mod (cevap, açılış, tonla, davet) uçtan uca, history, arketip kart.
-4. **Subscription** — StoreKit 2 + RevenueCat, trial, soft paywall, restore, webhook sync.
-5. **Polish** — animations, haptics, empty/error states, VoiceOver, localization, App Store metadata.
-6. **TestFlight & Launch** — 50 closed beta, 7-gün retention >40% hedef, submission.
-7. **Post-launch** — feature flags, prompt versioning UI, WidgetKit, AppShortcuts, push series.
+0. **Bootstrap** ✅ — repo init, migration, Apple Sign In, design tokens.
+1. **Onboarding** ✅ — 12 ekran, calibrate endpoint, deterministik arketip.
+2. **Vision pipeline** ✅ — parse + generate (streaming), prompt cache, failover. Eval: 4 mode için ayrı matrix (test-acilis/davet/tonla/matrix.ts), her mode v2/v3 sertleştirilmiş prompts.
+3. **Modes + Profile** ✅ — 4 mod (cevap, açılış, tonla, davet) uçtan uca + manuel chat composer + manuel profile entry, history, arketip kart, hesabı sil, AI consent revoke.
+4. **Subscription** %90 — StoreKit 2 + RevenueCat + restore + cost ceiling + RC purchase race grace period. Webhook canlı test + yıllık ürün wire kaldı.
+5. **Polish** %85 — animations, haptics, empty/error states, VoiceOver, hit-target 44pt, App Store metadata kaldı.
+6. **TestFlight & Launch** ⏳ user manual — DEVELOPMENT_TEAM, signing, archive, beta invite. Submission blocker'ları (Privacy Manifest, AppIcon, version, ITSAppUsesNonExemptEncryption) tamam.
+7. **Post-launch** — feature flags, prompt versioning UI, WidgetKit, AppShortcuts, push series, yıllık ürün, AI consent backend sync.
+
+**Ek tamamlananlar (Faz A/B/C, audit-driven):**
+- 8 submission blocker (armv7, AppIcon, version, encryption, terms+privacy, competitor names, camera string, 24h cron live)
+- 4 prod bug (free quota chip server-truth, SSE drop detection, RC purchase race, auth cold-launch flicker)
+- 6 dead-tap fix (ReplyCard onCopy, calibration stuck, AI consent zombie, ManualProfile hint, PhotoKit denied recovery)
+- App Review compliance (Apple SSO revocation listener, in-app account deletion, aps-environment Release, SDK privacy manifest min versions)
+- iOS stability (Calendar.istanbul TZ, Generation Task cancel on backToHome, SSE 30s idle watchdog)
+- Settings polish (notification toggle, EmailSignInSheet hide, restore failure UI, VoiceSample load guard, Chip 44pt)
 
 ---
 

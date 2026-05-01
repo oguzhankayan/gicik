@@ -1,4 +1,11 @@
-# Efso — Build Plan
+# Efso — Build Plan (📁 ARCHIVE)
+
+> ⚠️ **Bu dosya tarihsel referans.** Phase 0-3 tamamen, Phase 4-5 büyük ölçüde
+> tamamlandı (2026-04-29 → 2026-05-01). Aktif state için **`HANDOFF.md`** ve
+> **`README.md`** bak. Bu dosya orijinal commit-by-commit planın görünümü;
+> task listesi artık güncel değil.
+
+---
 
 Bu plan `prompt.md` (master) + `design/` referansları + tasarım sistemini somut, **commit-by-commit** task listesine çevirir. Phase 0'dan Phase 7'ye sırayla yürütülür.
 

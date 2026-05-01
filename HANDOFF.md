@@ -1,10 +1,15 @@
 # Efso — Production Readiness Handoff
 
-> **Rebrand 2026-05-01:** Efso → Efso. Display name + UI copy + logo + AppIcon
-> + L0 voice + dryroaster archetype label rename. Bundle ID `to.tikla.efso`
-> ve internal repo path'ler korundu (App Store Connect external rebrand
-> ayrı iş). Voice pivot: sakin/ironik mesafeli → GenZ tempo, sokak zekası,
-> internet rahatlığı + bilinçli ironi.
+> **Rebrand 2026-05-01:** Gıcık → Efso (full).
+> - Display name + UI copy + logo + AppIcon ("e") + L0 voice rewrite
+> - Bundle ID `to.tikla.efso`, Xcode target `Efso`, scheme `Efso`
+> - Folder paths: `efso-ios/Efso/`, `efso-backend/`
+> - Web URLs: `efso.app/{privacy,terms}`, `support@efso.app`
+> - StoreKit IDs: `efso_weekly`, `efso_yearly`
+> - GitHub repo: `oguzhankayan/efso`
+> - Voice pivot: sakin/ironik mesafeli → **GenZ tempo, sokak zekası, internet rahat ama klişe değil, bilinçli ironi**
+>
+> Kalan user-action: `efso.app` domain'ini yayına alma + sandbox trial doğrulaması.
 
 **Son güncelleme:** 2026-05-01
 **Durum:** Submission-ready dilim ✅ + polish kalan ⏳

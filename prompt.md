@@ -1,6 +1,9 @@
-# Efso — Claude Code Master Prompt
+# Efso — Claude Code Master Prompt (📁 ARCHIVE)
 
-> **Bu doküman ne için:** Gıcık iOS uygulaması ve backend'inin sıfırdan production'a kadar olan inşa süreci için Claude Code'a verilecek master context dosyası. Claude Code bunu CLAUDE.md olarak kullanır, faz faz ilerler.
+> ⚠️ **Bu dosya orijinal master brief.** İnşa başlamadan önce yazılan vizyon
+> dökümü. Aktif Claude Code context için **`CLAUDE.md`** kullan (faz
+> tamamlandıkça güncelleniyor). Bu dosya tarihsel referans olarak duruyor —
+> "neyi nereden başladık" kayıtsızlığı için.
 
 > **Nasıl kullanılır:** Bu dosyayı projenin root'una `CLAUDE.md` olarak koy. Claude Code başlatıldığında otomatik okuyacak. Her phase'i ayrı bir task/PR olarak işle.
 

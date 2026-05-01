@@ -1,14 +1,13 @@
 # efso-ios — Setup Guide
 
-Phase 0.3 — sıfırdan Xcode projesini ayağa kaldırma. **5-10 dakika.**
+Sıfırdan Xcode projesini ayağa kaldırma. **5-10 dakika.**
 
 ## Önkoşul
 
 ```bash
 brew install xcodegen
+brew install supabase/tap/supabase
 ```
-
-(xcodegen istemiyorsan en alttaki "manuel Xcode" yolunu izle.)
 
 ## Adımlar
 
@@ -20,9 +19,10 @@ cp Debug.xcconfig.template Debug.xcconfig
 cp Release.xcconfig.template Release.xcconfig
 ```
 
-`Debug.xcconfig` ve `Release.xcconfig` zaten `.gitignore`'da. **Gerçek anahtarları içlerine yaz** (Supabase URL, anon key, vb.).
-
-İlk başta sadece Supabase URL + anon key yeterli. Diğerleri (Sentry, PostHog, Mixpanel, RevenueCat) Phase 0+'da boş kalabilir; ilgili `bootstrap` fonksiyonları `nil`/`empty` durumunda no-op davranır.
+İkisi de gitignore'da. Gerçek anahtarları içlerine yaz:
+- `SUPABASE_URL` + `SUPABASE_ANON_KEY` (zorunlu)
+- `REVENUECAT_API_KEY` (Phase 4 — yoksa premium DEBUG'da otomatik açık, asserts release'de fail eder)
+- `SENTRY_DSN`, `POSTHOG_API_KEY`, `MIXPANEL_TOKEN` (opsiyonel, boşsa no-op)
 
 ### 2. Xcode projesini üret
 
@@ -30,13 +30,10 @@ cp Release.xcconfig.template Release.xcconfig
 xcodegen generate
 ```
 
-Bu `project.yml`'den `Efso.xcodeproj` üretir. SPM dependencies otomatik tanımlı:
-- supabase-swift
-- RevenueCat
-- PostHog
-- Sentry
-- Mixpanel
-- Lottie
+`project.yml`'den `Efso.xcodeproj` üretir. SPM dependencies otomatik:
+- supabase-swift (≥2.21), RevenueCat (≥5.20), PostHog (≥3.16), Sentry (≥8.36), Mixpanel (≥4.3), Lottie (≥4.5)
+
+Min versiyonlar Privacy Manifest taşıyan sürümler — App Store submission için.
 
 ### 3. Xcode'da aç
 
@@ -46,93 +43,74 @@ open Efso.xcodeproj
 
 İlk açılışta Xcode SPM paketlerini indirir (1-2 dakika).
 
-### 4. xcconfig'leri Xcode'a bağla
-
-Xcode'da:
-1. Proje navigator'da `Efso` (en üst) → seç
-2. `Project` (target değil, project) → `Info` tab
-3. `Configurations` altında:
-   - **Debug** → `Efso` target'ı için → `Debug` config seç
-   - **Release** → `Efso` target'ı için → `Release` config seç
-
-> xcodegen otomatik bağlamadıysa manuel yap. Sonra `Configuration.swift`'teki env vars çalışır.
-
-### 5. Apple Sign In capability
+### 4. Apple Developer Team + capabilities
 
 1. `Efso` target → `Signing & Capabilities` tab
-2. Team seç (Apple Developer Team ID)
-3. `+ Capability` → "Sign in with Apple" ekle
-4. Push Notifications capability'sini de ekle (Phase 7'de kullanılacak)
+2. **Team** seç (Apple Developer Team ID)
+3. project.yml içindeki `DEVELOPMENT_TEAM` boş — Xcode'dan team seçince auto-doldurur, ya da `project.yml` settings.base.DEVELOPMENT_TEAM kendin yaz, regen et.
+4. Capability'ler zaten entitlements üzerinden tanımlı:
+   - **Sign in with Apple** ✓ (Default)
+   - **Push Notifications** — Debug `aps-environment=development`, Release `production` (ayrı entitlements file)
 
-### 6. Fontları indir + ekle
+### 5. Fontları indir + ekle
 
-1. **Space Grotesk** — https://fonts.google.com/specimen/Space+Grotesk
-   - Regular, Medium, SemiBold, Bold (4 dosya)
-2. **JetBrains Mono** — https://fonts.google.com/specimen/JetBrains+Mono
-   - Regular, Medium (2 dosya)
+1. **Space Grotesk** — https://fonts.google.com/specimen/Space+Grotesk (Regular/Medium/SemiBold/Bold)
+2. **JetBrains Mono** — https://fonts.google.com/specimen/JetBrains+Mono (Regular/Medium)
 
-İndirilenleri `Efso/Resources/Fonts/` klasörüne kopyala. xcodegen sonra `UIAppFonts` Info.plist'e ekledi (project.yml'de tanımlı).
+`Efso/Resources/Fonts/` klasörüne kopyala. xcodegen `UIAppFonts` Info.plist'e otomatik ekler.
 
-### 7. Supabase backend'i deploy et
+### 6. Supabase backend
 
-Önce backend kuralım — bu olmadan auth çalışmaz.
+Backend kurulumu için: `efso-backend/README.md`. Hızlı versiyon:
 
 ```bash
 cd ../efso-backend
-brew install supabase/tap/supabase
-
 supabase login
-supabase link --project-ref <senin-supabase-project-ref>
-supabase db push       # migrations'ı uygula
-supabase functions deploy calibrate
+supabase link --project-ref <project-ref>
+supabase db push
+deno run --allow-read --allow-net --allow-env scripts/seed-prompts.ts
+supabase functions deploy parse-screenshot generate-replies calibrate \
+  delete-account cleanup-storage prompt-feedback create-text-conversation
 ```
 
 Supabase Dashboard'da:
-- **Auth → Providers → Apple** → enable, Apple bundle ID + key bilgilerini gir
-- **Storage → Buckets** → `screenshots` bucket'ı görmeli (migration auto-create)
+- **Auth → Providers → Apple** → enable, bundle ID + key
+- **Storage → Buckets** → `screenshots` (migration auto-create)
+- **Database → Extensions** → pg_cron + pg_net ON
+- **Vault** → `service_role_key` ekle (cron için)
 
-### 8. Build + Run
+### 7. Build + Run
 
-Xcode'a dön:
-- Scheme: `Efso`
-- Destination: `iPhone 17 Pro` simulator (iOS 17+)
-- ⌘R çalıştır
+Xcode → Scheme `Efso`, Destination iPhone simulator (iOS 17+) → ⌘R.
 
-İlk build:
-- `SignInView` görünmeli (logo + "yazma. efso yazsın." + Apple butonu)
-- Apple ile giriş → Supabase Apple SSO → success → `HomeView` (placeholder)
-- "çıkış yap" butonu → `SignInView`'e dönüş
+İlk build kontrol:
+- SignInView: logo + "yazma. efso yazsın." + Apple butonu
+- Apple SSO → onboarding (12 ekran) → calibration reveal → demo upload → paywall → home
 
-### 9. Sentry crash test
+## TestFlight (Faz D)
 
-`HomeView.swift`'te geçici olarak ekle:
-```swift
-PrimaryButton("crash") { fatalError("test crash") }
-```
+Submission'a hazırsın. Adımlar:
 
-Çalıştır, butonua bas, crash'i Sentry dashboard'da gör. Sonra sil.
+1. **Archive**: Xcode → Product → Destination "Any iOS Device (arm64)" → Product → Archive
+2. **Distribute**: Organizer → Distribute App → TestFlight & App Store → Upload
+3. **App Store Connect**:
+   - Bundle ID `to.tikla.efso` register
+   - App icon (1024×1024) — placeholder zaten var, custom hazır olunca değiştir
+   - Screenshots (en az 6.7" iPhone — 1290×2796), %30+ non-dating
+   - Privacy questionnaire — `PrivacyInfo.xcprivacy` referansla doldur
+   - Subscription product `efso_weekly` — price + duration + auto-renew terms
+4. **Internal Testing** → 1-2 kişi invite
+5. **External Testing** → 50 closed beta (Apple review 1-2 gün)
 
-## Phase 0 DoD ✅
-
-- [ ] Sign in with Apple çalışıyor
-- [ ] HomeView placeholder görünüyor
-- [ ] Sign out → SignInView dönüş
-- [ ] Sentry crash test ✓
-- [ ] Build warning'siz
-
-## Sonraki
-
-**Phase 1 Onboarding** — `BUILD_PLAN.md` Phase 1'i oku, sırasıyla 1.1'den başla.
-
----
+Detay: root `HANDOFF.md`.
 
 ## Manuel Xcode (xcodegen olmadan)
 
 Tercih etmiyorsan:
 1. Xcode → New Project → iOS App, SwiftUI, Swift 6
 2. Bundle ID: `to.tikla.efso`
-3. `efso-ios/Efso/` altındaki tüm `.swift` dosyalarını sürükleyip bırak
-4. SPM dependencies'i tek tek ekle (project.yml'deki `packages:` listesi)
+3. `Efso/` altındaki tüm `.swift` dosyalarını sürükleyip bırak
+4. SPM dependencies tek tek ekle (project.yml `packages:`)
 5. Capability'leri ekle, fontları kopyala, xcconfig'leri bağla
 
 xcodegen yolu çok daha hızlı.
