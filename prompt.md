@@ -1,4 +1,4 @@
-# Gıcık — Claude Code Master Prompt
+# Efso — Claude Code Master Prompt
 
 > **Bu doküman ne için:** Gıcık iOS uygulaması ve backend'inin sıfırdan production'a kadar olan inşa süreci için Claude Code'a verilecek master context dosyası. Claude Code bunu CLAUDE.md olarak kullanır, faz faz ilerler.
 
@@ -8,7 +8,7 @@
 
 ## 1. TL;DR
 
-**Gıcık**, Türkiye-first bir AI iletişim koçu uygulaması. Kullanıcı zor mesajlar (Tinder, Bumble, Hinge, Instagram DM, ex ile konuşma, patron mesajı) için ekran görüntüsü yükler. Uygulama 2 aşamada işler: (1) screenshot'ı parse eder, (2) kullanıcının seçtiği tone'da 3 cevap önerisi üretir.
+**Efso**, Türkiye-first bir AI iletişim koçu uygulaması. Kullanıcı zor mesajlar (Tinder, Bumble, Hinge, Instagram DM, ex ile konuşma, patron mesajı) için ekran görüntüsü yükler. Uygulama 2 aşamada işler: (1) screenshot'ı parse eder, (2) kullanıcının seçtiği tone'da 3 cevap önerisi üretir.
 
 Uygulama dating-first ama **Apple App Store Review için "iletişim koçu" pozisyonlanır**. Demo content'in en az %30'u non-dating (iş, aile, arkadaş) olmalıdır.
 
@@ -83,18 +83,18 @@ Uygulama dating-first ama **Apple App Store Review için "iletişim koçu" pozis
 İki ayrı repo:
 
 ```
-gicik-ios/              # iOS uygulaması
-gicik-backend/          # Supabase migrations + edge functions
+efso-ios/              # iOS uygulaması
+efso-backend/          # Supabase migrations + edge functions
 ```
 
-### gicik-ios/ dosya yapısı
+### efso-ios/ dosya yapısı
 
 ```
-gicik-ios/
-├── Gicik.xcodeproj
+efso-ios/
+├── Efso.xcodeproj
 ├── Gicik/
 │   ├── App/
-│   │   ├── GicikApp.swift            # @main entry
+│   │   ├── EfsoApp.swift            # @main entry
 │   │   ├── AppDelegate.swift
 │   │   ├── RootView.swift            # auth router
 │   │   └── Configuration.swift       # env, API keys
@@ -184,14 +184,14 @@ gicik-ios/
 │       └── Lottie/
 │           └── calibration-reveal.json
 │
-├── GicikTests/
-└── GicikUITests/
+├── EfsoTests/
+└── EfsoUITests/
 ```
 
-### gicik-backend/ dosya yapısı
+### efso-backend/ dosya yapısı
 
 ```
-gicik-backend/
+efso-backend/
 ├── supabase/
 │   ├── config.toml
 │   ├── migrations/
@@ -1106,7 +1106,7 @@ const ARCHETYPE_DISPLAY: Record<Archetype, DisplayConfig> = {
 
 **iOS:**
 - Xcode project (iOS 17+, SwiftUI lifecycle)
-- Bundle ID: `to.tikla.gicik` (veya senin tercihin)
+- Bundle ID: `to.tikla.efso` (veya senin tercihin)
 - Info.plist: notifications, photo picker, sign in with apple capabilities
 - Package dependencies: Supabase Swift SDK, RevenueCat, PostHog, Sentry, Mixpanel, Lottie
 - DesignSystem klasörü: Colors, Typography, Spacing tokens
@@ -1342,8 +1342,8 @@ Bu dokümanı okuduktan sonra ilk task:
 
 ```
 Phase 0: Bootstrap
-- gicik-backend repo'sunu init et (Supabase CLI)
-- gicik-ios Xcode project oluştur (iOS 17+, SwiftUI)
+- efso-backend repo'sunu init et (Supabase CLI)
+- efso-ios Xcode project oluştur (iOS 17+, SwiftUI)
 - DesignSystem token'larını yaz
 - Supabase initial migration yaz
 - Sign in with Apple flow'unu test et

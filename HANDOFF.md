@@ -1,7 +1,7 @@
 # Efso — Production Readiness Handoff
 
 > **Rebrand 2026-05-01:** Gıcık → Efso. Display name + UI copy + logo + AppIcon
-> + L0 voice + dryroaster archetype label rename. Bundle ID `to.tikla.gicik`
+> + L0 voice + dryroaster archetype label rename. Bundle ID `to.tikla.efso`
 > ve internal repo path'ler korundu (App Store Connect external rebrand
 > ayrı iş). Voice pivot: sakin/ironik mesafeli → GenZ tempo, sokak zekası,
 > internet rahatlığı + bilinçli ironi.
@@ -77,7 +77,7 @@ Bunlar dışında kod tarafı App Store'a archive + submit'e hazır.
 - `project.yml` settings.base.DEVELOPMENT_TEAM şu an boş; kendi Apple Developer Team ID'ni gir.
 
 **Signing**
-- Xcode'da Gicik target → Signing & Capabilities → Automatically manage signing tick + Team seç.
+- Xcode'da  Efso target → Signing & Capabilities → Automatically manage signing tick + Team seç.
 - Provisioning profile'lar otomatik üretilir.
 
 **Archive**
@@ -85,7 +85,7 @@ Bunlar dışında kod tarafı App Store'a archive + submit'e hazır.
 - Organizer → Distribute App → TestFlight & App Store → Upload.
 
 **App Store Connect**
-- Bundle ID `to.tikla.gicik` register et.
+- Bundle ID `to.tikla.efso` register et.
 - App icon (1024×1024) yükle (placeholder zaten var, custom design hazır olunca değiştir).
 - Screenshots (en az 6.7" iPhone — 1290×2796).
 - Privacy questionnaire doldur (PrivacyInfo zaten guideline'da).
@@ -152,7 +152,7 @@ Bunlar dışında kod tarafı App Store'a archive + submit'e hazır.
 ## Test scriptleri
 
 ```bash
-cd gicik-backend
+cd efso-backend
 set -a && source .env.local && set +a
 
 # Eval matrix per mode (Anthropic API kullanır)

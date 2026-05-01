@@ -1,4 +1,4 @@
-# Gıcık — Build Plan
+# Efso — Build Plan
 
 Bu plan `prompt.md` (master) + `design/` referansları + tasarım sistemini somut, **commit-by-commit** task listesine çevirir. Phase 0'dan Phase 7'ye sırayla yürütülür.
 
@@ -7,7 +7,7 @@ Bu plan `prompt.md` (master) + `design/` referansları + tasarım sistemini somu
 > - `CLAUDE.md` — Claude Code'un her oturumda yüklediği bağlam (= prompt.md kopyası)
 > - `BUILD_PLAN.md` — bu dosya, faz/task listesi
 >
-> **Repo stratejisi:** Şu an monorepo (`gicik/`). Phase 0 sonunda `gicik-ios/` ve `gicik-backend/` alt-dizinlerine ayrılır. (Master prompt iki ayrı repo öneriyor; solo dev için monorepo + workspace daha pratik. Sonra ayrılabilir.)
+> **Repo stratejisi:** Şu an monorepo (`gicik/`). Phase 0 sonunda `efso-ios/` ve `efso-backend/` alt-dizinlerine ayrılır. (Master prompt iki ayrı repo öneriyor; solo dev için monorepo + workspace daha pratik. Sonra ayrılabilir.)
 
 ---
 
@@ -30,7 +30,7 @@ Bu plan `prompt.md` (master) + `design/` referansları + tasarım sistemini somu
 
 > **Tek tasarım kaynağı:** `design-source/project/gicik design.html` (Claude Design export). 24 ekran, 5 section. Eski `design/` PNG mockup klasörü silindi — artık kullanılmıyor.
 >
-> **Component kaynağı:** `design-source/swiftui/DesignTokens.swift` + `Primitives.swift` (Phase 0.4'te bölünüp `gicik-ios/Gicik/DesignSystem/` altına taşınır).
+> **Component kaynağı:** `design-source/swiftui/DesignTokens.swift` + `Primitives.swift` (Phase 0.4'te bölünüp `efso-ios/Efso/DesignSystem/` altına taşınır).
 
 ### 01 — Onboarding (7 ekran)
 
@@ -106,13 +106,13 @@ Kaynak: tek `EmptyState` component, `kind` prop'u ile varyant.
 ## PHASE 0 — Bootstrap (1-2 gün)
 
 ### 0.1 Repo yapısını ayır
-- [ ] `gicik-ios/` ve `gicik-backend/` alt klasörlerini oluştur
+- [ ] `efso-ios/` ve `efso-backend/` alt klasörlerini oluştur
 - [ ] `prompt.md`, `CLAUDE.md`, `BUILD_PLAN.md` root'ta kalsın
-- [ ] `design/` klasörünü `gicik-ios/Resources/design-references/` altına taşı (committed reference, build'e dahil değil — `.xcodeproj` exclude)
+- [ ] `design/` klasörünü `efso-ios/Resources/design-references/` altına taşı (committed reference, build'e dahil değil — `.xcodeproj` exclude)
 - **Commit:** `chore: split monorepo into ios + backend subdirs`
 
 ### 0.2 Backend init (Supabase)
-- [ ] `cd gicik-backend && supabase init`
+- [ ] `cd efso-backend && supabase init`
 - [ ] `supabase/config.toml` — TR region, project_id ayarla
 - [ ] `.env.local` — local dev, gitignore'da
 - [ ] `supabase/migrations/20260101000000_initial_schema.sql` yaz (master prompt §6'daki tüm CREATE TABLE'lar)
@@ -127,7 +127,7 @@ Kaynak: tek `EmptyState` component, `kind` prop'u ile varyant.
 
 ### 0.3 iOS init (Xcode)
 - [ ] Xcode 16+ → New Project → iOS App, SwiftUI lifecycle, Swift 6, iOS 17 min
-- [ ] Bundle ID: `to.tikla.gicik` (master prompt'taki tercih)
+- [ ] Bundle ID: `to.tikla.efso` (master prompt'taki tercih)
 - [ ] Display Name: `Gıcık`
 - [ ] `Info.plist`:
   - `NSPhotoLibraryUsageDescription` = "Mesaj ekran görüntülerini analiz etmek için fotoğraflarına erişim"
@@ -144,7 +144,7 @@ Kaynak: tek `EmptyState` component, `kind` prop'u ile varyant.
 
 ### 0.4 Design System tokens
 
-> **Önbelleklenmiş başlangıç:** `design-source/swiftui/DesignTokens.swift` ve `Primitives.swift` zaten `tokens.css` ve `parts/shared.jsx`'ten çevrilmiş halde repo'da. Phase 0.4'ün ilk işi bunları `gicik-ios/Gicik/DesignSystem/` altına böl + Xcode target'a ekle.
+> **Önbelleklenmiş başlangıç:** `design-source/swiftui/DesignTokens.swift` ve `Primitives.swift` zaten `tokens.css` ve `parts/shared.jsx`'ten çevrilmiş halde repo'da. Phase 0.4'ün ilk işi bunları `efso-ios/Efso/DesignSystem/` altına böl + Xcode target'a ekle.
 
 Adımlar:
 - [ ] `design-source/swiftui/DesignTokens.swift` → `Gicik/DesignSystem/` altına böl:
@@ -190,7 +190,7 @@ Adımlar:
 - **Commit:** `feat(ios): config + supabase client + auth service`
 
 ### 0.6 App entry & root router
-- [ ] `Gicik/App/GicikApp.swift` — `@main`, AppDelegate, Sentry init, PostHog init, RevenueCat init, Mixpanel init
+- [ ] `Gicik/App/EfsoApp.swift` — `@main`, AppDelegate, Sentry init, PostHog init, RevenueCat init, Mixpanel init
 - [ ] `Gicik/App/AppDelegate.swift` — push notification register, deep link handling
 - [ ] `Gicik/App/RootView.swift` — auth state'e göre router (`AuthService.isSignedIn` ? `MainTabView` : `OnboardingFlowView`)
 - [ ] `Gicik/Features/Auth/SignInView.swift` — placeholder, Sign in with Apple butonu
@@ -243,7 +243,7 @@ Adımlar:
 - **Commit:** `feat(onboarding): calibration quiz engine + 9 questions`
 
 ### 1.4 Backend: /calibrate endpoint
-- [ ] `gicik-backend/supabase/functions/calibrate/index.ts`
+- [ ] `efso-backend/supabase/functions/calibrate/index.ts`
   - input: answers[]
   - `_shared/archetype-derivation.ts` — master prompt §9'daki `deriveArchetype` (TypeScript)
   - output: archetype_primary, secondary, display_label, description[], traits, full_profile
@@ -301,7 +301,7 @@ Adımlar:
 ## PHASE 2 — Vision Pipeline + Generation (4-5 gün)
 
 ### 2.1 Backend: prompt sistemi
-- [ ] `gicik-backend/prompts/` klasörü oluştur, master prompt §8'deki tüm dosyaları yaz:
+- [ ] `efso-backend/prompts/` klasörü oluştur, master prompt §8'deki tüm dosyaları yaz:
   - `L0_identity.tr.md`
   - `L1_modes/cevap.tr.md`, `acilis.tr.md`, `bio.tr.md`, `hayalet.tr.md`, `davet.tr.md`
   - `L2_constraints.tr.md`
@@ -508,7 +508,7 @@ Adımlar:
 - **Commit:** `feat(subscription): free tier limits + soft paywall`
 
 ### 4.4 RevenueCat → Supabase webhook
-- [ ] `gicik-backend/supabase/functions/revenuecat-webhook/index.ts`
+- [ ] `efso-backend/supabase/functions/revenuecat-webhook/index.ts`
 - [ ] Validate signature
 - [ ] Event'ler: INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION
 - [ ] profiles tablosuna sync (entitlement, expiration_date)
@@ -681,8 +681,8 @@ Hangi phase'de olduğunu kaybettiğinde buraya bak:
 
 ```
 cd ~/Desktop/gicik
-mkdir -p gicik-ios gicik-backend
-mv design gicik-ios/Resources/design-references
+mkdir -p efso-ios efso-backend
+mv design efso-ios/Resources/design-references
 git mv prompt.md prompt.md  # zaten root'ta
 ```
 

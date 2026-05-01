@@ -12,7 +12,7 @@ gicik/
 ├── README.md                # bu dosya
 ├── .gitignore
 │
-├── gicik-ios/               # SwiftUI iOS app
+├── efso-ios/               # SwiftUI iOS app
 │   ├── SETUP.md             # 5-10 dk Xcode kurulum
 │   ├── README.md
 │   ├── project.yml          # xcodegen spec
@@ -26,10 +26,10 @@ gicik/
 │   │   ├── Models/
 │   │   └── Resources/
 │   │       └── design-source/   # Claude Design canonical export
-│   ├── GicikTests/
-│   └── GicikUITests/
+│   ├── EfsoTests/
+│   └── EfsoUITests/
 │
-└── gicik-backend/           # Supabase + Edge Functions
+└── efso-backend/           # Supabase + Edge Functions
     ├── README.md
     └── supabase/
         ├── config.toml
@@ -40,8 +40,8 @@ gicik/
 
 ## Hızlı başlangıç
 
-1. **Backend kur**: `gicik-backend/README.md` — Supabase project + migrations + edge functions
-2. **iOS kur**: `gicik-ios/SETUP.md` — Xcodegen ile 5-10 dakikada hazır
+1. **Backend kur**: `efso-backend/README.md` — Supabase project + migrations + edge functions
+2. **iOS kur**: `efso-ios/SETUP.md` — Xcodegen ile 5-10 dakikada hazır
 3. **Build başlat**: `BUILD_PLAN.md` Phase 1'den itibaren
 
 ## Phase durumu

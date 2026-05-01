@@ -1,8 +1,8 @@
-# Gıcık — Claude Code Context
+# Efso — Claude Code Context
 
 ## TL;DR
 
-**Gıcık**: Türkiye-first AI iletişim koçu. Kullanıcı zor mesaj screenshot'ı yükler, app 2 aşamada işler: (1) parse, (2) seçilen tone'da 3 cevap üretir.
+**Efso**: Türkiye-first AI iletişim koçu. Kullanıcı zor mesaj screenshot'ı yükler, app 2 aşamada işler: (1) parse, (2) seçilen tone'da 3 cevap üretir.
 
 Dating-first **ama Apple Review için "iletişim koçu" pozisyonlanır**. Demo content'in en az %30'u non-dating (iş, aile, arkadaş).
 
@@ -29,7 +29,7 @@ Dating-first **ama Apple Review için "iletişim koçu" pozisyonlanır**. Demo c
 
 ## Repo
 
-İki repo: `gicik-ios/` ve `gicik-backend/`.
+İki repo: `efso-ios/` ve `efso-backend/`.
 
 - iOS dosya organizasyonu: `App/`, `DesignSystem/`, `Features/{Onboarding,Main,Modes,Profile,Settings}/`, `Core/{Networking,Auth,Storage,Subscription,Analytics}/`, `Models/`, `Resources/`.
 - Backend: `supabase/migrations/`, `supabase/functions/{_shared,parse-screenshot,generate-replies,calibrate,prompt-feedback,cleanup-storage}/`, `prompts/` (version-controlled system prompts, L0-L4 + tones + stage1), `eval/`.
@@ -116,7 +116,7 @@ Detaylı kontratlar: edge function dosyalarındaki types.
 
 ## Prompt sistemi
 
-System prompt'ları **`gicik-backend/prompts/`** altında version-controlled markdown:
+System prompt'ları **`efso-backend/prompts/`** altında version-controlled markdown:
 - `L0_identity.tr.md` — asistan sesi (sadece observation alanı)
 - `L1_modes/{cevap,acilis,tonla,davet}.tr.md` — mod-spesifik amaç ve angle'lar
 - `L2_constraints.tr.md` — güvenlik
