@@ -19,8 +19,8 @@ final class SubscriptionManager: NSObject {
     var yearlyPackage: Package?
 
     private let entitlementId = "premium"
-    private let weeklyProductId = "gicik_weekly"
-    private let yearlyProductId = "gicik_yearly"
+    private let weeklyProductId = "efso_weekly"
+    private let yearlyProductId = "efso_yearly"
 
     private override init() { super.init() }
 

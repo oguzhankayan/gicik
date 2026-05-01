@@ -24,8 +24,8 @@ xcuserdata/
 DerivedData/
 build/
 *.xcworkspace/xcuserdata/
-gicik-ios/Gicik.xcodeproj/
-gicik-ios/Gicik.xcworkspace/
+efso-ios/Efso.xcodeproj/
+efso-ios/Efso.xcworkspace/
 
 # xcconfig — secrets
 *.xcconfig
@@ -36,12 +36,12 @@ gicik-ios/Gicik.xcworkspace/
 Package.resolved
 
 # Supabase local
-gicik-backend/.env
-gicik-backend/.env.local
-gicik-backend/.branches/
-gicik-backend/.temp/
-gicik-backend/supabase/.temp/
-gicik-backend/supabase/.branches/
+efso-backend/.env
+efso-backend/.env.local
+efso-backend/.branches/
+efso-backend/.temp/
+efso-backend/supabase/.temp/
+efso-backend/supabase/.branches/
 
 # Local agent caches
 .agents/cache/

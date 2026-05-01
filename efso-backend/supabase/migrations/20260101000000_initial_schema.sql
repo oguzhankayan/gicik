@@ -212,7 +212,7 @@ CREATE TABLE public.subscription_state (
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     will_renew BOOLEAN NOT NULL DEFAULT FALSE,
     period_type TEXT,                         -- "trial" | "intro" | "normal"
-    product_identifier TEXT,                  -- gicik_weekly | gicik_yearly
+    product_identifier TEXT,                  -- efso_weekly | efso_yearly
     purchase_date TIMESTAMPTZ,
     expiration_date TIMESTAMPTZ,
 

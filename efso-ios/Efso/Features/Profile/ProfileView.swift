@@ -466,10 +466,10 @@ struct ProfileView: View {
             .accessibilityLabel("yapay zeka onayı, durum: \(aiConsentGiven ? "açık" : "kapalı"). yönet.")
             divider
             link(icon: "lock", title: "gizlilik politikası",
-                 url: URL(string: "https://gicik.app/privacy"))
+                 url: URL(string: "https://efso.app/privacy"))
             divider
             link(icon: "doc.text", title: "kullanım şartları",
-                 url: URL(string: "https://gicik.app/terms"))
+                 url: URL(string: "https://efso.app/terms"))
             divider
             // Apple Guideline 5.1.1 — in-app account deletion zorunlu.
             // Tek tap → confirm alert → backend RPC → signOut + reset.
@@ -491,7 +491,7 @@ struct ProfileView: View {
                 .padding(.horizontal, 4)
             VStack(spacing: 0) {
                 inlineLink(icon: "envelope", title: "destek e-postası",
-                           url: URL(string: "mailto:support@gicik.app"))
+                           url: URL(string: "mailto:support@efso.app"))
                 hairline
                 inlineButton(icon: "star", title: "değerlendir") {
                     requestReview()

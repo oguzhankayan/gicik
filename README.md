@@ -1,11 +1,11 @@
-# gıcık
+# efso
 
 Türkiye-first AI iletişim koçu. iOS-only MVP. Apple Review için "iletişim koçu" olarak pozisyonlanır; dating-first ama %30+ non-dating demo content zorunlu.
 
 ## Repo yapısı
 
 ```
-gicik/
+efso/
 ├── prompt.md                # Master prompt (Oğuzhan'ın brief'i)
 ├── CLAUDE.md                # Claude Code context (= prompt.md)
 ├── BUILD_PLAN.md            # Phase 0-7, commit-by-commit task listesi
@@ -18,7 +18,7 @@ gicik/
 │   ├── project.yml          # xcodegen spec
 │   ├── Debug.xcconfig.template
 │   ├── Release.xcconfig.template
-│   ├── Gicik/
+│   ├── Efso/
 │   │   ├── App/             # entry, config, root
 │   │   ├── DesignSystem/    # tokens + 9 component + katalog
 │   │   ├── Features/        # auth, onboarding, main, modes, profile

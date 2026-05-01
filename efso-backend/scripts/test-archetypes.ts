@@ -19,7 +19,7 @@ const ARCHETYPES = [
 ] as const;
 
 const ARCHETYPE_LABELS: Record<string, string> = {
-  dryroaster: "🥀 GICIK",
+  dryroaster: "🥀 EFSO",
   observer: "🪨 AĞIR",
   softie_with_edges: "🍬 TATLI",
   chaos_agent: "🔥 ALEV",

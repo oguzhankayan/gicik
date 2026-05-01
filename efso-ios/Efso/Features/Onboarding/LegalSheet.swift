@@ -2,11 +2,11 @@ import SwiftUI
 import SafariServices
 
 /// Şartlar & gizlilik için in-app SafariView wrapper.
-/// gicik.app/terms ve gicik.app/privacy yayına alındığında doğrudan
+/// efso.app/terms ve efso.app/privacy yayına alındığında doğrudan
 /// çalışır. Yayına alınmadıysa kullanıcı 404 görür; submission öncesi
 /// URL'lerin live olduğundan emin ol.
 ///
-/// Submission blocker: gicik.app/{terms,privacy} sayfaları yayına alınmalı.
+/// Submission blocker: efso.app/{terms,privacy} sayfaları yayına alınmalı.
 struct LegalSheet: View {
     enum Kind { case terms, privacy }
 
@@ -20,8 +20,8 @@ struct LegalSheet: View {
 
     private var url: URL {
         switch kind {
-        case .terms: URL(string: "https://gicik.app/terms")!
-        case .privacy: URL(string: "https://gicik.app/privacy")!
+        case .terms: URL(string: "https://efso.app/terms")!
+        case .privacy: URL(string: "https://efso.app/privacy")!
         }
     }
 }

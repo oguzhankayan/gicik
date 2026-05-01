@@ -9,7 +9,7 @@ SwiftUI iOS uygulaması. iOS 17+, Swift 6, MV pattern.
 ## Proje yapısı
 
 ```
-Gicik/
+Efso/
 ├── App/
 │   ├── EfsoApp.swift              # @main entry, Sentry/Analytics bootstrap
 │   ├── AppDelegate.swift           # push notification, deep link

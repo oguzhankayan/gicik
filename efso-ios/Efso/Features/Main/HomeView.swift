@@ -80,7 +80,7 @@ struct HomeView: View {
                 }
             }
         } message: {
-            Text("bu olmadan uygulama çalışamaz. çıkış yapılacak. verilerinin silinmesi için support@gicik.app ile iletişime geç.")
+            Text("bu olmadan uygulama çalışamaz. çıkış yapılacak. verilerinin silinmesi için support@efso.app ile iletişime geç.")
         }
         .alert("kalibrasyonu yeniden mi ölçelim?", isPresented: $showingRecalibrate) {
             Button("vazgeç", role: .cancel) {}

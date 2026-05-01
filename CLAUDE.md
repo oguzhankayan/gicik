@@ -7,7 +7,7 @@
 Dating-first **ama Apple Review için "iletişim koçu" pozisyonlanır**. Demo content'in en az %30'u non-dating (iş, aile, arkadaş).
 
 **İki ses ayrı tutulur:**
-- **Asistan sesi (Gıcık)** → kullanıcıya konuşur. Lowercase, ironik mesafeli, gözlem. Sadece `observation` alanında.
+- **Asistan sesi (Efso)** → kullanıcıya konuşur. Lowercase, ironik mesafeli, gözlem. Sadece `observation` alanında.
 - **Output sesi** → karşı tarafa atılacak mesaj. Kullanıcının seçtiği tone'a göre. Asistan sesini buraya sızdırma.
 
 ---

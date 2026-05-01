@@ -1,6 +1,6 @@
 # Efso — Production Readiness Handoff
 
-> **Rebrand 2026-05-01:** Gıcık → Efso. Display name + UI copy + logo + AppIcon
+> **Rebrand 2026-05-01:** Efso → Efso. Display name + UI copy + logo + AppIcon
 > + L0 voice + dryroaster archetype label rename. Bundle ID `to.tikla.efso`
 > ve internal repo path'ler korundu (App Store Connect external rebrand
 > ayrı iş). Voice pivot: sakin/ironik mesafeli → GenZ tempo, sokak zekası,
@@ -14,7 +14,7 @@
 ## Bir bakışta
 
 **Şu an submit edilebilir mi?** Evet, ama **2 user-action** kalıyor:
-1. `gicik.app/privacy` + `/terms` HTML sayfalarını yayına al (DNS + content). Kod hazır (`SFSafariViewController` ile direkt açılır).
+1. `efso.app/privacy` + `/terms` HTML sayfalarını yayına al (DNS + content). Kod hazır (`SFSafariViewController` ile direkt açılır).
 2. Sandbox'ta trial flow + RevenueCat → Supabase webhook senkronu canlı doğrula (RC test config + 1-2 deneme satın alma).
 
 Bunlar dışında kod tarafı App Store'a archive + submit'e hazır.
@@ -30,7 +30,7 @@ Bunlar dışında kod tarafı App Store'a archive + submit'e hazır.
 | S2 | ITSAppUsesNonExemptEncryption | `false` eklendi |
 | S3 | AppIcon PNG yok | 1024×1024 placeholder generate (bg0 + pink halo + lime "g") |
 | S4 | Version uyuşmazlığı | `MARKETING_VERSION 1.0.0`, Info.plist `$(MARKETING_VERSION)` substitute |
-| S5 | Privacy/Terms placeholder warning | LegalSheet → SFSafariViewController, gicik.app live olunca otomatik çalışır |
+| S5 | Privacy/Terms placeholder warning | LegalSheet → SFSafariViewController, efso.app live olunca otomatik çalışır |
 | S6 | "tinder"/"bumble" UI'da | 3 site temizlendi: ValueIntroView, Mode.swift, TypewriterText preview |
 | S7 | NSCameraUsageDescription | tamamen kaldırıldı |
 | S8 | 24h cron | pg_cron + pg_net + vault.service_role_key + cron.schedule **live** |
@@ -90,7 +90,7 @@ Bunlar dışında kod tarafı App Store'a archive + submit'e hazır.
 - Screenshots (en az 6.7" iPhone — 1290×2796).
 - Privacy questionnaire doldur (PrivacyInfo zaten guideline'da).
 - "App Privacy" section: Photos/Videos, Email Address, User ID, Other User Content (asistan obs, opener), Product Interaction, Crash Data, Performance Data, Purchase History.
-- Subscription: weekly product ID `gicik_weekly` (CLAUDE.md), price + duration + auto-renew terms.
+- Subscription: weekly product ID `efso_weekly` (CLAUDE.md), price + duration + auto-renew terms.
 
 **Test invite**
 - TestFlight → Internal Testing → 1-2 kişi email invite.

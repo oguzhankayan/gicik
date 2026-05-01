@@ -49,17 +49,17 @@ open Efso.xcodeproj
 ### 4. xcconfig'leri Xcode'a bağla
 
 Xcode'da:
-1. Proje navigator'da `Gicik` (en üst) → seç
+1. Proje navigator'da `Efso` (en üst) → seç
 2. `Project` (target değil, project) → `Info` tab
 3. `Configurations` altında:
-   - **Debug** → `Gicik` target'ı için → `Debug` config seç
-   - **Release** → `Gicik` target'ı için → `Release` config seç
+   - **Debug** → `Efso` target'ı için → `Debug` config seç
+   - **Release** → `Efso` target'ı için → `Release` config seç
 
 > xcodegen otomatik bağlamadıysa manuel yap. Sonra `Configuration.swift`'teki env vars çalışır.
 
 ### 5. Apple Sign In capability
 
-1. `Gicik` target → `Signing & Capabilities` tab
+1. `Efso` target → `Signing & Capabilities` tab
 2. Team seç (Apple Developer Team ID)
 3. `+ Capability` → "Sign in with Apple" ekle
 4. Push Notifications capability'sini de ekle (Phase 7'de kullanılacak)
@@ -71,7 +71,7 @@ Xcode'da:
 2. **JetBrains Mono** — https://fonts.google.com/specimen/JetBrains+Mono
    - Regular, Medium (2 dosya)
 
-İndirilenleri `Gicik/Resources/Fonts/` klasörüne kopyala. xcodegen sonra `UIAppFonts` Info.plist'e ekledi (project.yml'de tanımlı).
+İndirilenleri `Efso/Resources/Fonts/` klasörüne kopyala. xcodegen sonra `UIAppFonts` Info.plist'e ekledi (project.yml'de tanımlı).
 
 ### 7. Supabase backend'i deploy et
 
@@ -94,12 +94,12 @@ Supabase Dashboard'da:
 ### 8. Build + Run
 
 Xcode'a dön:
-- Scheme: `Gicik`
+- Scheme: `Efso`
 - Destination: `iPhone 17 Pro` simulator (iOS 17+)
 - ⌘R çalıştır
 
 İlk build:
-- `SignInView` görünmeli (logo + "yazma. gıcık yazsın." + Apple butonu)
+- `SignInView` görünmeli (logo + "yazma. efso yazsın." + Apple butonu)
 - Apple ile giriş → Supabase Apple SSO → success → `HomeView` (placeholder)
 - "çıkış yap" butonu → `SignInView`'e dönüş
 
