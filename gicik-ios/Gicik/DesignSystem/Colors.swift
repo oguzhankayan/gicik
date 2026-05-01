@@ -1,6 +1,6 @@
 import SwiftUI
 
-// gıcık — color tokens
+// efso — color tokens
 // Kaynak: design-source/project/tokens.css
 
 enum AppColor {

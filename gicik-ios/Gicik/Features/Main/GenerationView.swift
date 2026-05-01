@@ -22,7 +22,7 @@ struct GenerationView: View {
     //   - gözlem yap beyan et geç, açıklama yapma.
     // Sequence gözlemci tavrını yansıtıyor: "ekran açık" varlık beyanı,
     // "kim son yazmış" ilk merak, "boşluk neyi söylüyor" sessizliği okumak,
-    // "söylenmemişe bakıyorum" Gıcık'ın signature move'u (L0: "insanlar
+    // "söylenmemişe bakıyorum" Efso'ın signature move'u (L0: "insanlar
     // duyduklarını değil görmedikleri şeyi öğrenmek ister").
     // 4 × 2.4s = 9.6s tek cycle, parsing süresine birebir denk.
     @State private var parsingQuipIndex = 0

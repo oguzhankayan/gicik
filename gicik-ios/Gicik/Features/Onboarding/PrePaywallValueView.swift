@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Pre-paywall value reinforcement — paywall'dan hemen önce, archetype-aware.
-/// "Senin tarzın belli, gıcık hazır" mesajı + 3 net benefit + bridge CTA.
+/// "Senin tarzın belli, efso hazır" mesajı + 3 net benefit + bridge CTA.
 /// Rizz playbook: paywall'dan önce son value moment.
 struct PrePaywallValueView: View {
     @Bindable var vm: OnboardingViewModel
@@ -68,9 +68,9 @@ struct PrePaywallValueView: View {
 
     private var headline: String {
         if vm.archetype != nil {
-            return "tarzın belli.\ngıcık hazır."
+            return "tarzın belli.\nefso hazır."
         }
-        return "tanıştık.\ngıcık hazır."
+        return "tanıştık.\nefso hazır."
     }
 
     private var subline: String {
@@ -105,7 +105,7 @@ struct PrePaywallValueView: View {
         }
     }
 
-    /// "🥀 GICIK" → (emoji: "🥀", name: "GICIK"). Boşluk yoksa label aynen kullanılır.
+    /// "🥀 EFSO" → (emoji: "🥀", name: "EFSO"). Boşluk yoksa label aynen kullanılır.
     private func splitLabel(_ raw: String) -> (emoji: String, name: String) {
         let trimmed = raw.trimmingCharacters(in: .whitespaces)
         if let space = trimmed.firstIndex(of: " ") {
@@ -122,7 +122,7 @@ struct PrePaywallValueView: View {
         .init(icon: "bolt.fill", title: "saniyeler içinde",
               body: "ekran görüntüsü at, 3 cevap. düşünmek sana kalsın."),
         .init(icon: "slider.horizontal.3", title: "5 ton, sen seç",
-              body: "flörtöz, esprili, direkt, sıcak, gizemli. gıcık o ses olur."),
+              body: "flörtöz, esprili, direkt, sıcak, gizemli. efso o ses olur."),
         .init(icon: "lock.shield.fill", title: "senin tarzın saklı",
               body: "kalibrasyon ve örnek metnin sadece sende. 24 saatte ekranlar silinir.")
     ]

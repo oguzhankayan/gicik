@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Y2K "gıcık" logo. `i` harfi üzerinde holographic dot.
+/// Y2K "efso" logo. `o` harfi içinde holographic dot
+/// (önceden "ı" üzerindeydi; isim değişti).
 /// Kullanım: `Logo(size: 88)` — splash screen'de
 struct Logo: View {
     let size: CGFloat
@@ -8,24 +9,22 @@ struct Logo: View {
     init(size: CGFloat = 64) { self.size = size }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            Text("g")
-            ZStack(alignment: .top) {
-                Text("ı")
+        HStack(alignment: .center, spacing: 0) {
+            Text("efs")
+            ZStack {
+                Text("o")
                 Circle()
                     .fill(AppColor.holographic)
-                    .frame(width: size * 0.14, height: size * 0.14)
+                    .frame(width: size * 0.16, height: size * 0.16)
                     .shadow(color: AppColor.pink.opacity(0.7), radius: 6)
                     .shadow(color: AppColor.purple.opacity(0.5), radius: 12)
-                    .offset(y: size * 0.07)
             }
-            Text("cık")
         }
         .font(AppFont.display(size, weight: .bold))
         .tracking(-size * 0.04)
         .foregroundColor(.white)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("gıcık")
+        .accessibilityLabel("efso")
     }
 }
 

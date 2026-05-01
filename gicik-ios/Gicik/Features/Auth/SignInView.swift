@@ -13,7 +13,7 @@ struct SignInView: View {
         VStack {
             Spacer()
             Logo(size: 88)
-            Text("yazma. gıcık yazsın.")
+            Text("yazma. efso yazsın.")
                 .font(AppFont.body(16))
                 .foregroundColor(AppColor.text60)
                 .padding(.top, 28)

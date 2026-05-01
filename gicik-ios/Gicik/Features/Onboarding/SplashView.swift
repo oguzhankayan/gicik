@@ -37,7 +37,7 @@ struct SplashView: View {
                     .scaleEffect(logoIn ? 1 : 0.85)
                     .blur(radius: logoIn ? 0 : 12)
 
-                Text("yazma. gıcık yazsın.")
+                Text("yazma. efso yazsın.")
                     .font(AppFont.body(15))
                     .foregroundColor(AppColor.text60)
                     .opacity(taglineIn ? 1 : 0)

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Asistan sesi — Gıcık'ın kullanıcıya konuşması.
+/// Asistan sesi — Efso'ın kullanıcıya konuşması.
 /// Italic body + leading sparkles icon (lime accent) + glass card.
 /// ASLA çıktı mesajı içermez.
 ///

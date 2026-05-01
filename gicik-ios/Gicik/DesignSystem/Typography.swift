@@ -1,6 +1,6 @@
 import SwiftUI
 
-// gıcık — typography
+// efso — typography
 // Display: Space Grotesk (variable font, weight axis)
 // Body: SF Pro (sistem)
 // Mono: JetBrains Mono (Regular + Medium static weights)

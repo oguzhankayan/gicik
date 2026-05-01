@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════
--- gıcık — initial schema
+-- efso — initial schema
 -- ════════════════════════════════════════════════════════════
 -- profiles, conversations, prompt_versions, usage_daily, security_events
 -- all tables RLS-on, all writes scoped to auth.uid()

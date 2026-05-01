@@ -109,7 +109,7 @@ interface AffinitySpec {
 const SIGMA = 0.28; // tüm trait'ler için ortak fall-off; küçük = sert ayrışma
 
 const AFFINITY: Record<ArchetypePrimary, AffinitySpec> = {
-  // GICIK — ironik mesafeli, direkt, ironik mizah, orta-yüksek petty
+  // EFSO — ironik mesafeli, direkt, ironik mizah, orta-yüksek petty
   dryroaster: {
     directness:      [0.80, 1.4],
     humor_intensity: [0.85, 1.6],
@@ -205,7 +205,7 @@ function gaussian(value: number, target: number, sigma: number): number {
 
 const ARCHETYPE_DISPLAY: Record<ArchetypePrimary, { label: string; description: string[] }> = {
   dryroaster: {
-    label: "🥀 GICIK",
+    label: "🥀 EFSO",
     description: [
       "spesifik gözlem yaparsın, klişe sevmezsin",
       "kısa cümle, nokta dostusun",

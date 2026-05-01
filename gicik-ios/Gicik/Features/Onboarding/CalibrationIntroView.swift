@@ -11,7 +11,7 @@ struct CalibrationIntroView: View {
             TopBar(active: 1, total: 12)
             Spacer()
             orbital
-            Text("gıcık'ı kalibre et")
+            Text("efso'ı kalibre et")
                 .font(AppFont.display(30, weight: .bold))
                 .tracking(-0.02 * 30)
                 .foregroundColor(.white)

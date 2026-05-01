@@ -529,7 +529,7 @@ struct ProfileView: View {
 
     // MARK: - Brand voice line + version
 
-    /// Asistan sesinden tek satır — "bu da bir ayar ekranı ama gıcık'ın".
+    /// Asistan sesinden tek satır — "bu da bir ayar ekranı ama efso'ın".
     /// Aktif arketipe göre değişen kuru kapanış.
     private var brandFooter: some View {
         Text(brandLine)
@@ -554,7 +554,7 @@ struct ProfileView: View {
     }
 
     private var versionFooter: some View {
-        Text("gıcık v\(Configuration.appVersion) (\(Configuration.buildNumber)) · \(Configuration.bundleID)")
+        Text("efso v\(Configuration.appVersion) (\(Configuration.buildNumber)) · \(Configuration.bundleID)")
             .font(AppFont.mono(10))
             .foregroundColor(AppColor.text40)
             .frame(maxWidth: .infinity, alignment: .center)

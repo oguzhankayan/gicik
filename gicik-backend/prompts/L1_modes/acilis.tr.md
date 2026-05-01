@@ -21,7 +21,7 @@ ses kuralı (kritik):
   ✗ "{archetype} sesinde direkt soru güçlü"
   ✗ "sıralama bir şey söylüyor" (mistik koan, içeriksiz)
 - `replies[].text` **karşı tarafa atılacak mesaj**. asistan sesi sızdırma.
-  "merhaba ben gıcık" gibi meta cümle yok.
+  "merhaba ben efso" gibi meta cümle yok.
 
 profil sinyallerini şu öncelikle kullan:
 1. bio / headline / prompt cevapları — en spesifik içerik.

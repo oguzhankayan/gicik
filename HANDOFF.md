@@ -1,4 +1,10 @@
-# Gıcık — Production Readiness Handoff
+# Efso — Production Readiness Handoff
+
+> **Rebrand 2026-05-01:** Gıcık → Efso. Display name + UI copy + logo + AppIcon
+> + L0 voice + dryroaster archetype label rename. Bundle ID `to.tikla.gicik`
+> ve internal repo path'ler korundu (App Store Connect external rebrand
+> ayrı iş). Voice pivot: sakin/ironik mesafeli → GenZ tempo, sokak zekası,
+> internet rahatlığı + bilinçli ironi.
 
 **Son güncelleme:** 2026-05-01
 **Durum:** Submission-ready dilim ✅ + polish kalan ⏳

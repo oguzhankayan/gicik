@@ -55,7 +55,7 @@ struct ResultView: View {
         return "\(idx) · \(reply.toneLabel.trLower)"
     }
 
-    /// Observation = gıcık'ın gözlemi. Eskiden italic info bar'dı (kimse
+    /// Observation = efso'ın gözlemi. Eskiden italic info bar'dı (kimse
     /// okumuyordu). Artık page-title treatment: büyük lowercase display, küçük
     /// "gözlem" mono label üstünde. Markanın gerçek anı, footnote değil.
     /// Boş gelirse hiç render edilmez.

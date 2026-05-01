@@ -1,4 +1,4 @@
-// Shared types — Edge Functions across gıcık backend
+// Shared types — Edge Functions across efso backend
 
 // Tonla = kullanıcı taslağını seçilen tona çevirir (ss yok, text input).
 // Bio Phase 7+'a ertelendi.
@@ -85,7 +85,7 @@ export interface CalibrationAnswer {
 export interface ArchetypeResult {
   archetype_primary: ArchetypePrimary;
   archetype_secondary: ArchetypePrimary;
-  display_label: string;          // "🥀 GICIK"
+  display_label: string;          // "🥀 EFSO"
   display_description: string[];  // 3 davranışsal cümle
   traits: Record<string, number>;
   full_profile: Record<string, unknown>;

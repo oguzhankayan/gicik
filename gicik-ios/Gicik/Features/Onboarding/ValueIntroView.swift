@@ -18,7 +18,7 @@ struct ValueIntroView: View {
         Page(
             kicker: "neden farklı",
             headline: "klişe değil.\nseni dinler.",
-            body: "kalibrasyonla tarzını öğrenir. flörtöz, esprili, direkt — sen seçersin, gıcık o ses olur.",
+            body: "kalibrasyonla tarzını öğrenir. flörtöz, esprili, direkt — sen seçersin, efso o ses olur.",
             asset: "slide2"
         ),
         Page(

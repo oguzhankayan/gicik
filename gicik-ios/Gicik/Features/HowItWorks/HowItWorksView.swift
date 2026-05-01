@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// Slaytlar (5s × 4 = 20s loop):
 ///   1. ekran görüntüsü ver  — chat screenshot, başlık "1. EKRAN GÖRÜNTÜSÜ VER"
-///   2. gıcık okuyor          — aynı screenshot + observation cümlesi
+///   2. efso okuyor          — aynı screenshot + observation cümlesi
 ///   3. üç farklı ton         — 3 reply card listesi
 ///   4. seç ve gönder         — aynı 3 kart, ortadaki lime stroke ile seçili
 ///
@@ -106,7 +106,7 @@ struct HowItWorksView: View {
 
     private var slide2: some View {
         VStack(spacing: 22) {
-            stepLabel("2", "GICIK OKUYOR")
+            stepLabel("2", "EFSO OKUYOR")
             // Son bubble (karşı tarafın sorusu) vurgulanır — "cevap bekliyor".
             ChatScreenshot(highlightedIndex: 2)
             HStack(spacing: 6) {
@@ -179,7 +179,7 @@ struct HowItWorksView: View {
 
     private let slideA11y = [
         "1. ekran görüntüsü ver. konuşmayı yükle.",
-        "2. gıcık okuyor. üç gün sustuğunu fark ediyor.",
+        "2. efso okuyor. üç gün sustuğunu fark ediyor.",
         "3. üç farklı tonda cevap üretiyor: flörtöz, esprili, direkt.",
         "4. seç, yapıştır, gönder."
     ]

@@ -57,7 +57,7 @@ enum ArchetypePrimary: String, Codable {
 
     var label: String {
         switch self {
-        case .dryroaster: "🥀 GICIK"
+        case .dryroaster: "🥀 EFSO"
         case .observer: "🪨 AĞIR"
         case .softie_with_edges: "🍬 TATLI"
         case .chaos_agent: "🔥 ALEV"

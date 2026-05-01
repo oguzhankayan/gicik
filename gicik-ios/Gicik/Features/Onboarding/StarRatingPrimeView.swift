@@ -23,7 +23,7 @@ struct StarRatingPrimeView: View {
                     .frame(height: 80)
 
                 VStack(spacing: 12) {
-                    Text("gıcık'a\n5 yıldız ver")
+                    Text("efso'a\n5 yıldız ver")
                         .font(AppFont.display(30, weight: .bold))
                         .tracking(-0.02 * 30)
                         .foregroundColor(.white)

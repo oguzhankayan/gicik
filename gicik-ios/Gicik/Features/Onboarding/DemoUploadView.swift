@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Demo upload — aha moment.
 /// Yukarıda küçük bir konuşma geçmişi (rounded rectangle, son mesaj cevapsız).
-/// Ortada Gıcık'ın o son mesaja dair gözlemi.
+/// Ortada Efso'ın o son mesaja dair gözlemi.
 /// Aşağıda kalibrasyon modellerinin önereceği 3 farklı cevap (typewriter reveal).
 ///
 /// Cevap modu deneyimini birebir taklit eder.
@@ -41,7 +41,7 @@ struct DemoUploadView: View {
                     .tracking(0.04 * 11)
                     .foregroundColor(AppColor.text40)
 
-                Text("son mesaj cevapsız.\ngıcık 3 farklı tonda yazsa?")
+                Text("son mesaj cevapsız.\nefso 3 farklı tonda yazsa?")
                     .font(AppFont.display(22, weight: .bold))
                     .tracking(-0.02 * 22)
                     .foregroundColor(.white)
