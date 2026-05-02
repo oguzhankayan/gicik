@@ -82,81 +82,71 @@ Deno.serve(async (req: Request) => {
   try {
     const { userId, client, serviceClient } = await requireAuth(req);
 
-    // ─── AI consent check ───
-    const { data: consentProfile } = await client
-      .from("profiles")
-      .select("ai_consent_given")
-      .eq("id", userId)
-      .single();
+    const body = (await req.json().catch(() => null)) as RequestBody | null;
+    if (!body?.conversation_id) {
+      return errorResponse("invalid_input", "conversation_id required");
+    }
 
-    if (!consentProfile?.ai_consent_given) {
+    const today = todayIstanbulISODate();
+
+    // ─── parallel data load ───
+    // Consent + profile merged (tek profiles sorgusu). Conversation, subscription,
+    // usage hepsi bağımsız — tek round-trip'te çözülür (~300ms tasarruf).
+    const [profileResult, convResult, subResult, usageResult] = await Promise.all([
+      client
+        .from("profiles")
+        .select("ai_consent_given, archetype_primary, archetype_secondary, calibration_data, voice_sample, gender, age_bracket, intent")
+        .eq("id", userId)
+        .maybeSingle(),
+      client
+        .from("conversations")
+        .select("id, mode, parse_result, screenshot_storage_path, extra_context")
+        .eq("id", body.conversation_id)
+        .eq("user_id", userId)
+        .maybeSingle(),
+      client
+        .from("subscription_state")
+        .select("is_active")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      client
+        .from("usage_daily")
+        .select("generation_count, llm_cost_usd")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .maybeSingle(),
+    ]);
+
+    // ─── validate ───
+    const profile = profileResult.data;
+    if (!profile?.ai_consent_given) {
       return new Response(JSON.stringify({ error: "ai_consent_required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const body = (await req.json().catch(() => null)) as RequestBody | null;
-    if (!body?.conversation_id) {
-      return errorResponse("invalid_input", "conversation_id required");
-    }
-
-    // ─── load conversation + profile ───
-    const { data: conv, error: convErr } = await client
-      .from("conversations")
-      .select("id, mode, parse_result, screenshot_storage_path, extra_context")
-      .eq("id", body.conversation_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (convErr || !conv) {
+    const conv = convResult.data;
+    if (convResult.error || !conv) {
       return errorResponse("invalid_input", "conversation not found");
     }
     const mode = conv.mode as Mode;
     const parseResult = conv.parse_result as ParseResult;
 
-    // tonla'nın imzası: tek tone, üç açı. body.tone yoksa üretim
-    // anlamlı değil (3 reply de hardcoded "esprili" çıkar). Erken dur.
     if (mode === "tonla" && !body.tone) {
       return errorResponse("invalid_input", "tonla için tone zorunlu", 422);
     }
 
-    const { data: profile } = await client
-      .from("profiles")
-      .select("archetype_primary, archetype_secondary, calibration_data, voice_sample, gender, age_bracket, intent")
-      .eq("id", userId)
-      .maybeSingle();
-
-    // Advanced mode: kullanıcı tek bir ton zorlamak istediyse o tonu kullan.
-    // Default: mode'a özgü 3 farklı ton ile çeşitlendir.
-    // Açılış için sıra arketipe göre değişir — hero (replies[0]) arketibin
-    // doğal sesi.
     const tonesToUse: Tone[] = body.tone
       ? [body.tone, body.tone, body.tone]
       : (mode === "acilis"
           ? openerTonesFor(profile?.archetype_primary as string | null | undefined)
           : (TONES_BY_MODE[mode] ?? ["flortoz", "esprili", "direkt"]));
 
-    // ─── free tier check ───
-    const { data: subState } = await client
-      .from("subscription_state")
-      .select("is_active")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    // Bugünkü usage row'unu hem free tier check'i hem cost ceiling
-    // kontrolü hem de response'taki remaining_today için tek seferde çek.
-    // "bugün" boundary'si Europe/Istanbul (brand TR-first); UTC ile mismatch
-    // yapardı (sınır saatlerde reset farklı). Bkz. _shared/dates.ts.
-    const today = todayIstanbulISODate();
-    const { data: usage } = await client
-      .from("usage_daily")
-      .select("generation_count, llm_cost_usd")
-      .eq("user_id", userId)
-      .eq("date", today)
-      .maybeSingle();
-    const todayCount = usage?.generation_count ?? 0;
-    const todayCostUSD = (usage?.llm_cost_usd as number | null) ?? 0;
+    // ─── free tier + cost ceiling ───
+    const subState = subResult.data;
+    const todayCount = usageResult.data?.generation_count ?? 0;
+    const todayCostUSD = (usageResult.data?.llm_cost_usd as number | null) ?? 0;
 
     if (!subState?.is_active) {
       if (todayCount >= FREE_DAILY_LIMIT) {
@@ -164,10 +154,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // CLAUDE.md mandate: per-user $0.50/gün LLM cost ceiling. Premium dahil
-    // sınırsız üretim ama cost drain'e karşı server-side hard cap. Kullanıcı
-    // çok denerse ya prompt stack şişmiş ya kötü niyet — her iki halde de
-    // kapat. Free zaten 3/gün ile sınırlı, bu cap pratikte premium için.
     const COST_CEILING_USD = 0.50;
     if (todayCostUSD >= COST_CEILING_USD) {
       console.warn(`cost ceiling hit: user=${userId} cost=${todayCostUSD}`);
@@ -232,6 +218,8 @@ Deno.serve(async (req: Request) => {
 
         let assembled = "";
         let finalUsage: AnthropicUsage = { input_tokens: 0, output_tokens: 0 };
+        let observationEmitted = false;
+        let repliesEmitted = 0;
 
         const userMessage = buildUserPrompt(parseResult, tonesToUse, mode);
 
@@ -249,6 +237,31 @@ Deno.serve(async (req: Request) => {
             }
             if (evt.type === "text_delta" && evt.text) {
               assembled += evt.text;
+
+              // Incremental emission: parse and emit fields as they complete
+              // in the JSON stream. Client gets observation ~1-2s in, each
+              // reply ~1s after, instead of everything at the end (~5-8s).
+              if (!observationEmitted) {
+                const obs = tryExtractObservation(assembled);
+                if (obs !== null) {
+                  send({ type: "observation", text: obs });
+                  observationEmitted = true;
+                }
+              }
+              if (observationEmitted && repliesEmitted < 3) {
+                const replies = extractCompletedReplies(assembled);
+                for (const r of replies) {
+                  if (typeof r.index === "number" && r.index >= repliesEmitted) {
+                    send({
+                      type: "reply",
+                      index: r.index,
+                      tone: r.tone ?? tonesToUse[r.index] ?? tonesToUse[0],
+                      text: r.text,
+                    });
+                    repliesEmitted++;
+                  }
+                }
+              }
             }
             if (evt.type === "message_stop" && evt.usage) {
               finalUsage = evt.usage;
@@ -260,28 +273,44 @@ Deno.serve(async (req: Request) => {
           return;
         }
 
-        // Parse structured output (model returns JSON in assembled string)
+        // Final parse for DB persistence + fallback emission
         let structured: GenerationResult | null = null;
         try {
           structured = parseModelJSON(assembled, mode, tonesToUse);
         } catch (e) {
-          send({ type: "error", message: `parse output failed: ${e instanceof Error ? e.message : e}` });
-          controller.close();
-          return;
+          if (repliesEmitted < 3) {
+            send({ type: "error", message: `parse output failed: ${e instanceof Error ? e.message : e}` });
+            controller.close();
+            return;
+          }
         }
 
-        if (!structured) {
+        if (!structured && repliesEmitted < 3) {
           send({ type: "error", message: "empty output" });
           controller.close();
           return;
         }
 
+        // Fallback: if incremental extraction missed anything, emit now
+        if (structured) {
+          if (!observationEmitted) {
+            send({ type: "observation", text: structured.observation });
+          }
+          if (repliesEmitted < 3) {
+            for (const r of structured.replies) {
+              if (r.index >= repliesEmitted) {
+                send({ type: "reply", index: r.index, tone: r.tone, text: r.text });
+              }
+            }
+          }
+        }
+
         // Output filter — toxic positivity guard
         let qualityWarning = false;
-        if (hasToxicPositivity(structured.observation)
-          || structured.replies.some(r => hasToxicPositivity(r.text))) {
-          // Log; do not retry inside same edge instance to avoid runaway cost.
-          // Flag the done event so the client knows output may not meet quality standards.
+        if (structured && (
+          hasToxicPositivity(structured.observation)
+          || structured.replies.some(r => hasToxicPositivity(r.text))
+        )) {
           qualityWarning = true;
           await serviceClient.from("security_events").insert({
             user_id: userId,
@@ -291,40 +320,37 @@ Deno.serve(async (req: Request) => {
           });
         }
 
-        // Emit observation
-        send({ type: "observation", text: structured.observation });
-
-        // Emit replies
-        for (const r of structured.replies) {
-          send({ type: "reply", index: r.index, tone: r.tone, text: r.text });
-        }
-
         // Persist
         const cost = anthropicCostUSD(finalUsage);
         const durationMs = Date.now() - startTime;
 
-        await serviceClient
-          .from("conversations")
-          .update({
-            // 'tone' col DB schema'sında tek değer; varyasyonlar reply içinde duruyor
-            tone: tonesToUse[0],
-            generation_result: structured,
-            generation_model: Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-4-6",
-            generation_cost_usd: cost,
-            generation_duration_ms: durationMs,
-            prompt_version_id: L1.id,
-          })
-          .eq("id", conv.id);
-
-        await serviceClient.rpc("fn_increment_usage", { p_user_id: userId, p_cost_usd: cost });
-
-        await serviceClient
-          .from("profiles")
-          .update({
-            total_generations: ((profile as { total_generations?: number } | null)?.total_generations ?? 0) + 1,
-            last_active_at: new Date().toISOString(),
-          })
-          .eq("id", userId);
+        // DB writes parallelized — client'a SSE zaten gitti, bunlar fire-and-forget.
+        const dbWrites: Promise<unknown>[] = [
+          serviceClient.rpc("fn_increment_usage", { p_user_id: userId, p_cost_usd: cost }),
+          serviceClient
+            .from("profiles")
+            .update({
+              total_generations: ((profile as { total_generations?: number } | null)?.total_generations ?? 0) + 1,
+              last_active_at: new Date().toISOString(),
+            })
+            .eq("id", userId),
+        ];
+        if (structured) {
+          dbWrites.push(
+            serviceClient
+              .from("conversations")
+              .update({
+                tone: tonesToUse[0],
+                generation_result: structured,
+                generation_model: Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-4-6",
+                generation_cost_usd: cost,
+                generation_duration_ms: durationMs,
+                prompt_version_id: L1.id,
+              })
+              .eq("id", conv.id),
+          );
+        }
+        await Promise.all(dbWrites);
 
         // remaining_today: client'ın quota chip'i için server-truth.
         // Bu üretim DB'ye yazılmadan önce hesaplandığından +1 yapıyoruz.
@@ -538,4 +564,68 @@ function fillL4Template(
     out = out.replaceAll(`{{ ${k} }}`, v);
   }
   return out;
+}
+
+// ──────────────────────────────────────────────────────────
+// Incremental JSON extraction — stream SSE events as model
+// generates instead of waiting for the full response.
+// ──────────────────────────────────────────────────────────
+
+function tryExtractObservation(partial: string): string | null {
+  const m = partial.match(/"observation"\s*:\s*"((?:[^"\\]|\\.)*)"\s*[,}]/);
+  if (!m) return null;
+  try {
+    return JSON.parse('"' + m[1] + '"');
+  } catch {
+    return null;
+  }
+}
+
+function extractCompletedReplies(
+  assembled: string,
+): Array<{ index: number; tone: string; text: string }> {
+  const repliesIdx = assembled.indexOf('"replies"');
+  if (repliesIdx < 0) return [];
+  const arrStart = assembled.indexOf("[", repliesIdx);
+  if (arrStart < 0) return [];
+
+  const results: Array<{ index: number; tone: string; text: string }> = [];
+  let i = arrStart + 1;
+
+  while (i < assembled.length) {
+    while (i < assembled.length && /\s|,/.test(assembled[i])) i++;
+    if (i >= assembled.length || assembled[i] === "]") break;
+    if (assembled[i] !== "{") break;
+
+    let depth = 0;
+    let inStr = false;
+    let esc = false;
+    const start = i;
+
+    for (; i < assembled.length; i++) {
+      const ch = assembled[i];
+      if (esc) { esc = false; continue; }
+      if (ch === "\\" && inStr) { esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; continue; }
+      if (inStr) continue;
+      if (ch === "{") depth++;
+      if (ch === "}") {
+        depth--;
+        if (depth === 0) { i++; break; }
+      }
+    }
+
+    if (depth === 0) {
+      try {
+        const obj = JSON.parse(assembled.slice(start, i));
+        if (typeof obj.text === "string") {
+          results.push(obj);
+        }
+      } catch {
+        // Object not yet complete or malformed — skip
+      }
+    }
+  }
+
+  return results;
 }
