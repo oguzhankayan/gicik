@@ -36,7 +36,6 @@ Deno.serve(async (req: Request) => {
     // ─── 2. DB row'ları sil — RLS bypass, sırayla ───
     // FK cascade'e güvenmiyoruz; explicit sıralama daha güvenli.
     const tables = [
-      "prompt_feedback",
       "conversations",
       "security_events",
       "subscription_state",

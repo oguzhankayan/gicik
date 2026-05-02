@@ -105,7 +105,7 @@ final class SubscriptionManager: NSObject {
             if isActive {
                 // Webhook propagation ortalama 1-3s; 4s defansiyel.
                 // Kullanıcıya hissel olarak "ödeme işleniyor" geliyor.
-                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                try? await Task.sleep(for: .seconds(4))
                 await refreshCustomerInfo()
             }
             return isActive

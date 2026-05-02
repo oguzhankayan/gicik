@@ -1,28 +1,19 @@
 import SwiftUI
 
-/// Tokens.css `cosmic-bg` SwiftUI versiyonu.
-/// Deep cosmic black + üstte purple bloom + sağ-altta pink bloom.
+/// Refined-y2k arka plan — inkstone bg + üstte sessiz chrome lilac wash.
+/// Önceki sürümün pink/purple çift bloom'u emekli; tek mor radial yeter.
 struct CosmicBackground: View {
     var body: some View {
         ZStack {
             AppColor.bg0
                 .ignoresSafeArea()
 
-            // Top purple bloom (radial)
+            // Üstte chrome lilac wash — sessiz, dozajlı
             RadialGradient(
-                colors: [Color(hex: 0x8000FF, alpha: 0.18), .clear],
-                center: UnitPoint(x: 0.5, y: -0.10),
+                colors: [AppColor.accent.opacity(0.18), .clear],
+                center: UnitPoint(x: 0.5, y: -0.05),
                 startRadius: 0,
-                endRadius: 380
-            )
-            .ignoresSafeArea()
-
-            // Bottom-right pink bloom
-            RadialGradient(
-                colors: [Color(hex: 0xFF0080, alpha: 0.08), .clear],
-                center: UnitPoint(x: 1.0, y: 1.0),
-                startRadius: 0,
-                endRadius: 320
+                endRadius: 420
             )
             .ignoresSafeArea()
         }

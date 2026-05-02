@@ -47,13 +47,16 @@ const INACTIVE_TYPES = new Set([
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return errorResponse("invalid_input", "POST only", 405);
 
-  // Shared-secret auth
-  if (WEBHOOK_SECRET) {
-    const authHeader = req.headers.get("authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (token !== WEBHOOK_SECRET) {
-      return errorResponse("unauthenticated", "invalid webhook secret", 401);
-    }
+  // Shared-secret auth — REVENUECAT_WEBHOOK_SECRET must be configured.
+  // If missing, reject all requests to prevent unauthenticated access.
+  if (!WEBHOOK_SECRET) {
+    console.error("REVENUECAT_WEBHOOK_SECRET not configured");
+    return errorResponse("internal", "webhook not configured", 500);
+  }
+  const authHeader = req.headers.get("authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  if (token !== WEBHOOK_SECRET) {
+    return errorResponse("unauthenticated", "invalid webhook secret", 401);
   }
 
   let body: RCBody;

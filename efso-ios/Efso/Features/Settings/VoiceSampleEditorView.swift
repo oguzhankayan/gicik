@@ -1,11 +1,6 @@
 import SwiftUI
 
-/// Kullanıcının "bize biraz kendinden bahset" cevabını görüntüler ve günceller.
-/// profiles.voice_sample kolonuna yazılır; LLM her üretimde L4 prompt'una
-/// <user_voice> block olarak inject eder.
-///
-/// Onboarding'de bir kez sorulur (atlanabilir). Buradan istenildiğinde
-/// güncellenebilir; etki anında, sonraki üretimden itibaren.
+/// Yazım tarzı editörü — kullanıcının mesaj örneklerinden stil öğrenir.
 struct VoiceSampleEditorView: View {
     let onClose: () -> Void
 
@@ -14,37 +9,40 @@ struct VoiceSampleEditorView: View {
     @State private var loading: Bool = true
     @State private var saving: Bool = false
     @State private var error: String?
-    /// Load fail edip kullanıcı boş editor görürse, "kaydet" basışı
-    /// mevcut sample'ı silebiliyordu (silent overwrite). Bu flag varsa
-    /// editor disabled, save de blocked.
     @State private var loadFailed: Bool = false
     @FocusState private var focused: Bool
 
     private let maxLength: Int = 500
 
     var body: some View {
-        ZStack(alignment: .top) {
-            CosmicBackground()
-            VStack(spacing: 0) {
-                topBar
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 18) {
-                        header
-                        editor
-                            .padding(.top, 8)
-                        if let error {
-                            Text(error)
-                                .font(AppFont.body(12))
-                                .foregroundColor(AppColor.danger)
-                        }
+        VStack(spacing: 0) {
+            topBar
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 18) {
+                    header
+                    editor
+                    if !sample.isEmpty {
+                        detectCard
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 4)
-                    .padding(.bottom, 32)
+                    if let error {
+                        Text(error)
+                            .font(AppFont.body(12))
+                            .foregroundColor(AppColor.danger)
+                    }
                 }
-                .scrollDismissesKeyboard(.interactively)
-                footer
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+                .padding(.bottom, 32)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .scrollDismissesKeyboard(.interactively)
+
+            HoloPrimaryButton(title: saving ? "kaydediliyor" : "kaydet ve uygula", isEnabled: isDirty && !saving && !loadFailed) {
+                Task { await save() }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 24)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { await load() }
@@ -56,60 +54,59 @@ struct VoiceSampleEditorView: View {
         }
     }
 
-    // MARK: - Sections
-
     private var topBar: some View {
         HStack {
             Button { onClose() } label: {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 18, weight: .medium))
+                Text("← geri")
+                    .font(AppFont.mono(12))
+                    .tracking(0.10 * 12)
                     .foregroundColor(AppColor.text60)
+                    .frame(height: 44)
+                    .padding(.horizontal, 16)
+                    .contentShape(Rectangle())
             }
             Spacer()
-            Text("kendi sesin")
-                .font(AppFont.body(16))
-                .foregroundColor(.white.opacity(0.85))
+            EfsoTag("yazım tarzı", color: AppColor.text40)
             Spacer()
-            Color.clear.frame(width: 18, height: 18)
+            Color.clear.frame(width: 60, height: 44)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 12)
-        .padding(.bottom, 8)
+        .padding(.top, 6)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("kendinden bahset")
-                .font(AppFont.display(22, weight: .bold))
-                .tracking(-0.02 * 22)
-                .foregroundColor(.white)
-            Text("nasıl yazdığını öğrenelim. cevaplar senin sesine yakın çıksın. istediğin zaman güncelle.")
-                .font(AppFont.body(13))
+        VStack(alignment: .leading, spacing: 10) {
+            Text("nasıl yazdığını\nbiz ezberleyelim.")
+                .font(AppFont.displayItalic(30, weight: .regular))
+                .tracking(-0.025 * 30)
+                .foregroundColor(AppColor.ink)
+                .lineSpacing(30 * 0.05)
+            Text("son 5-10 mesajını yapıştır. üslup, kelime, noktalama, hepsi sayar.")
+                .font(AppFont.body(13.5))
                 .foregroundColor(AppColor.text60)
-                .lineSpacing(13 * 0.40)
+                .lineSpacing(13.5 * 0.4)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.horizontal, 4)
     }
 
     private var editor: some View {
         VStack(alignment: .trailing, spacing: 8) {
             ZStack(alignment: .topLeading) {
                 if sample.isEmpty && !loading {
-                    Text("ne yapıyorsun, neden buradasın, ne tarz mesajlar atıyorsun. ne hissediyorsan yaz.")
-                        .font(AppFont.body(15))
-                        .italic()
+                    Text("\"yarın boş musun\"\n\"hadi gel kahve içelim\"\n\"of sıkıldım yaa\"\n...")
+                        .font(AppFont.body(14))
                         .foregroundColor(AppColor.text30)
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
                 }
                 TextEditor(text: $sample)
                     .focused($focused)
-                    .font(AppFont.body(15))
-                    .foregroundColor(.white)
+                    .font(AppFont.body(14))
+                    .foregroundColor(AppColor.ink)
                     .scrollContentBackground(.hidden)
                     .padding(.horizontal, 12)
-                    .padding(.top, 8)
-                    .frame(minHeight: 200)
+                    .padding(.vertical, 8)
+                    .frame(minHeight: 220)
                     .disabled(loading || loadFailed)
                     .opacity((loading || loadFailed) ? 0.4 : 1)
                     .onChange(of: sample) { _, new in
@@ -119,67 +116,60 @@ struct VoiceSampleEditorView: View {
                     }
             }
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(AppColor.bg1.opacity(0.55))
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(AppColor.bg1)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(AppColor.text10, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(AppColor.text20, lineWidth: 1)
                     )
             )
-
-            HStack(spacing: 8) {
-                Spacer()
+            HStack {
                 Text("\(sample.count) / \(maxLength)")
-                    .font(AppFont.mono(11))
+                    .font(AppFont.mono(10))
+                    .tracking(0.14 * 10)
                     .foregroundColor(AppColor.text40)
-            }
-        }
-    }
-
-    private var footer: some View {
-        VStack(spacing: 0) {
-            Rectangle().fill(AppColor.text05).frame(height: 1)
-            HStack(spacing: 10) {
-                if isDirty {
-                    Button {
-                        sample = initialSample
-                    } label: {
-                        Text("vazgeç")
-                            .font(AppFont.body(14, weight: .medium))
-                            .foregroundColor(AppColor.text60)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                    }
-                }
                 Spacer()
                 Button {
-                    Task { await save() }
+                    focused = true
                 } label: {
-                    Text(saving ? "kaydediliyor" : "kaydet")
-                        .font(AppFont.body(14, weight: .semibold))
-                        .foregroundColor(isDirty ? AppColor.bg0 : AppColor.text40)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 12)
-                        .background(
-                            Capsule()
-                                .fill(isDirty ? AppColor.lime : AppColor.bg1.opacity(0.5))
-                        )
+                    Text("+ ÖRNEK EKLE")
+                        .font(AppFont.mono(10))
+                        .tracking(0.14 * 10)
+                        .foregroundColor(AppColor.accent)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                 }
-                .disabled(!isDirty || saving || loadFailed)
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
         }
     }
 
-    // MARK: - State
+    private var detectCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            EfsoTag("tespit · şu an", color: AppColor.accent)
+            Text("\"kısa cümleler, lowercase, hafif bıkkınlık tonu. emoji yok.\"")
+                .font(AppFont.displayItalic(15.5, weight: .regular))
+                .foregroundColor(AppColor.ink)
+                .lineSpacing(15.5 * 0.30)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(AppColor.bg2)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(AppColor.text10, lineWidth: 1)
+                )
+        )
+    }
 
     private var isDirty: Bool {
         sample.trimmingCharacters(in: .whitespacesAndNewlines)
             != initialSample.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-
-    // MARK: - Backend
 
     private struct ProfileRow: Decodable {
         let voice_sample: String?

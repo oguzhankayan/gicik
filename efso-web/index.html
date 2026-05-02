@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>efso — ne diyeceğini değil, ne dediğini gör.</title>
+<meta name="description" content="efso, mesajlaşma becerilerini geliştiren yapay zeka iletişim koçu. ekran görüntüsü yükle, üç farklı cevap al.">
+<meta name="theme-color" content="#0A0612">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:title" content="efso — iletişim koçun.">
+<meta property="og:description" content="mesajlaşma becerilerini geliştiren yapay zeka iletişim koçu.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://efso.app">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg0:#0A0612;
+  --bg1:#13101C;
+  --bg2:#1C1726;
+  --ink:#F0EDE6;
+  --text60:rgba(240,237,230,0.6);
+  --text40:rgba(240,237,230,0.4);
+  --text20:rgba(240,237,230,0.2);
+  --accent:#C8A2F8;
+  --pink:#F2A0C4;
+  --pop:#B8E986;
+}
+
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  background:var(--bg0);
+  color:var(--ink);
+  font-family:'Inter',system-ui,sans-serif;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+.mono{font-family:'JetBrains Mono',monospace;letter-spacing:0.08em}
+.tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.625rem;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--text40);
+}
+
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* hero */
+.hero{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:2rem 1.5rem;
+  position:relative;
+}
+.hero::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  background:radial-gradient(ellipse 60% 50% at 50% 40%, rgba(200,162,248,0.06) 0%, transparent 70%);
+  pointer-events:none;
+}
+
+.wordmark{
+  font-family:'Inter',sans-serif;
+  font-size:3.5rem;
+  font-weight:300;
+  letter-spacing:-0.04em;
+  color:var(--ink);
+  margin-bottom:1.5rem;
+}
+
+.hero h2{
+  font-size:1.75rem;
+  font-weight:300;
+  font-style:italic;
+  letter-spacing:-0.02em;
+  color:var(--ink);
+  max-width:480px;
+  line-height:1.35;
+  margin-bottom:1rem;
+}
+
+.hero p{
+  color:var(--text60);
+  font-size:0.9375rem;
+  max-width:400px;
+  margin-bottom:2.5rem;
+}
+
+.app-store-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  background:var(--ink);
+  color:var(--bg0);
+  padding:0.875rem 2rem;
+  border-radius:14px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.8125rem;
+  letter-spacing:0.06em;
+  text-decoration:none;
+  transition:opacity 0.2s;
+}
+.app-store-btn:hover{opacity:0.85;text-decoration:none}
+
+/* features */
+.features{
+  padding:6rem 1.5rem;
+  max-width:720px;
+  margin:0 auto;
+}
+
+.feature{
+  margin-bottom:4rem;
+}
+.feature .tag{margin-bottom:0.75rem;display:block}
+.feature h3{
+  font-size:1.5rem;
+  font-weight:400;
+  font-style:italic;
+  letter-spacing:-0.02em;
+  margin-bottom:0.5rem;
+}
+.feature p{
+  color:var(--text60);
+  font-size:0.9375rem;
+  max-width:480px;
+}
+
+/* modes */
+.modes{
+  padding:4rem 1.5rem;
+  max-width:720px;
+  margin:0 auto;
+}
+.modes h2{
+  font-size:0.625rem;
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--text40);
+  margin-bottom:2rem;
+}
+.mode-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1rem;
+}
+.mode-card{
+  background:var(--bg1);
+  border:1px solid var(--text20);
+  border-radius:16px;
+  padding:1.5rem;
+}
+.mode-card h4{
+  font-size:0.9375rem;
+  font-weight:500;
+  margin-bottom:0.375rem;
+}
+.mode-card p{
+  font-size:0.8125rem;
+  color:var(--text60);
+  line-height:1.5;
+}
+
+/* footer */
+.site-footer{
+  padding:4rem 1.5rem 2rem;
+  max-width:720px;
+  margin:0 auto;
+  border-top:1px solid var(--text20);
+}
+.footer-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:1.5rem;
+  margin-bottom:2rem;
+}
+.footer-links a{
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.75rem;
+  letter-spacing:0.08em;
+  color:var(--text40);
+}
+.footer-links a:hover{color:var(--ink)}
+.footer-copy{
+  font-size:0.75rem;
+  color:var(--text40);
+}
+
+@media(max-width:600px){
+  .wordmark{font-size:2.5rem}
+  .hero h2{font-size:1.375rem}
+  .mode-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="wordmark">efso</div>
+  <h2>ne diyeceğini değil, ne dediğini gör.</h2>
+  <p>mesajlaşma becerilerini geliştiren yapay zeka iletişim koçu. ekran görüntüsü yükle, üç farklı cevap al.</p>
+  <a href="#" class="app-store-btn">yakında app store'da</a>
+</section>
+
+<section class="features">
+  <div class="feature">
+    <span class="tag">nasıl çalışır</span>
+    <h3>ekran görüntüsü yükle.</h3>
+    <p>konuşmanın ekran görüntüsünü çek ve yükle. efso konuşmayı analiz eder, dinamikleri çözer, sana üç farklı cevap önerir.</p>
+  </div>
+  <div class="feature">
+    <span class="tag">kişiselleştirme</span>
+    <h3>seni tanır.</h3>
+    <p>kısa bir kalibrasyon quizi ile iletişim tarzını belirler. öneriler sana özel; başkasının ağzıyla konuşturmuyor.</p>
+  </div>
+  <div class="feature">
+    <span class="tag">gizlilik</span>
+    <h3>ekran görüntülerin 24 saatte silinir.</h3>
+    <p>verilerini saklamıyoruz. ekran görüntüleri 24 saat sonra sunuculardan kalıcı olarak silinir. konuşma verileri 30 gün tutulur.</p>
+  </div>
+</section>
+
+<section class="modes">
+  <h2>dört mod</h2>
+  <div class="mode-grid">
+    <div class="mode-card">
+      <h4>cevap</h4>
+      <p>gelen mesaja üç farklı tonda cevap önerisi al.</p>
+    </div>
+    <div class="mode-card">
+      <h4>açılış</h4>
+      <p>profilden yola çıkarak ilk mesaj üret.</p>
+    </div>
+    <div class="mode-card">
+      <h4>tonla</h4>
+      <p>yazdığın taslağı seçtiğin tona çevir.</p>
+    </div>
+    <div class="mode-card">
+      <h4>davet</h4>
+      <p>konuşmayı buluşmaya taşıyacak mesaj üret.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="/privacy">gizlilik politikası</a>
+    <a href="/terms">kullanım şartları</a>
+    <a href="/support">destek</a>
+    <a href="mailto:support@efso.app">iletişim</a>
+  </div>
+  <p class="footer-copy">&copy; 2026 efso. tüm hakları saklıdır.</p>
+</footer>
+
+</body>
+</html>

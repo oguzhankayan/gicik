@@ -1,24 +1,12 @@
 import SwiftUI
 
-/// Manuel chat composer — kullanıcı ekran görüntüsü atmadan konuşmayı
-/// elle kurar. Cevap ve davet modları için. Açılış için
-/// ManualProfileEntryView kullanılır.
-///
-/// UX:
-/// - üst: geri + "elle yaz" + "kim" alanı (karşı tarafın adı, opsiyonel)
-/// - orta: alternating bubble listesi (sol = onun, sağ = senin)
-/// - sağa kayar bubble silinir (swipe action)
-/// - "+ onun mesajı" / "+ senin mesajın" toggle butonu — son bubble'a
-///   göre uygun olanı vurgular
-/// - alt: tone seçici + "üret" CTA
-///
-/// Validasyon kuralı: en az 1 mesaj + son mesaj `.other` olmalı.
 struct ManualChatComposerView: View {
     @Bindable var vm: HomeViewModel
     let mode: Mode
 
-    @FocusState private var focusedMessageID: UUID?
-    @FocusState private var nameFocused: Bool
+    @State private var inputText = ""
+    @State private var selectedSender: HomeViewModel.ManualSender = .other
+    @FocusState private var inputFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,330 +14,249 @@ struct ManualChatComposerView: View {
             ScrollViewReader { proxy in
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
-                        nameField
-                            .padding(.top, 16)
-                        emptyOrMessages
-                            .padding(.top, 18)
-                        addButtons
+                        header
                             .padding(.top, 14)
-                        toneSelector
-                            .padding(.top, 24)
+                            .padding(.horizontal, 24)
+                        messagesArea
+                            .padding(.top, 18)
+                            .padding(.horizontal, 16)
                     }
-                    .padding(.horizontal, 24)
                     .padding(.bottom, 16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: vm.manualMessages.count) { _, _ in
                     guard let last = vm.manualMessages.last else { return }
-                    // Insertion animation (~0.34s) bitsin sonra scroll —
-                    // bubble belirme + scroll-to aynı anda çakışmasın.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(180))
                         withAnimation(.spring(response: 0.34, dampingFraction: 0.85)) {
                             proxy.scrollTo(last.id, anchor: .bottom)
                         }
                     }
                 }
             }
-            footer
+            composerBar
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("bitti") {
-                    focusedMessageID = nil
-                    nameFocused = false
-                }
-            }
-        }
     }
 
-    // MARK: - TopBar
+    // MARK: - Top Bar
+
     private var topBar: some View {
-        HStack(spacing: 12) {
+        HStack {
             Button { vm.backToHome() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                Text("× iptal")
+                    .font(AppFont.mono(12))
+                    .tracking(0.10 * 12)
                     .foregroundColor(AppColor.text60)
-                    .frame(width: 44, height: 44)
+                    .frame(height: 44)
+                    .padding(.horizontal, 16)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel("geri")
-            Spacer(minLength: 0)
-            Text("elle yaz · \(mode.label.trLower)")
-                .font(AppFont.body(16))
-                .foregroundColor(.white.opacity(0.85))
-            Spacer(minLength: 0)
-            Color.clear.frame(width: 44, height: 44)
-        }
-        .padding(.horizontal, 14)
-        .padding(.top, 4)
-    }
-
-    // MARK: - Name field
-    private var nameField: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "person.crop.circle")
-                .font(.system(size: 16))
-                .foregroundColor(AppColor.text40)
-                .accessibilityHidden(true)
-            TextField("karşı tarafın adı (opsiyonel)", text: $vm.manualOtherName)
-                .focused($nameFocused)
-                .font(AppFont.body(14))
-                .foregroundColor(.white)
-                .submitLabel(.done)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(AppColor.bg1.opacity(0.55))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(AppColor.text08, lineWidth: 1)
-                )
-        )
-    }
-
-    // MARK: - Empty / messages
-    /// Önceden empty/messages arası VStack yapı değişimiydi → snap yapıyordu.
-    /// Şimdi tek container, içeride conditional görünüm + her bubble'da
-    /// asymmetric transition.
-    private var emptyOrMessages: some View {
-        VStack(spacing: 8) {
-            if vm.manualMessages.isEmpty {
-                emptyHint
-                    .transition(.opacity)
-            } else {
-                ForEach($vm.manualMessages) { $msg in
-                    messageBubble(msg: $msg)
-                        .id(msg.id)
-                        .transition(.asymmetric(
-                            insertion: .opacity
-                                .combined(with: .move(edge: .bottom))
-                                .combined(with: .scale(scale: 0.96, anchor: .bottom)),
-                            removal: .opacity.combined(with: .scale(scale: 0.92))
-                        ))
+            .accessibilityLabel("iptal")
+            Spacer()
+            EfsoTag("elle yaz", color: AppColor.text40)
+            Spacer()
+            if canSubmit {
+                Button {
+                    vm.lastError = nil
+                    vm.confirmManualInput()
+                } label: {
+                    Text("tamam →")
+                        .font(AppFont.mono(12))
+                        .tracking(0.10 * 12)
+                        .foregroundColor(AppColor.ink)
+                        .frame(height: 44)
+                        .padding(.horizontal, 16)
+                        .contentShape(Rectangle())
                 }
+                .accessibilityLabel("tamam")
+                .transition(.opacity)
+            } else {
+                Color.clear.frame(width: 60, height: 44)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: canSubmit)
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("konuşmayı sen aktar.")
+                .font(AppFont.displayItalic(28, weight: .regular))
+                .tracking(-0.025 * 28)
+                .foregroundColor(AppColor.ink)
+            Text("karşıdaki ve sen, sırayla.")
+                .font(AppFont.body(13.5))
+                .foregroundColor(AppColor.text60)
+        }
+    }
+
+    // MARK: - Messages
+
+    @ViewBuilder
+    private var messagesArea: some View {
+        VStack(spacing: 8) {
+            ForEach(vm.manualMessages) { msg in
+                messageBubble(msg)
+                    .id(msg.id)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
         .animation(.spring(response: 0.34, dampingFraction: 0.82), value: vm.manualMessages.count)
     }
 
-    private var emptyHint: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("konuşmayı kur")
-                .font(AppFont.display(20, weight: .bold))
-                .tracking(-0.02 * 20)
-                .foregroundColor(.white)
-            Text("önce karşı taraftan başlayalım. son mesaj onun olsun ki sen cevap üretebilelim.")
-                .font(AppFont.body(13))
-                .foregroundColor(AppColor.text60)
-                .lineSpacing(13 * 0.40)
+    private func messageBubble(_ msg: HomeViewModel.ManualMessage) -> some View {
+        let isMe = msg.sender == .user
+        return HStack(alignment: .bottom, spacing: 6) {
+            if isMe { Spacer(minLength: 48) }
+            Text(msg.text)
+                .font(AppFont.body(14.5))
+                .foregroundColor(isMe ? AppColor.bg0 : AppColor.ink)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(bubbleShape(isMe: isMe).fill(isMe ? AppColor.ink : AppColor.bg2))
+                .contextMenu {
+                    Button(role: .destructive) {
+                        withAnimation {
+                            vm.manualMessages.removeAll { $0.id == msg.id }
+                        }
+                    } label: {
+                        Label("sil", systemImage: "trash")
+                    }
+                }
+            if !isMe { Spacer(minLength: 48) }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(AppColor.bg1.opacity(0.4))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(AppColor.text05, lineWidth: 1)
-                )
+    }
+
+    private func bubbleShape(isMe: Bool) -> UnevenRoundedRectangle {
+        UnevenRoundedRectangle(
+            topLeadingRadius: isMe ? 16 : 4,
+            bottomLeadingRadius: 16,
+            bottomTrailingRadius: 16,
+            topTrailingRadius: isMe ? 4 : 16,
+            style: .continuous
         )
     }
 
-    private func messageBubble(msg: Binding<HomeViewModel.ManualMessage>) -> some View {
-        let isOther = msg.wrappedValue.sender == .other
-        let voLabel = isOther
-            ? "karşı tarafın mesajı: \(msg.wrappedValue.text.isEmpty ? "boş" : msg.wrappedValue.text)"
-            : "senin cevabın: \(msg.wrappedValue.text.isEmpty ? "boş" : msg.wrappedValue.text)"
-        return HStack {
-            if !isOther { Spacer(minLength: 36) }
-            ZStack(alignment: .topLeading) {
-                if msg.wrappedValue.text.isEmpty {
-                    Text(isOther ? "onun mesajı" : "senin cevabın")
-                        .font(AppFont.body(14))
-                        .foregroundColor(AppColor.text30)
-                        .padding(.horizontal, 14)
-                        .padding(.top, 10)
-                        .allowsHitTesting(false)
-                }
-                TextField("", text: msg.text, axis: .vertical)
-                    .focused($focusedMessageID, equals: msg.wrappedValue.id)
-                    .font(AppFont.body(14))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    // lineLimit(1...6) her karakterde parent VStack reflow
-                    // tetikliyordu. axis:.vertical zaten doğal şekilde
-                    // büyür; cap kaldırıldı, akıcılaşıyor.
-            }
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(isOther
-                          ? AppColor.bg1.opacity(0.7)
-                          : AppColor.pink.opacity(0.22))
-            )
-            .overlay(alignment: .topTrailing) {
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    let id = msg.wrappedValue.id
-                    // Focus önce kalksın — kaybolurken keyboard takılı
-                    // kalmasın. Sonra remove animation çalışır.
-                    if focusedMessageID == id { focusedMessageID = nil }
-                    vm.manualMessages.removeAll { $0.id == id }
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(AppColor.text40)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                        .accessibilityHidden(true)
-                }
-                .accessibilityLabel("mesajı sil")
-            }
-            if isOther { Spacer(minLength: 36) }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(voLabel)
-    }
+    // MARK: - Composer Bar
 
-    // MARK: - Add buttons
-    private var addButtons: some View {
-        HStack(spacing: 10) {
-            addButton(label: "+ onun mesajı", sender: .other,
-                      tint: AppColor.text60, suggested: nextSuggested == .other)
-            addButton(label: "+ senin cevabın", sender: .user,
-                      tint: AppColor.pink, suggested: nextSuggested == .user)
-        }
-    }
-
-    private func addButton(
-        label: String,
-        sender: HomeViewModel.ManualSender,
-        tint: Color,
-        suggested: Bool
-    ) -> some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            let new = HomeViewModel.ManualMessage(sender: sender)
-            // Append'i .animation modifier'ı zaten yakalar; ek
-            // withAnimation sarmasına gerek yok. Focus'u animation
-            // bittikten sonra ver — keyboard pop-up + transition collide
-            // etmesin.
-            vm.manualMessages.append(new)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
-                focusedMessageID = new.id
-            }
-        } label: {
-            Text(label)
-                .font(AppFont.body(13, weight: .medium))
-                .foregroundColor(suggested ? .white : AppColor.text60)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(suggested ? tint.opacity(0.18) : AppColor.bg1.opacity(0.5))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(
-                                    suggested ? tint.opacity(0.6) : AppColor.text08,
-                                    lineWidth: suggested ? 1.2 : 1
-                                )
-                        )
-                )
-        }
-        .buttonStyle(.plain)
-    }
-
-    /// Bir sonraki için önerilen sender — son mesajın tersi.
-    /// Boşsa "other" (konuşma karşı taraftan başlar).
-    private var nextSuggested: HomeViewModel.ManualSender {
-        guard let last = vm.manualMessages.last else { return .other }
-        return last.sender == .other ? .user : .other
-    }
-
-    // MARK: - Tone selector
-    private var toneSelector: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("ton")
-                    .font(AppFont.mono(11))
-                    .tracking(0.04 * 11)
-                    .foregroundColor(AppColor.text40)
-                Spacer()
-                Text(vm.selectedTone == nil ? "üç farklı ton önerisi" : "tek tonda üç açı")
-                    .font(AppFont.body(11))
-                    .foregroundColor(AppColor.text40)
-            }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    Chip(label: "üç farklı", isSelected: vm.selectedTone == nil) {
-                        vm.selectedTone = nil
-                    }
-                    ForEach(Tone.allCases) { tone in
-                        Chip(
-                            label: tone.label.trLower,
-                            isSelected: vm.selectedTone == tone,
-                            emoji: tone.emoji
-                        ) {
-                            vm.selectedTone = tone
-                        }
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
-    // MARK: - Footer
-    /// Submit kapısı + neden disabled olduğunu yazan inline hint.
-    /// Kullanıcı "üret"in pasif olduğu anda **neden** olduğunu görmeli.
-    private var submitGate: (canSubmit: Bool, hint: String?) {
-        let nonEmpty = vm.manualMessages.filter {
-            !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        }
-        if nonEmpty.isEmpty {
-            return (false, "en az bir mesaj gir")
-        }
-        if nonEmpty.last?.sender != .other {
-            return (false, "son mesaj karşı taraftan olmalı, sen cevap yazacaksın")
-        }
-        return (true, nil)
-    }
-
-    @ViewBuilder
-    private var footer: some View {
-        let gate = submitGate
-        VStack(spacing: 8) {
+    private var composerBar: some View {
+        VStack(spacing: 10) {
             if let err = vm.lastError {
                 Text(err)
                     .font(AppFont.body(12))
                     .foregroundColor(AppColor.warning)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-            } else if let hint = gate.hint {
-                Text(hint)
-                    .font(AppFont.body(12))
-                    .foregroundColor(AppColor.text40)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
             }
-            HStack(spacing: 10) {
-                SecondaryButton(title: "temizle") {
-                    vm.manualMessages = []
-                    vm.manualOtherName = ""
-                    vm.lastError = nil
-                }
-                PrimaryButton("üret", isEnabled: gate.canSubmit) {
-                    vm.lastError = nil
-                    vm.proceedToManualGeneration()
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
+            senderToggle
+                .padding(.horizontal, 16)
+            inputRow
+                .padding(.horizontal, 16)
+                .padding(.bottom, 14)
         }
+    }
+
+    private var senderToggle: some View {
+        HStack(spacing: 4) {
+            ForEach([HomeViewModel.ManualSender.other, .user], id: \.self) { sender in
+                let on = selectedSender == sender
+                let label = sender == .other ? "karşıdaki" : "ben"
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        selectedSender = sender
+                    }
+                } label: {
+                    Text(label)
+                        .font(AppFont.body(13, weight: .semibold))
+                        .foregroundColor(on ? AppColor.bg0 : AppColor.text60)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                .fill(on ? AppColor.ink : Color.clear)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(AppColor.bg2)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(AppColor.text10, lineWidth: 1)
+                )
+        )
+    }
+
+    private var inputRow: some View {
+        HStack(spacing: 10) {
+            TextField("mesajı yaz...", text: $inputText, axis: .vertical)
+                .focused($inputFocused)
+                .font(AppFont.body(14))
+                .foregroundColor(AppColor.ink)
+                .lineLimit(1...5)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(AppColor.bg1)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(AppColor.text10, lineWidth: 1)
+                        )
+                )
+                .onSubmit { addMessage() }
+            Button { addMessage() } label: {
+                holoSendButton
+            }
+            .accessibilityLabel("gönder")
+            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+    }
+
+    private var holoSendButton: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(AppColor.holographic)
+                .frame(width: 48, height: 48)
+            RoundedRectangle(cornerRadius: 12.5, style: .continuous)
+                .fill(AppColor.ink)
+                .frame(width: 45, height: 45)
+            Text("↵")
+                .font(AppFont.body(18, weight: .bold))
+                .foregroundColor(AppColor.bg0)
+        }
+        .opacity(
+            inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1
+        )
+    }
+
+    // MARK: - Logic
+
+    private func addMessage() {
+        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let msg = HomeViewModel.ManualMessage(sender: selectedSender, text: trimmed)
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+            vm.manualMessages.append(msg)
+        }
+        inputText = ""
+        selectedSender = selectedSender == .other ? .user : .other
+    }
+
+    private var canSubmit: Bool {
+        var hasContent = false
+        var hasOther = false
+        for msg in vm.manualMessages {
+            if !msg.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                hasContent = true
+                if msg.sender == .other { hasOther = true }
+            }
+        }
+        return hasContent && hasOther
     }
 }

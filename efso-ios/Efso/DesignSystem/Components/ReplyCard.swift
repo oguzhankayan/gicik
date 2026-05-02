@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// Output sesi — kullanıcının atacağı mesaj.
-/// 3 cevap önerisinden biri. Mono uppercase tone-angle label + body + copy + thumbs.
+/// Refined-y2k çıkış kartı — kullanıcının atacağı mesaj.
+/// Primary varyant (en üst kart): bg2 + holographic 2pt highlight stripe + ink CTA.
+/// Diğer kartlar: bg1 + nötr border + outline CTA.
 struct ReplyCard: View {
-    let toneAngle: String   // "doğrudan engage" | "yön çevirme" | "ileri taşıma"
+    let toneAngle: String
     let text: String
+    var isPrimary: Bool = false
     let isCopied: Bool
     let onCopy: () -> Void
     let onThumbsUp: () -> Void
@@ -13,6 +15,7 @@ struct ReplyCard: View {
     init(
         toneAngle: String,
         text: String,
+        isPrimary: Bool = false,
         isCopied: Bool = false,
         onCopy: @escaping () -> Void,
         onThumbsUp: @escaping () -> Void = {},
@@ -20,6 +23,7 @@ struct ReplyCard: View {
     ) {
         self.toneAngle = toneAngle
         self.text = text
+        self.isPrimary = isPrimary
         self.isCopied = isCopied
         self.onCopy = onCopy
         self.onThumbsUp = onThumbsUp
@@ -28,34 +32,47 @@ struct ReplyCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(toneAngle.trUpper)
-                .font(AppFont.mono(11))
-                .tracking(0.08 * 11)
-                .foregroundColor(AppColor.text40)
-                .padding(.bottom, 10)
+            HStack(alignment: .center) {
+                Text("angle · \(toneAngle.trLower)")
+                    .font(AppFont.mono(10, weight: .medium))
+                    .tracking(0.16 * 10)
+                    .foregroundColor(AppColor.accent)
+                    .textCase(.uppercase)
+
+                Spacer()
+
+                feedbackButtons
+            }
+            .padding(.bottom, 10)
 
             Text(text)
-                .font(AppFont.body(16))
-                .foregroundColor(.white)
-                .lineSpacing(16 * 0.45)
+                .font(AppFont.body(15.5))
+                .foregroundColor(AppColor.ink)
+                .lineSpacing(15.5 * 0.45)
+                .tracking(-0.01 * 15.5)
                 .padding(.bottom, 14)
+                .fixedSize(horizontal: false, vertical: true)
 
-            HStack {
+            HStack(spacing: 10) {
                 copyButton
-                Spacer()
                 feedbackButtons
             }
         }
         .padding(.horizontal, 18)
-        .padding(.top, 18)
-        .padding(.bottom, 14)
+        .padding(.vertical, 16)
         .background(
-            RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
-                .fill(AppColor.bg1.opacity(0.7))
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
-                        .strokeBorder(AppColor.text05, lineWidth: 1)
-                )
+            ZStack(alignment: .top) {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(isPrimary ? AppColor.bg2 : AppColor.bg1)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(isPrimary ? AppColor.text20 : AppColor.text10, lineWidth: 1)
+                if isPrimary {
+                    Capsule()
+                        .fill(AppColor.holographic)
+                        .frame(width: 36, height: 2)
+                        .offset(y: -1)
+                }
+            }
         )
     }
 
@@ -66,23 +83,20 @@ struct ReplyCard: View {
                     Text("kopyalandı")
                     Image(systemName: "checkmark")
                 } else {
-                    Image(systemName: "doc.on.doc")
                     Text("kopyala")
                 }
             }
             .font(AppFont.body(13, weight: .medium))
-            .foregroundColor(isCopied ? AppColor.lime : .white.opacity(0.85))
-            .padding(.horizontal, 12)
-            .frame(height: 32)
+            .foregroundColor(isPrimary ? AppColor.bg0 : AppColor.ink)
+            .frame(maxWidth: .infinity)
+            .frame(height: 36)
             .background(
-                Capsule()
-                    .fill(isCopied ? AppColor.lime.opacity(0.08) : .clear)
-                    .overlay(
-                        Capsule().strokeBorder(
-                            isCopied ? AppColor.lime.opacity(0.6) : AppColor.text10,
-                            lineWidth: 1
-                        )
-                    )
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .fill(isPrimary ? AppColor.ink : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .strokeBorder(isPrimary ? Color.clear : AppColor.text20, lineWidth: 1)
             )
         }
         .accessibilityLabel(isCopied ? "kopyalandı" : "kopyala")
@@ -90,17 +104,25 @@ struct ReplyCard: View {
     }
 
     private var feedbackButtons: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 6) {
             Button(action: onThumbsUp) {
-                Image(systemName: "hand.thumbsup")
-                    .font(.system(size: 16))
-                    .foregroundColor(AppColor.text40)
+                Image(systemName: "heart")
+                    .font(.system(size: 11))
+                    .foregroundColor(AppColor.text60)
+                    .frame(width: 24, height: 24)
+                    .background(Circle().strokeBorder(AppColor.text10, lineWidth: 1))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("beğen")
             Button(action: onThumbsDown) {
-                Image(systemName: "hand.thumbsdown")
-                    .font(.system(size: 16))
-                    .foregroundColor(AppColor.text40)
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 10))
+                    .foregroundColor(AppColor.text60)
+                    .frame(width: 24, height: 24)
+                    .background(Circle().strokeBorder(AppColor.text10, lineWidth: 1))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("beğenme")
         }

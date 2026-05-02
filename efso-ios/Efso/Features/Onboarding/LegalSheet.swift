@@ -20,8 +20,8 @@ struct LegalSheet: View {
 
     private var url: URL {
         switch kind {
-        case .terms: URL(string: "https://efso.app/terms")!
-        case .privacy: URL(string: "https://efso.app/privacy")!
+        case .terms: URL(string: "https://efso-app.pages.dev/terms")!
+        case .privacy: URL(string: "https://efso-app.pages.dev/privacy")!
         }
     }
 }

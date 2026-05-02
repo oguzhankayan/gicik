@@ -1,10 +1,9 @@
 import Foundation
 import Security
 
-/// Minimal keychain wrapper — Apple Sign In credential / refresh token storage.
+/// Minimal keychain wrapper — session token storage.
 enum KeychainManager {
     enum Key: String {
-        case appleSignInUserID = "to.tikla.efso.appleSignInUserID"
         case supabaseSession = "to.tikla.efso.supabaseSession"
     }
 
@@ -14,7 +13,7 @@ enum KeychainManager {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key.rawValue,
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
         ]
         SecItemDelete(query as CFDictionary)
         SecItemAdd(query as CFDictionary, nil)

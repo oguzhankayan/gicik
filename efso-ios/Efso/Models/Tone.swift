@@ -34,6 +34,8 @@ enum Tone: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    static let allLabels: [String] = allCases.map { $0.label.trLower }
+
     /// Arketipe göre default önerilen tone.
     static func recommended(for archetype: ArchetypePrimary?) -> Tone {
         switch archetype {

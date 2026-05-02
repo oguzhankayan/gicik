@@ -91,6 +91,31 @@ enum ArchetypePrimary: String, Codable {
         }
     }
 
+    /// Kısa key — refined-y2k design'da arketip ismi olarak kullanılır
+    /// ("dryroaster.", "softie." gibi). iconAssetName'in `arch-` prefix'siz hali.
+    var iconKey: String {
+        switch self {
+        case .dryroaster: "dryroaster"
+        case .observer: "observer"
+        case .softie_with_edges: "softie"
+        case .chaos_agent: "chaos"
+        case .strategist: "strategist"
+        case .romantic_pessimist: "romantic"
+        }
+    }
+
+    /// Refined wordmark — italic display'de kullanılan kısa Türkçe alt başlık.
+    var shortTitle: String {
+        switch self {
+        case .dryroaster: "kuru ironist"
+        case .observer: "gözlemci"
+        case .softie_with_edges: "kenarlı tatlı"
+        case .chaos_agent: "kaos ajanı"
+        case .strategist: "stratejist"
+        case .romantic_pessimist: "romantik karamsar"
+        }
+    }
+
     var description: [String] {
         switch self {
         case .dryroaster: [

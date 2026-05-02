@@ -1,193 +1,123 @@
 import SwiftUI
 
-/// Demo upload — aha moment.
-/// Yukarıda küçük bir konuşma geçmişi (rounded rectangle, son mesaj cevapsız).
-/// Ortada Efso'ın o son mesaja dair gözlemi.
-/// Aşağıda kalibrasyon modellerinin önereceği 3 farklı cevap (typewriter reveal).
-///
-/// Cevap modu deneyimini birebir taklit eder.
+/// Refined-y2k demo upload — 3 seçenek (galeri, örnek konuşma, elle yaz) +
+/// "şimdilik atla" alt link. Animasyon/typewriter yok; sade.
 struct DemoUploadView: View {
     let onContinue: () -> Void
-    @State private var revealedCount: Int = 0
-    @State private var pulseEmphasis: Bool = false
-
-    private struct ChatMessage {
-        let isMine: Bool
-        let text: String
-    }
-
-    private let chat: [ChatMessage] = [
-        .init(isMine: false, text: "akşam ne yapıyon"),
-        .init(isMine: true,  text: "valla bilmiyom ne yapsak?"),
-        .init(isMine: false, text: "8'de kadıköy boğa uyar mı?"),  // last, unanswered
-    ]
-
-    /// Production'la birebir: tek arketipin (örnekte HAVALI) 3 farklı tonda
-    /// üretilmiş cevapları. Kullanıcı gerçek deneyimde de aynısını görür.
-    /// (kadıköy boğa = boğa heykeli, klasik buluşma noktası — yer değil.)
-    private let demoReplies: [(label: String, text: String)] = [
-        ("01 — FLÖRTÖZ", "8 erken. 9'da boğa'nın orada ol, beni biraz beklersin."),
-        ("02 — ESPRİLİ", "boğa'nın orda buluşmak film başlangıcı gibi. 8 olur."),
-        ("03 — DİREKT",  "8 boğa, geliyorum. sonra moda mı, akmar mı?"),
-    ]
 
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(active: 5, total: 12, showBack: false)
+            OnbHeader(step: 10, total: 11, showBack: false)
 
-            VStack(alignment: .leading, spacing: 0) {
-                Text("DEMO / DENEME")
-                    .font(AppFont.mono(11))
-                    .tracking(0.04 * 11)
-                    .foregroundColor(AppColor.text40)
-
-                Text("son mesaj cevapsız.\nefso 3 farklı tonda yazsa?")
-                    .font(AppFont.display(22, weight: .bold))
-                    .tracking(-0.02 * 22)
-                    .foregroundColor(.white)
-                    .lineSpacing(22 * 0.10)
-                    .padding(.top, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 14) {
+                EfsoTag("ilk üretimin", color: AppColor.accent, dot: true)
+                Text("bir konuşma\ndene.")
+                    .font(AppFont.displayItalic(38, weight: .regular))
+                    .tracking(-0.03 * 38)
+                    .foregroundColor(AppColor.ink)
+                    .lineSpacing(38 * 0.0)
+                Text("gerçek bir dm screenshot'ı at. ya da örnek konuşmayı kullan. ikisi de sayılır.")
+                    .font(AppFont.body(14))
+                    .foregroundColor(AppColor.text60)
+                    .lineSpacing(14 * 0.4)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, 24)
-            .padding(.top, 4)
+            .padding(.top, 20)
 
-            chatBubbleCard
-                .padding(.horizontal, 24)
-                .padding(.top, 18)
-
-            inlineHint("davet karşıdan. uzun cevap istemiyor — gel ya da kontra teklif et.")
-                .padding(.horizontal, 24)
-                .padding(.top, 12)
-                .padding(.bottom, 18)
-
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 10) {
-                    ForEach(Array(demoReplies.enumerated()), id: \.offset) { idx, item in
-                        if idx < revealedCount {
-                            ReplyCard(
-                                toneAngle: item.label,
-                                text: item.text,
-                                onCopy: {
-                                    UIPasteboard.general.string = item.text
-                                    UINotificationFeedbackGenerator().notificationOccurred(.success)
-                                }
-                            )
-                            .transition(.opacity.combined(with: .move(edge: .bottom)))
-                        } else {
-                            ReplyCardSkeleton()
-                        }
-                    }
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 12)
-                .padding(.bottom, 100)
+            VStack(spacing: 12) {
+                primaryOption
+                secondaryOption(emoji: "✦", title: "örnek konuşma", subtitle: "\u{201C}üç gün suskun\u{201D} senaryosunu dene", accent: true)
+                secondaryOption(emoji: "Aa", title: "elle yaz", subtitle: "konuşmayı sen aktar", accent: false)
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
 
-            Spacer(minLength: 0)
+            Spacer()
 
-            SecondaryButton(title: "ben de denemek istiyorum →", action: onContinue)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 32)
+            VStack(spacing: 14) {
+                Button { onContinue() } label: {
+                    Text("ŞİMDİLİK ATLA")
+                        .font(AppFont.mono(11))
+                        .tracking(0.14 * 11)
+                        .foregroundColor(AppColor.text40)
+                        .underline(true, color: AppColor.text20)
+                }
+            }
+            .padding(.bottom, 28)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .task {
-            revealedCount = 0
-            for i in 1...demoReplies.count {
-                try? await Task.sleep(nanoseconds: 800_000_000)
-                withAnimation(AppAnimation.standard) {
-                    revealedCount = i
+    }
+
+    private var primaryOption: some View {
+        Button { onContinue() } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(AppColor.bg2)
+                    Text("📷").font(.system(size: 22))
                 }
+                .frame(width: 48, height: 48)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("screenshot seç")
+                        .font(AppFont.displayItalic(18, weight: .regular))
+                        .foregroundColor(AppColor.ink)
+                    Text("GALERİDEN")
+                        .font(AppFont.mono(10))
+                        .tracking(0.14 * 10)
+                        .foregroundColor(AppColor.text40)
+                }
+                Spacer()
             }
+            .padding(20)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(AppColor.bg1)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(AppColor.text20, style: StrokeStyle(lineWidth: 1.5, dash: [6, 6]))
+            )
         }
-        .onAppear {
-            withAnimation(AppAnimation.pulseGlow) {
-                pulseEmphasis = true
-            }
-        }
+        .buttonStyle(.plain)
     }
 
-    /// Demo-only inline hint — info icon + italic asistan voice.
-    /// Tam ObservationCard'tan daha az yer kaplar; mesaj kutusunun önüne geçmez.
-    private func inlineHint(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "info.circle.fill")
-                .font(.system(size: 14))
-                .foregroundColor(AppColor.lime)
-                .padding(.top, 2)
-            Text(text)
-                .font(AppFont.body(13))
-                .italic()
-                .foregroundColor(AppColor.text60)
-                .lineSpacing(13 * 0.40)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-    }
-
-    private var chatBubbleCard: some View {
-        VStack(spacing: 8) {
-            ForEach(Array(chat.enumerated()), id: \.offset) { idx, msg in
-                chatBubble(msg, isLast: idx == chat.count - 1)
+    private func secondaryOption(emoji: String, title: String, subtitle: String, accent: Bool) -> some View {
+        Button { onContinue() } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(AppColor.bg2)
+                    Text(emoji)
+                        .font(emoji == "Aa" ? AppFont.mono(14) : AppFont.displayItalic(18))
+                        .foregroundColor(accent ? AppColor.accent : AppColor.text60)
+                }
+                .frame(width: 40, height: 40)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(AppFont.body(15, weight: .medium))
+                        .foregroundColor(AppColor.ink)
+                    Text(subtitle)
+                        .font(AppFont.body(12))
+                        .foregroundColor(AppColor.text60)
+                }
+                Spacer()
+                Text("→").foregroundColor(accent ? AppColor.accent : AppColor.text40)
             }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity)
-        .background(
-            ZStack {
+            .padding(20)
+            .frame(maxWidth: .infinity)
+            .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppColor.bg1.opacity(0.55))
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(AppColor.text08, lineWidth: 1)
-            }
-        )
-    }
-
-    @ViewBuilder
-    private func chatBubble(_ msg: ChatMessage, isLast: Bool) -> some View {
-        HStack(spacing: 0) {
-            if msg.isMine { Spacer(minLength: 60) }
-
-            Text(msg.text)
-                .font(AppFont.body(14))
-                .foregroundColor(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(
-                    bubbleBackground(isMine: msg.isMine, emphasized: isLast && !msg.isMine)
-                )
-                .scaleEffect(isLast && !msg.isMine && pulseEmphasis ? 1.02 : 1.0)
-                .shadow(
-                    color: isLast && !msg.isMine
-                        ? AppColor.pink.opacity(pulseEmphasis ? 0.35 : 0.15)
-                        : .clear,
-                    radius: 14
-                )
-
-            if !msg.isMine { Spacer(minLength: 60) }
+                    .fill(AppColor.bg1)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(AppColor.text10, lineWidth: 1)
+                    )
+            )
         }
-    }
-
-    @ViewBuilder
-    private func bubbleBackground(isMine: Bool, emphasized: Bool) -> some View {
-        if emphasized {
-            // Last unanswered "their" bubble — holographic 1pt border + glow
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(AppColor.bg2.opacity(0.85))
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(AppColor.holographic, lineWidth: 1)
-            }
-        } else if isMine {
-            // User's reply bubble — pink fill
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(AppColor.pink.opacity(0.5))
-        } else {
-            // Their bubble — neutral glass
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.white.opacity(0.10))
-        }
+        .buttonStyle(.plain)
     }
 }
 

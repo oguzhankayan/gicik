@@ -1,0 +1,43 @@
+import SwiftUI
+
+/// Refined ton seçici — pill shape, ink fill on selection.
+/// Mode ekranlarında (cevap/açılış/tonla/davet) generate butonunun hemen üstünde.
+struct TonePicker: View {
+    let tones: [String]
+    let selected: String
+    let onSelect: (String) -> Void
+    var label: String = "ton"
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: label.isEmpty ? 0 : 10) {
+            if !label.isEmpty {
+                EfsoTag(label, color: AppColor.text40)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(tones, id: \.self) { tone in
+                        let on = tone == selected
+                        Button(action: { onSelect(tone) }) {
+                            Text(tone.trLower)
+                                .font(AppFont.body(13, weight: on ? .semibold : .regular))
+                                .foregroundColor(on ? AppColor.bg0 : AppColor.ink)
+                                .padding(.horizontal, 14)
+                                .frame(height: 36)
+                                .background(
+                                    Capsule().fill(on ? AppColor.ink : Color.clear)
+                                )
+                                .overlay(
+                                    Capsule().stroke(on ? Color.clear : AppColor.text20, lineWidth: 1)
+                                )
+                                .contentShape(Rectangle().inset(by: -4))
+                                .frame(minHeight: 44)
+                        }
+                        .accessibilityLabel(tone)
+                        .accessibilityValue(on ? "seçili" : "")
+                        .sensoryFeedback(.selection, trigger: selected)
+                    }
+                }
+            }
+        }
+    }
+}

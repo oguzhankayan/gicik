@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Tonla modu — kullanıcı taslağını yapıştırır + ton seçer + üret.
-/// SS yok; sadece text input. Ton zorunlu (üç farklı ton chip'i yok).
+/// Refined-y2k tonla modu — büyük italic "taslağı yaz." + textarea +
+/// asistan sesli SES SIZIYOR hint kartı + ton seçici + holo CTA.
 struct TonlaDraftView: View {
     @Bindable var vm: HomeViewModel
 
+    @State private var subs = SubscriptionManager.shared
     @FocusState private var draftFocused: Bool
     @FocusState private var contextFocused: Bool
     @State private var showContextField = false
@@ -14,33 +15,23 @@ struct TonlaDraftView: View {
             && vm.selectedTone != nil
     }
 
-    /// Disable iken sebep göster — kullanıcı neden basamadığını okur.
-    /// Manual composer'larla aynı pattern.
-    private var submitHint: String? {
-        let draftEmpty = vm.draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        if draftEmpty && vm.selectedTone == nil { return "taslağı yaz, ton seç" }
-        if draftEmpty { return "taslağı yaz" }
-        if vm.selectedTone == nil { return "ton seç" }
-        return nil
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             topBar
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 18) {
                     header
                     draftInput
+                    voiceLeakHint
                     contextSection
-                    toneSelector
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
                 .padding(.top, 4)
-                .padding(.bottom, 16)
+                .padding(.bottom, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .scrollDismissesKeyboard(.interactively)
-            footer
+            bottomBlock
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .toolbar {
@@ -54,133 +45,157 @@ struct TonlaDraftView: View {
         }
     }
 
-    // MARK: - TopBar
-
     private var topBar: some View {
-        HStack(spacing: 12) {
+        HStack {
             Button { vm.backToHome() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                Text("← geri")
+                    .font(AppFont.mono(12))
+                    .tracking(0.10 * 12)
                     .foregroundColor(AppColor.text60)
-                    .frame(width: 44, height: 44)
+                    .frame(height: 44)
+                    .padding(.horizontal, 16)
                     .contentShape(Rectangle())
-                    .accessibilityHidden(true)
             }
             .accessibilityLabel("geri")
-            Spacer(minLength: 0)
-            Text("tonla modu")
-                .font(AppFont.body(16))
-                .foregroundColor(.white.opacity(0.85))
-            Spacer(minLength: 0)
-            Color.clear.frame(width: 44, height: 44)
+            Spacer()
+            EfsoTag("tonla", color: AppColor.text40)
+            Spacer()
+            if !subs.isActive {
+                quotaChip
+                    .frame(minWidth: 60, alignment: .trailing)
+                    .padding(.trailing, 14)
+            } else {
+                Color.clear.frame(width: 60, height: 44)
+            }
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 4)
     }
 
-    // MARK: - Header
+    private var quotaChip: some View {
+        let usedToday = vm.todayUsageCount
+        let cap = 3
+        return Text("\(min(usedToday, cap))/\(cap)")
+            .font(AppFont.mono(10))
+            .tracking(0.14 * 10)
+            .foregroundColor(usedToday >= cap ? AppColor.warning : AppColor.text60)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(AppColor.bg1))
+            .overlay(Capsule().strokeBorder(AppColor.text10, lineWidth: 1))
+    }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("yazdığını ver, tonlayalım")
-                .font(AppFont.display(22, weight: .bold))
-                .tracking(-0.02 * 22)
-                .foregroundColor(.white)
-                .lineSpacing(22 * 0.08)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text("niyetin aynı kalır, sadece ses değişir.")
-                .font(AppFont.body(13))
+            Text("taslağı yaz.")
+                .font(AppFont.displayItalic(38, weight: .regular))
+                .tracking(-0.03 * 38)
+                .foregroundColor(AppColor.ink)
+            Text("ne demek istediğini yaz. ton biz bakarız.")
+                .font(AppFont.body(14))
                 .foregroundColor(AppColor.text60)
-                .lineSpacing(13 * 0.40)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 4)
+        .padding(.top, 16)
     }
-
-    // MARK: - Draft input
 
     private var draftInput: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("taslak")
-                .font(AppFont.mono(11))
-                .tracking(0.04 * 11)
-                .foregroundColor(AppColor.text40)
-
             ZStack(alignment: .topLeading) {
                 if vm.draftText.isEmpty {
                     Text("yazdığını buraya yapıştır")
                         .font(AppFont.body(15))
                         .foregroundColor(AppColor.text40)
-                        .padding(.horizontal, 14)
-                        .padding(.top, 12)
+                        .padding(.horizontal, 18)
+                        .padding(.top, 16)
                         .allowsHitTesting(false)
-                        .accessibilityHidden(true)
                 }
                 TextEditor(text: $vm.draftText)
-                    .font(AppFont.body(15))
-                    .foregroundColor(.white)
+                    .font(AppFont.body(16))
+                    .foregroundColor(AppColor.ink)
                     .scrollContentBackground(.hidden)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .frame(minHeight: 140)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .frame(minHeight: 180)
                     .focused($draftFocused)
             }
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(AppColor.bg1.opacity(0.5))
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(AppColor.bg1)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(
-                                draftFocused ? AppColor.text20 : AppColor.text08,
-                                lineWidth: 1
-                            )
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(draftFocused ? AppColor.accent : AppColor.text20, lineWidth: 1)
                     )
             )
-
             HStack {
-                Spacer()
-                Text("\(vm.draftText.count) / 1500")
+                Text("\(vm.draftText.count) / 1500 karakter")
                     .font(AppFont.mono(10))
+                    .tracking(0.14 * 10)
                     .foregroundColor(AppColor.text40)
+                Spacer()
+                if vm.draftText.count > 200 {
+                    Text("SES SIZIYOR · SİVİLT")
+                        .font(AppFont.mono(10))
+                        .tracking(0.14 * 10)
+                        .foregroundColor(AppColor.accent)
+                }
             }
         }
     }
 
-    // MARK: - Context (optional)
+    @ViewBuilder
+    private var voiceLeakHint: some View {
+        if vm.draftText.count > 200 {
+            HStack(alignment: .top, spacing: 10) {
+                Text("✦")
+                    .foregroundColor(AppColor.accent)
+                Text("kızgınlığını saklayamıyorsun. yazıyı kısalt, soru ile bitir, gücünü kaybetme.")
+                    .font(AppFont.displayItalic(13.5, weight: .regular))
+                    .foregroundColor(AppColor.ink)
+                    .lineSpacing(13.5 * 0.30)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(AppColor.bg2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(AppColor.text10, lineWidth: 1)
+                    )
+            )
+        }
+    }
 
     @ViewBuilder
     private var contextSection: some View {
         if showContextField {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("karşı tarafın son mesajı")
-                        .font(AppFont.mono(11))
-                        .tracking(0.04 * 11)
-                        .foregroundColor(AppColor.text40)
+                    EfsoTag("karşı tarafın son mesajı", color: AppColor.text40)
                     Spacer()
                     Button {
                         vm.contextText = ""
                         showContextField = false
                     } label: {
                         Text("kaldır")
-                            .font(AppFont.body(11))
+                            .font(AppFont.mono(11))
+                            .tracking(0.10 * 11)
                             .foregroundColor(AppColor.text40)
                     }
                 }
-
                 ZStack(alignment: .topLeading) {
                     if vm.contextText.isEmpty {
-                        Text("karşı tarafın son mesajı — dil eşleşsin diye")
-                            .font(AppFont.body(14))
+                        Text("dil eşleşsin diye")
+                            .font(AppFont.body(13))
                             .foregroundColor(AppColor.text40)
                             .padding(.horizontal, 14)
                             .padding(.top, 12)
-                            .allowsHitTesting(false)
                     }
                     TextEditor(text: $vm.contextText)
                         .focused($contextFocused)
                         .font(AppFont.body(14))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColor.ink)
                         .scrollContentBackground(.hidden)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
@@ -188,10 +203,10 @@ struct TonlaDraftView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(AppColor.bg1.opacity(0.4))
+                        .fill(AppColor.bg1)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(AppColor.text05, lineWidth: 1)
+                                .strokeBorder(AppColor.text10, lineWidth: 1)
                         )
                 )
             }
@@ -199,73 +214,39 @@ struct TonlaDraftView: View {
             Button { showContextField = true } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "plus")
-                        .font(.system(size: 11, weight: .medium))
                     Text("karşı tarafın son mesajını ekle")
-                        .font(AppFont.body(13))
                 }
+                .font(AppFont.mono(11))
+                .tracking(0.10 * 11)
                 .foregroundColor(AppColor.text60)
             }
         }
     }
 
-    // MARK: - Tone selector (zorunlu)
-
-    private var toneSelector: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("ton")
-                    .font(AppFont.mono(11))
-                    .tracking(0.04 * 11)
-                    .foregroundColor(AppColor.text40)
-                Spacer()
-                Text(vm.selectedTone == nil
-                     ? "ton seç, üç açı çıkar"
-                     : "üç açı, aynı tonda")
-                    .font(AppFont.body(11))
-                    .foregroundColor(vm.selectedTone == nil ? AppColor.pink : AppColor.text40)
-            }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(Tone.allCases) { tone in
-                        Chip(
-                            label: tone.label.trLower,
-                            isSelected: vm.selectedTone == tone,
-                            emoji: tone.emoji
-                        ) {
-                            vm.selectedTone = tone
-                        }
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
-    // MARK: - Footer
-
     @ViewBuilder
-    private var footer: some View {
-        VStack(spacing: 8) {
-            if let err = vm.lastError {
-                Text(err)
-                    .font(AppFont.body(12))
-                    .foregroundColor(AppColor.warning)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-            } else if let hint = submitHint {
-                Text(hint)
-                    .font(AppFont.body(12))
-                    .foregroundColor(AppColor.text40)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-            }
-            PrimaryButton("tonla", isEnabled: canSubmit) {
+    private var bottomBlock: some View {
+        VStack(spacing: 12) {
+            TonePicker(
+                tones: Tone.allLabels,
+                selected: vm.selectedTone?.label.trLower ?? "",
+                onSelect: { label in
+                    if let tone = Tone.allCases.first(where: { $0.label.trLower == label }) {
+                        vm.selectedTone = tone
+                    }
+                },
+                label: ""
+            )
+            .padding(.horizontal, 20)
+
+            HoloPrimaryButton(title: "tonla", isEnabled: canSubmit) {
                 draftFocused = false
                 contextFocused = false
                 vm.proceedToTonlaGeneration()
             }
-            .padding(.horizontal, 24)
+            .opacity(canSubmit ? 1 : 0.35)
+            .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
+        .padding(.top, 10)
     }
 }

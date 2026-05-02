@@ -1,8 +1,9 @@
 import SwiftUI
 import UIKit
 
-/// Main shell — avatar + logo, primary "cevap" hero, 3 secondary mode rows,
-/// history scroll (history boşsa hiç gözükmez).
+/// Refined-y2k home — editorial mode list. Kart-grid emekli; her mod
+/// 36pt italic isim + tek satır mono açıklama + numerik prefix (01-04).
+/// Asistan sesi gözlem + editorial mode list + context footer.
 struct HomeView: View {
     @State private var vm = HomeViewModel()
     @State private var showArchetypeSwitcher = false
@@ -10,18 +11,13 @@ struct HomeView: View {
     @State private var showHowItWorks = false
     @State private var paywallReason: EntitlementGate.LockReason?
     @State private var subs = SubscriptionManager.shared
-    /// AI consent revoke akışı — ProfileView'dan tetiklenir; onaylanırsa
-    /// UD flag temizlenir + signOut. Veri silme support üzerinden (manuel).
     @State private var showingAIConsentRevoke = false
-    /// Kalibrasyonu yenile akışı — onboardingCompleted false yapılır, signOut
-    /// + RootView yeniden onboarding'e döner. Mevcut kalibrasyonun korunması
-    /// Phase 7+; MVP'de "yenileme = baştan"un dürüst karşılığı.
     @State private var showingRecalibrate = false
-    /// Tek-seferlik archetype spotlight overlay — first home view'da
-    /// kullanıcıya sol üst avatar'ın "tarz değiştir" işlevini gösterir.
-    /// UD flag dismiss'te yazılır, bir daha açılmaz.
     @AppStorage(UDKey.archetypeSpotlightSeen.rawValue) private var archetypeSpotlightSeen: Bool = false
     @State private var showArchetypeSpotlight: Bool = false
+    @State private var selectedHistoryItem: ConversationHistoryItem?
+    @State private var safeAreaTopInset: CGFloat = 47
+    @State private var cachedStats: HomeStats?
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -48,9 +44,7 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(AppAnimation.standard, value: stageKey)
-        // Paywall sheet ROOT level — generation/result stage'inden de tetiklenmeli.
-        // Önceden homeContent içindeydi, sadece home stage'de iken çalışıyordu.
-        .sheet(item: $paywallReason) { reason in
+        .sheet(item: $paywallReason, onDismiss: { paywallReason = nil }) { reason in
             PaywallView(
                 onContinue: { paywallReason = nil },
                 onDismiss: { paywallReason = nil },
@@ -67,17 +61,7 @@ struct HomeView: View {
         .alert("yapay zeka onayını geri çek?", isPresented: $showingAIConsentRevoke) {
             Button("vazgeç", role: .cancel) {}
             Button("geri çek", role: .destructive) {
-                // Zombie state önle: onboardingCompleted'ı da kaldır.
-                // Aksi halde tekrar girişte HomeView açılır ama AI
-                // consent kapalı, LLM call'ları sessizce fail eder.
-                // Bu yapı: revoke → re-onboard → consent step'inde tekrar
-                // onay gerek (veya iptal → çıkış).
-                UserDefaults.standard.set(false, .aiConsentGiven)
-                UserDefaults.standard.set(false, .onboardingCompleted)
-                Task {
-                    await SubscriptionManager.shared.signOut()
-                    try? await AuthService.shared.signOut()
-                }
+                Task { await vm.revokeAIConsent() }
             }
         } message: {
             Text("bu olmadan uygulama çalışamaz. çıkış yapılacak. verilerinin silinmesi için support@efso.app ile iletişime geç.")
@@ -94,19 +78,13 @@ struct HomeView: View {
         } message: {
             Text("9 sorudan oluşan kalibrasyon yeniden başlar. mevcut arketip silinir.")
         }
-        // First-launch tek-seferlik spotlight: sol-üst avatar'ın "tarz
-        // değiştir" işlevini gösterir. Sadece home stage'inde, henüz
-        // görmemiş kullanıcıda. Hesaplama: topBar leading 24 + avatar
-        // çapı 36 → ortası (24+18, 58+18+22) safe-area top sonrası.
-        // SafeArea zaten topBar 58pt push eder; geometry içinde
-        // hesaplandığı için sabit değer iyi yaklaşım.
         .overlay {
             if showArchetypeSpotlight {
                 SpotlightOverlay(
-                    targetCenter: CGPoint(x: 24 + 22, y: 58 + 22 + safeAreaTopInset),
+                    targetCenter: CGPoint(x: 24 + 22, y: safeAreaTopInset + 6 + 22 + 14 + 22),
                     targetRadius: 22,
                     title: "tarzını buradan değiştir",
-                    subtitle: "istediğin zaman sol-üst avatara dokun, başka bir arketipe geç.",
+                    subtitle: "istediğin zaman avatara dokun, başka bir arketipe geç. nasıl çalışır bilgisi sağ üstteki ayarlarda.",
                     isPresented: $showArchetypeSpotlight,
                     onDismiss: { archetypeSpotlightSeen = true }
                 )
@@ -114,26 +92,27 @@ struct HomeView: View {
             }
         }
         .onAppear {
-            // İlk home render'ında, eğer daha önce görülmediyse, kısa
-            // gecikme ile spotlight aç. Gecikme: kullanıcı sayfayı
-            // önce kavrasın, sonra dikkati buraya çekelim.
+            if let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first,
+               let inset = scene.windows.first?.safeAreaInsets.top {
+                safeAreaTopInset = inset
+            }
             if !archetypeSpotlightSeen {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(600))
                     if !archetypeSpotlightSeen {
                         showArchetypeSpotlight = true
                     }
                 }
             }
         }
+        .onChange(of: vm.history) { _, _ in
+            cachedStats = computeHomeStats()
+        }
     }
 
-    /// Cihaz safe-area top inset — spotlight target koordinatı için.
-    /// SwiftUI'da window inset'e direkt erişim çıkardığı için UIWindowScene
-    /// üzerinden bir kez okur, default 47pt (iPhone 14+ Dynamic Island).
-    private var safeAreaTopInset: CGFloat {
-        let scene = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }.first
-        return scene?.windows.first?.safeAreaInsets.top ?? 47
+    private var homeStats: HomeStats {
+        cachedStats ?? computeHomeStats()
     }
 
     private var stageKey: String {
@@ -145,33 +124,34 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Home content
+    // MARK: - Home content (refined editorial)
 
     private var homeContent: some View {
-        ScrollView(showsIndicators: false) {
-            // Vertical rhythm AppSpacing scale'inde (8/16/24/32/48). 36/18/28
-            // off-scale değerlerdi; göze farklı gelmiyor ama design tokens
-            // disiplini polish'in koşulu (impeccable).
-            VStack(spacing: 0) {
-                topBar
-                primaryMode.padding(.top, AppSpacing.xl)            // 32
-                secondaryModes.padding(.top, AppSpacing.md)         // 16
-                if vm.history.isEmpty {
-                    emptyHistoryHint.padding(.top, AppSpacing.xl)
-                } else {
-                    // Stats chip yalnızca bu hafta üretim varsa.
-                    // Öncesi: history boş olsa da değil, weekCount=0 olsa
-                    // "0 cevap" + "en çok cevap modu" görünüyordu — boş, anlamsız.
-                    let stats = computeHomeStats()
-                    if stats.weekCount > 0 {
-                        // 32→24: kart kalktığı için breathing room küçülebilir.
-                        statsChip.padding(.top, AppSpacing.lg)
-                    }
-                    historySection.padding(.top, AppSpacing.md)
-                }
-                Spacer(minLength: AppSpacing.xl)                    // 32
-            }
+        VStack(spacing: 0) {
+            EfsoWordmark(size: 22)
+                .padding(.top, safeAreaTopInset + 6)
+
+            topBar
+                .padding(.top, 14)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 14)
+
+            observationStrip
+                .padding(.horizontal, 24)
+                .padding(.bottom, 14)
+
+            modeList
+
+            Spacer(minLength: 12)
+
+            quotaCard
+                .padding(.horizontal, 24)
+
+            contextFooter
+                .padding(.top, quotaCardVisible ? 10 : 0)
+                .padding(.bottom, 18)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .sheet(isPresented: $showArchetypeSwitcher) {
             ArchetypeSwitcherSheet(vm: vm)
                 .presentationDetents([.large])
@@ -181,6 +161,7 @@ struct HomeView: View {
             HowItWorksView(onClose: { showHowItWorks = false })
                 .presentationBackground(AppColor.bg0)
                 .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showProfile) {
             ProfileView(
@@ -188,81 +169,90 @@ struct HomeView: View {
                 onClose: { showProfile = false },
                 onHowItWorks: {
                     showProfile = false
-                    // Profile sheet kapanırken stack'i kirletmemek için kısa
-                    // delay'le HowItWorks aç. Aksi halde iki sheet üst üste gelir.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
-                        showHowItWorks = true
-                    }
-                },
-                onSignOut: {
-                    showProfile = false
                     Task {
-                        await SubscriptionManager.shared.signOut()
-                        try? await AuthService.shared.signOut()
+                        try? await Task.sleep(for: .milliseconds(320))
+                        showHowItWorks = true
                     }
                 },
                 onAIConsent: {
                     showProfile = false
-                    // Sheet kapanma animasyonu sonrası alert'i tetikle.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(320))
                         showingAIConsentRevoke = true
                     }
                 },
                 onRecalibrate: {
                     showProfile = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(320))
                         showingRecalibrate = true
                     }
                 },
                 onUpgrade: {
-                    // Sheet kapansın, kısa gecikme ile paywall sheet açılsın.
-                    // Aynı anda iki sheet sunulamaz.
                     showProfile = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) {
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(320))
                         paywallReason = .userInitiated
                     }
                 }
             )
             .presentationBackground(AppColor.bg0)
         }
+        .sheet(isPresented: $showingHistory) {
+            ConversationHistorySheet(
+                history: vm.history,
+                selectedItem: $selectedHistoryItem
+            )
+            .presentationBackground(AppColor.bg0)
+            .presentationDetents([.large])
+        }
+        .sheet(item: $selectedHistoryItem) { item in
+            HistoryDetailSheet(item: item)
+                .presentationBackground(AppColor.bg0)
+        }
     }
+
+    // MARK: - Top bar
 
     private var topBar: some View {
         HStack {
-            // Arketip avatarı — tap ile tarz değiştirme sheet'i açılır.
-            // Holographic stroke yalnızca burada kalır (calibration reveal'in homepage izi).
             Button { showArchetypeSwitcher = true } label: {
-                ZStack {
-                    Circle()
-                        .fill(AppColor.bg2.opacity(0.7))
-                    Circle()
-                        .strokeBorder(AppColor.holographic, lineWidth: 1)
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(AppColor.bg2.opacity(0.7))
+                        Circle()
+                            .strokeBorder(AppColor.holographic, lineWidth: 1)
+                        if let arch = vm.archetype {
+                            Image(arch.iconAssetName)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .padding(4)
+                                .accessibilityHidden(true)
+                        } else {
+                            Text("✨").font(.system(size: 18))
+                                .accessibilityHidden(true)
+                        }
+                    }
+                    .frame(width: 36, height: 36)
+
                     if let arch = vm.archetype {
-                        Image(arch.iconAssetName)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .padding(4)
-                            .accessibilityHidden(true)
-                    } else {
-                        Text("✨").font(.system(size: 18))
-                            .accessibilityHidden(true)
+                        Text(arch.iconKey)
+                            .font(AppFont.mono(10))
+                            .tracking(0.12 * 10)
+                            .foregroundColor(AppColor.text40)
+                            .textCase(.uppercase)
                     }
                 }
-                .frame(width: 36, height: 36)
-                .frame(width: 44, height: 44)   // hit-target 44, görsel 36
+                .frame(minHeight: 44)
                 .contentShape(Rectangle())
             }
             .accessibilityLabel("tarz değiştir, şu an \(archetypeShortLabel)")
 
             Spacer()
-            Logo(size: 26)
-            Spacer()
 
             Button { showProfile = true } label: {
-                // person.crop.circle → slider.horizontal.3: avatar zaten
-                // "sen" sinyalini taşıyor; sağ ikonun "ayar" anlamı net
-                // olsun. Semantic ayrım net + universal settings glyph.
-                Image(systemName: "slider.horizontal.3")
+                Image(systemName: "gearshape")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(AppColor.text60)
                     .frame(width: 44, height: 44)
@@ -271,204 +261,223 @@ struct HomeView: View {
             }
             .accessibilityLabel("ayarlar")
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 58)
     }
 
-    // MARK: - Primary mode (cevap)
+    // MARK: - Observation strip (asistan sesi, lila highlight)
 
-    /// Trafiğin %80'i buraya gidecek — 4-eşit-grid yerine ana CTA olarak öne çıkar.
-    /// Holographic stroke sadece bu kartta kalır; secondary'ler düz neutral.
-    ///
-    /// Hero CTA: lime "başla →" pill bottom-left. Subtitle zaten "üç cevap dön"
-    /// diyor — value claim copy'de, ek visual preview gereksiz çıktı (denedik,
-    /// kullanıcı feedback "skeleton/design hatası gibi"). Şu an minimal:
-    /// icon + title + subtitle + CTA, holographic border ile brand imzası.
-    private var primaryMode: some View {
-        Button { tryEnterMode(.cevap) } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .center, spacing: 0) {
-                    Image(systemName: Mode.cevap.systemIcon)
-                        .font(.system(size: 22, weight: .light))
-                        .foregroundColor(.white.opacity(0.85))
-                        .accessibilityHidden(true)
-                    Spacer(minLength: 0)
-                    heroStatusPill
-                }
-
-                Spacer(minLength: 0)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("cevap")
-                        .font(AppFont.display(32, weight: .bold))
-                        .tracking(-0.02 * 32)
-                        .foregroundColor(.white)
-                    Text("ss yükle, üç cevap çıkar.")
-                        .font(AppFont.body(13))
-                        .foregroundColor(AppColor.text60)
-                }
-
-                HStack(spacing: 6) {
-                    Text("başla")
-                        .font(AppFont.body(12, weight: .semibold))
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .foregroundColor(AppColor.bg0)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(Capsule().fill(AppColor.lime))
-                .padding(.top, 14)
-            }
+    private var observationStrip: some View {
+        observationLine
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-            // minHeight: Dynamic Type'da subtitle taşmasın diye sabit
-            // height bırakıldı. 200 görsel zemin, içerik gerekirse büyür.
-            .frame(maxWidth: .infinity, minHeight: 200, alignment: .leading)
-            .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
-                        .fill(AppColor.bg1.opacity(0.7))
-                    RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
-                        .strokeBorder(AppColor.holographic, lineWidth: 1)
-                        .opacity(0.55)
-                }
-            )
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 24)
-        .sensoryFeedback(.impact(weight: .light), trigger: vm.stage)
-        .accessibilityLabel("cevap modu, ekran görüntüsü ver üç cevap dön, başla")
     }
 
-    /// Hero kartının sağ-üstünde status pill — premium mühür veya free
-    /// kalan kullanım. İki amaç tek pill'de: (1) hero üst yarısı boş
-    /// görünmesin, (2) free user evden çıkmadan kalan hakkını görsün.
     @ViewBuilder
-    private var heroStatusPill: some View {
-        if subs.isActive {
-            HStack(spacing: 4) {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 9, weight: .semibold))
-                    .accessibilityHidden(true)
-                Text("premium")
-                    .font(AppFont.mono(10))
-                    .tracking(0.04 * 10)
-            }
-            .foregroundColor(AppColor.lime)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .background(
-                Capsule()
-                    .fill(AppColor.lime.opacity(0.12))
-                    .overlay(Capsule().strokeBorder(AppColor.lime.opacity(0.35), lineWidth: 1))
-            )
-            .accessibilityLabel("premium aktif")
-        } else if !vm.historyLoadedOnce && vm.remainingToday == nil {
-            // Cold-launch'ta history + server-truth gelmediyse chip
-            // yalan söylemesin (0/3 + 402 senaryosu). Belirsiz state.
-            EmptyView()
-        } else {
-            // Server-truth (vm.remainingToday) önceliklidir; yoksa lokal
-            // history'den hesap. remainingToday her başarılı üretim sonrası
-            // güncellenir (generate-replies done event).
-            let cap = EntitlementGate.freeDailyLimit
-            let usedToday: Int = {
-                if let remaining = vm.remainingToday {
-                    return cap - remaining
-                }
-                return vm.history.filter { Calendar.istanbul.isDateInToday($0.createdAt) }.count
-            }()
-            let remaining = max(0, cap - usedToday)
-            let isLow = remaining == 0
-            HStack(spacing: 4) {
-                Image(systemName: isLow ? "lock.fill" : "bolt.fill")
-                    .font(.system(size: 9, weight: .semibold))
-                    .accessibilityHidden(true)
-                Text("\(min(usedToday, cap))/\(cap) bugün")
-                    .font(AppFont.mono(10))
-                    .tracking(0.04 * 10)
-            }
-            .foregroundColor(isLow ? AppColor.warning : AppColor.text60)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .background(
-                Capsule()
-                    .fill((isLow ? AppColor.warning : AppColor.text40).opacity(0.10))
-                    .overlay(
-                        Capsule().strokeBorder(
-                            (isLow ? AppColor.warning : AppColor.text20).opacity(0.4),
-                            lineWidth: 1
-                        )
-                    )
-            )
-            .accessibilityLabel("bugün \(usedToday) cevap üretildi, sınır \(cap)")
+    private var observationLine: some View {
+        let stats = homeStats
+        let parts = todayObservation(stats: stats)
+        Text(attributedObservation(parts: parts))
+            .font(AppFont.displayItalic(22, weight: .regular))
+            .tracking(-0.02 * 22)
+            .lineSpacing(22 * 0.20)
+            .foregroundColor(AppColor.ink)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// İlk parça nötr ink, ikinci parça chrome lilac accent.
+    private func attributedObservation(parts: (String, String?)) -> AttributedString {
+        var combined = AttributedString(parts.0)
+        combined.foregroundColor = AppColor.ink
+        if let highlight = parts.1 {
+            var hi = AttributedString(" \(highlight)")
+            hi.foregroundColor = AppColor.accent
+            combined.append(hi)
+        }
+        return combined
+    }
+
+    private func todayObservation(stats: HomeStats) -> (String, String?) {
+        let arch = vm.archetype ?? .dryroaster
+
+        if stats.weekCount == 0 {
+            return firstVisitObservation(arch: arch)
+        }
+        if stats.streakDays >= 3 {
+            return streakObservation(arch: arch, days: stats.streakDays)
+        }
+        if stats.weekCount >= 5 {
+            return highUsageObservation(arch: arch, count: stats.weekCount)
+        }
+        return normalObservation(arch: arch, count: stats.weekCount)
+    }
+
+    private func firstVisitObservation(arch: ArchetypePrimary) -> (String, String?) {
+        switch arch {
+        case .dryroaster:       return ("henüz hiç denemedim.", "ilk ss yeter.")
+        case .observer:         return ("sessizlik de bir cevap.", "ama bir dene.")
+        case .softie_with_edges: return ("burada yenisin.", "birlikte bakalım.")
+        case .chaos_agent:      return ("boş ekran sıkıcı.", "bir şey at bakalım.")
+        case .strategist:       return ("veri yok, analiz yok.", "ilk hamle sende.")
+        case .romantic_pessimist: return ("henüz bir şey yok.", "belki de öyle kalır. belki de değil.")
         }
     }
 
-    // MARK: - Secondary modes (açılış / tonla / davet)
+    private func streakObservation(arch: ArchetypePrimary, days: Int) -> (String, String?) {
+        switch arch {
+        case .dryroaster:       return ("\(days) gün üst üste.", "alışkanlık mı, ihtiyaç mı?")
+        case .observer:         return ("\(days) gün aralıksız.", "bir örüntü var.")
+        case .softie_with_edges: return ("\(days) gündür buradasın.", "güzel gidiyorsun.")
+        case .chaos_agent:      return ("\(days) gün. durmadın.", "momentum iyi.")
+        case .strategist:       return ("\(days) günlük seri.", "tutarlılık kazandırır.")
+        case .romantic_pessimist: return ("\(days) gün üst üste geldin.", "alışma sakın.")
+        }
+    }
 
-    /// Kompakt liste — primary cevap kartının altında inline. Aynı affordance
-    /// (kart) ama görsel ağırlık çok daha düşük, hiyerarşi net.
-    private var secondaryModes: some View {
-        VStack(spacing: 8) {
-            ForEach(secondaryList, id: \.rawValue) { mode in
-                Button { tryEnterMode(mode) } label: {
-                    HStack(spacing: 14) {
-                        // Restrained strategy: secondary list'te üç mode
-                        // ikonu da tek tonda (text60). Cevap (primary)
-                        // holographic'i taşıyor; secondary'de renk swatch'ı
-                        // hiyerarşi değil gürültü üretiyordu. Glance'la
-                        // ayrım ikon karakteri + sıralama + label ile.
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(AppColor.bg2.opacity(0.6))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .strokeBorder(AppColor.text05, lineWidth: 1)
-                                )
-                            Image(systemName: mode.systemIcon)
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        .frame(width: 32, height: 32)
+    private func highUsageObservation(arch: ArchetypePrimary, count: Int) -> (String, String?) {
+        switch arch {
+        case .dryroaster:       return ("bu hafta \(count) cevap.", "biraz nefes ver.")
+        case .observer:         return ("\(count) cevap bu hafta.", "gözlemle, acele etme.")
+        case .softie_with_edges: return ("bu hafta \(count) tane olmuş.", "kendine de vakit ayır.")
+        case .chaos_agent:      return ("\(count) cevap. fırtına gibi.", "devam.")
+        case .strategist:       return ("bu hafta \(count).", "veri birikiyor.")
+        case .romantic_pessimist: return ("\(count) cevap bu hafta.", "çok mu yazıyorsun?")
+        }
+    }
 
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(mode.label.trLower)
-                                .font(AppFont.body(15, weight: .medium))
-                                .foregroundColor(.white)
-                            Text(mode.subtitle)
-                                .font(AppFont.body(12))
-                                .foregroundColor(AppColor.text40)
-                        }
-                        Spacer()
-                        // Mode kilidi kaldırıldı (2026-05-01) — tüm modlar
-                        // her tier'a açık. lock.fill render artık gerekmez.
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13))
+    private func normalObservation(arch: ArchetypePrimary, count: Int) -> (String, String?) {
+        switch arch {
+        case .dryroaster:       return ("bu hafta \(count) cevap.", "fena değil.")
+        case .observer:         return ("\(count) cevap.", "sakin tempo.")
+        case .softie_with_edges: return ("bu hafta \(count) cevap ürettin.", "iyi gidiyorsun.")
+        case .chaos_agent:      return ("\(count) cevap.", "daha var mı?")
+        case .strategist:       return ("\(count) cevap bu hafta.", "yeterli mi?")
+        case .romantic_pessimist: return ("bu hafta \(count) cevap.", "az mı, çok mu, bilemedim.")
+        }
+    }
+
+    // MARK: - Mode list (editorial)
+
+    private struct ModeRow: Identifiable {
+        let id: Mode
+        let kbd: String
+        let title: String
+        let desc: String
+    }
+
+    private static let modes: [ModeRow] = [
+        .init(id: .cevap,  kbd: "01", title: "cevap",  desc: "screenshot ver, üç ton üç cevap."),
+        .init(id: .acilis, kbd: "02", title: "açılış", desc: "profilden ilk mesaj."),
+        .init(id: .tonla,  kbd: "03", title: "tonla",  desc: "taslağını seçtiğin tona çevir."),
+        .init(id: .davet,  kbd: "04", title: "davet",  desc: "buluşmaya geçiş cümlesi."),
+    ]
+
+    private var modeList: some View {
+        VStack(spacing: 0) {
+            ForEach(Self.modes) { mode in
+                Button { tryEnterMode(mode.id) } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 16) {
+                        Text(mode.kbd)
+                            .font(AppFont.mono(11))
+                            .tracking(0.18 * 11)
                             .foregroundColor(AppColor.text40)
+                            .frame(width: 26, alignment: .leading)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(mode.title)
+                                .font(AppFont.displayItalic(36, weight: .regular))
+                                .tracking(-0.03 * 36)
+                                .foregroundColor(AppColor.ink)
+                            Text(mode.desc)
+                                .font(AppFont.body(13.5))
+                                .foregroundColor(AppColor.text60)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    .padding(.horizontal, 14)
-                    .frame(height: 60)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(AppColor.bg1.opacity(0.5))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(AppColor.text05, lineWidth: 1)
-                            )
-                    )
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("\(mode.title) modu, \(mode.desc)")
+
+                if mode.id != Self.modes.last?.id {
+                    Rectangle()
+                        .fill(AppColor.text10)
+                        .frame(height: 1)
+                        .padding(.horizontal, 24)
+                }
             }
         }
-        .padding(.horizontal, 24)
     }
 
-    /// Sıra niyet sırasıyla: yeni eşleşme (açılış) → taslağı tonla → ileri (davet).
-    private var secondaryList: [Mode] { [.acilis, .tonla, .davet] }
+    // MARK: - Quota card
 
-    /// Mode tıklaması: entitlement gate kontrolü, kilitli ise paywall sheet.
+    @ViewBuilder
+    private var quotaCard: some View {
+        if subs.isActive {
+            EmptyView()
+        } else if !vm.historyLoadedOnce && vm.remainingToday == nil {
+            EmptyView()
+        } else {
+            freeQuotaStrip
+        }
+    }
+
+    private var freeQuotaStrip: some View {
+        let cap = EntitlementGate.freeDailyLimit
+        let usedToday: Int = {
+            if let remaining = vm.remainingToday { return cap - remaining }
+            return vm.todayUsageCount
+        }()
+        let remaining = max(0, cap - usedToday)
+        return HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("günlük üretim")
+                    .font(AppFont.mono(10))
+                    .tracking(0.14 * 10)
+                    .foregroundColor(AppColor.text40)
+                    .textCase(.uppercase)
+                HStack(spacing: 4) {
+                    Text("\(remaining)")
+                        .font(AppFont.body(14, weight: .semibold))
+                        .foregroundColor(AppColor.pop)
+                    Text("/ \(cap) kaldı")
+                        .font(AppFont.body(14))
+                        .foregroundColor(AppColor.ink)
+                }
+            }
+            Spacer()
+            Button {
+                paywallReason = .userInitiated
+            } label: {
+                Text("premium")
+                    .font(AppFont.mono(11))
+                    .tracking(0.14 * 11)
+                    .foregroundColor(AppColor.ink)
+                    .textCase(.uppercase)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(AppColor.text20, lineWidth: 1)
+                    )
+            }
+            .accessibilityLabel("premium'a geç")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(AppColor.bg1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(AppColor.text10, lineWidth: 1)
+                )
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("bugün \(usedToday) cevap üretildi, sınır \(cap)")
+    }
+
+    // MARK: - Mode entry gate
+
     private func tryEnterMode(_ mode: Mode) {
         if !EntitlementGate.canUseMode(mode, isPremium: subs.isActive) {
             paywallReason = .modeLocked(mode)
@@ -477,227 +486,18 @@ struct HomeView: View {
         vm.selectMode(mode)
     }
 
-    // MARK: - Stats chip (kişisel veri özeti)
-
-    /// Marka karakterli mini özet — tek blok, üst üste 2 satır.
-    /// Üst: bu hafta toplam (display sayı + cevap kelimesi)
-    /// Alt: anlamlı yan-bilgi cümlesi ("en çok cevap modu" / "3 gün üst üste").
-    /// Hero-metric template (büyük "19 cevap") absolute ban'ı — kaldırıldı.
-    /// Yerine: tek satır asistan-sesi gözlem, ortalama bir hairline divider
-    /// + italic. "Sayma" değil "fark etme" hissi. Brand "iletişim koçu"
-    /// pozisyonuyla uyumlu.
-    @ViewBuilder
-    private var statsChip: some View {
-        let stats = computeHomeStats()
-        let line = statsObservationLine(stats: stats)
-        if let line {
-            VStack(spacing: 0) {
-                Rectangle()
-                    .fill(AppColor.text05)
-                    .frame(height: 1)
-                    .accessibilityHidden(true)
-                HStack(spacing: 8) {
-                    if stats.streakDays >= 3 {
-                        Circle()
-                            .fill(AppColor.lime)
-                            .frame(width: 5, height: 5)
-                            .accessibilityHidden(true)
-                    }
-                    Text(line)
-                        .font(AppFont.body(12))
-                        .italic()
-                        .foregroundColor(AppColor.text60)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 0)
-                }
-                .padding(.vertical, 14)
-            }
-            .padding(.horizontal, AppSpacing.lg)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(line)
-        }
-    }
-
-    /// Stats'tan asistan-sesi tek cümlelik gözlem üret. Sayı ön planda
-    /// değil; davranış öne çıkar.
-    private func statsObservationLine(stats: HomeStats) -> String? {
-        guard stats.weekCount > 0 else { return nil }
-        if stats.streakDays >= 3 {
-            // En güçlü sinyal — streak'i öne çıkar.
-            return "\(stats.streakDays) gün üst üste denedin. devam."
-        }
-        // 2+ cevap varsa secondaryLine zaten "en çok X modu" diyor;
-        // onu sayıyla beraber tek doğal cümlede topla.
-        if let secondary = stats.secondaryLine {
-            // "en çok cevap modu" → "cevap ağırlıklı." (kısa, brand-voice)
-            let cleaned = secondary
-                .replacingOccurrences(of: "en çok ", with: "")
-                .replacingOccurrences(of: " modu", with: " ağırlıklı")
-            return "bu hafta \(stats.weekCount) cevap. \(cleaned)."
-        }
-        // Tek cevap — özet değil, davet.
-        return stats.weekCount == 1 ? "ilk cevabını verdin." : "bu hafta \(stats.weekCount) cevap."
-    }
-
-    /// History boş iken minimal hint — marka sesinin imzasıyla.
-    /// mono-10 caps label + lowercase asistan-voice satır (period bitir).
-    /// Generic "empty state" olmasın; "yeni kullanıcının ilk hissi" olsun.
-    private var emptyHistoryHint: some View {
-        VStack(spacing: 10) {
-            Text("henüz boş")
-                .font(AppFont.mono(10))
-                .tracking(0.06 * 10)
-                .foregroundColor(AppColor.text40)
-            Text("ilk ss'i ver, başlayalım.")
-                .font(AppFont.body(13))
-                .italic()
-                .foregroundColor(AppColor.text60)
-
-            // First-session asistanı: 14s loop animasyon, "nasıl çalışıyor"
-            // sorusunu soran kullanıcı için. Replay anytime — ProfileView'dan da.
-            Button {
-                showHowItWorks = true
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "play.circle")
-                        .font(.system(size: 12))
-                    Text("nasıl çalışıyor")
-                        .font(AppFont.mono(11))
-                        .tracking(0.04 * 11)
-                }
-                .foregroundColor(AppColor.text60)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule().strokeBorder(AppColor.text10, lineWidth: 0.5)
-                )
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 4)
-            .accessibilityHint("14 saniyelik animasyonu açar")
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, AppSpacing.lg)
-        .padding(.horizontal, AppSpacing.lg)
-    }
-
-    // MARK: - History (kompakt 2-up grid + "tümü" CTA)
-
-    /// Eskiden 8 kart dikey yığılırdı, ana ekranı kocaman yapıyordu.
-    /// Artık 2 kart yan yana özet + "tümü" link → ProfileView'in tam history'sine.
-    private var historySection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("son")
-                    .font(AppFont.mono(11))
-                    .tracking(0.04 * 11)
-                    .foregroundColor(AppColor.text40)
-                Spacer()
-                if vm.history.count > 2 {
-                    Button {
-                        showProfile = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text("tümü")
-                                .font(AppFont.mono(11))
-                                .tracking(0.04 * 11)
-                                .foregroundColor(AppColor.text60)
-                            Text("(\(vm.history.count))")
-                                .font(AppFont.mono(10))
-                                .foregroundColor(AppColor.text40)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundColor(AppColor.text40)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("tüm konuşmalar, \(vm.history.count) kayıt")
-                }
-            }
-            .padding(.horizontal, 24)
-
-            HStack(alignment: .top, spacing: 10) {
-                ForEach(vm.history.prefix(2)) { item in
-                    historyTile(item)
-                }
-                // Tek kayıt varsa sağdaki slot'u boş Spacer ile dengele,
-                // tek kart ekran ortasında değil sola tutsun.
-                if vm.history.count == 1 {
-                    Color.clear.frame(maxWidth: .infinity)
-                }
-            }
-            .padding(.horizontal, 24)
-        }
-    }
-
-    /// Kompakt yatay tile — kare yakını, tek satır mode + 2 satır snippet.
-    /// Phase 5'e kadar replay yok; bu yüzden Button değil static card.
-    /// Önceden Button + haptic-only idi (yalan affordance), commit c3b7656
-    /// "kill dead-tap" direktifi gereği static'e çevrildi.
-    private func historyTile(_ item: ConversationHistoryItem) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: item.mode.systemIcon)
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundColor(AppColor.text60)
-                    .accessibilityHidden(true)
-                Text(item.mode.label.trLower)
-                    .font(AppFont.body(12, weight: .semibold))
-                    .foregroundColor(.white)
-                Spacer(minLength: 0)
-                Text(item.relativeTime)
-                    .font(AppFont.mono(9))
-                    .tracking(0.04 * 9)
-                    .foregroundColor(AppColor.text40)
-            }
-            Text(item.snippet)
-                .font(AppFont.body(11))
-                .foregroundColor(AppColor.text60)
-                .lineSpacing(11 * 0.35)
-                .lineLimit(3)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(AppColor.bg1.opacity(0.4))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(AppColor.text05, lineWidth: 1)
-                )
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.mode.label.trLower), \(item.relativeTime), \(item.snippet)")
-    }
-
-    // MARK: - Stats helpers
+    // MARK: - Stats
 
     private struct HomeStats {
         let weekCount: Int
-        /// 3+ olunca lime streak noktası görünür.
         let streakDays: Int
-        /// "en çok cevap modu" / "3 gün üst üste" / "günde 2 cevap" gibi.
-        /// Anlamsız (tek veri / boş) durumlarda nil — UI satırı gizler.
-        let secondaryLine: String?
     }
 
-    /// vm.history üzerinden son 7 günün özetini çıkar.
-    /// Secondary line öncelikli sıralama:
-    ///   1. streak ≥ 3 → "{n} gün üst üste" (en güçlü engagement sinyali)
-    ///   2. mode çeşitliliği varsa → "en çok {mode} modu"
-    ///   3. yoksa nil
     private func computeHomeStats() -> HomeStats {
         let cal = Calendar.istanbul
         let now = Date()
         let weekAgo = now.addingTimeInterval(-7 * 86400)
         let weekItems = vm.history.filter { $0.createdAt >= weekAgo }
-        let count = weekItems.count
-
-        // Streak — bugünden geriye, ardışık günler.
         let activeDays: Set<DateComponents> = Set(vm.history.map {
             cal.dateComponents([.year, .month, .day], from: $0.createdAt)
         })
@@ -713,35 +513,46 @@ struct HomeView: View {
                 break
             }
         }
+        return HomeStats(weekCount: weekItems.count, streakDays: streak)
+    }
 
-        // Mode dağılımı
-        var modeCounts: [Mode: Int] = [:]
-        for it in weekItems { modeCounts[it.mode, default: 0] += 1 }
-        let topMode = modeCounts.max { $0.value < $1.value }?.key
+    // MARK: - Context footer
 
-        // Secondary line seçimi (priority order)
-        let secondary: String?
-        if streak >= 3 {
-            secondary = "\(streak) gün üst üste"
-        } else if count >= 2, let top = topMode {
-            secondary = "en çok \(top.label.trLower) modu"
-        } else {
-            secondary = nil
+    @State private var showingHistory = false
+
+    private var quotaCardVisible: Bool {
+        !subs.isActive && (vm.historyLoadedOnce || vm.remainingToday != nil)
+    }
+
+    private var contextFooter: some View {
+        Button { showingHistory = true } label: {
+            HStack(spacing: 6) {
+                Text(contextFooterText)
+                    .font(AppFont.mono(10))
+                    .tracking(0.12 * 10)
+                    .foregroundColor(AppColor.text40)
+                    .textCase(.uppercase)
+                if !vm.history.isEmpty {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(AppColor.text30)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .disabled(vm.history.isEmpty)
+    }
 
-        return HomeStats(
-            weekCount: count,
-            streakDays: streak,
-            secondaryLine: secondary
-        )
+    private var contextFooterText: String {
+        guard let last = vm.history.first else {
+            return "henüz konuşma yok"
+        }
+        return "son konuşma \(last.relativeTime)"
     }
 
     // MARK: - Computed
-
-    private var archetypeEmoji: String {
-        guard let archetype = vm.archetype else { return "✨" }
-        return String(archetype.label.first ?? "✨")
-    }
 
     private var archetypeShortLabel: String {
         guard let archetype = vm.archetype else { return "" }
@@ -755,4 +566,3 @@ struct HomeView: View {
         .background(CosmicBackground())
         .preferredColorScheme(.dark)
 }
-

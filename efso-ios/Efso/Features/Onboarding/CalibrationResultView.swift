@@ -1,161 +1,185 @@
 import SwiftUI
 
-/// Calibration result reveal — orbital + arketip emoji + 3 obs cümlesi.
-/// design-source/parts/quiz.jsx → CalibrationResult
+/// Refined-y2k arketip ifşası — büyük italic display + custom ikon + gözlem kart + CTA.
+/// VM ve flow korundu; sadece görsel katman yenilendi.
 struct CalibrationResultView: View {
     @Bindable var vm: OnboardingViewModel
-    @State private var rotation: Double = 0
     @State private var revealedCount: Int = 0
+    @State private var safeAreaTopInset: CGFloat = 59
 
     var body: some View {
         VStack(spacing: 0) {
-            // Reveal ekranında back/close butonu yok — kullanıcı alttaki
-            // 'devam et' veya 'yeniden kalibre et' ile ilerler.
-            Spacer().frame(height: 60)
+            header
+                .padding(.top, safeAreaTopInset)
+                .padding(.horizontal, 28)
 
-            VStack(spacing: 0) {
-                orbital
-                    .padding(.top, 8)
+            VStack(alignment: .leading, spacing: 16) {
+                EfsoTag("arketip belirlendi", color: AppColor.ink, dot: true)
 
-                Text("SENİN TARZIN…")
-                    .font(AppFont.mono(11))
-                    .tracking(0.04 * 11)
-                    .foregroundColor(AppColor.lime)
-                    .padding(.top, 18)
+                Text(archetypeName)
+                    .font(AppFont.displayItalic(56, weight: .regular))
+                    .tracking(-0.03 * 56)
+                    .foregroundColor(AppColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
 
-                if let result = vm.archetype {
-                    Text(result.archetypePrimary.label.dropFirst(2))
-                        .font(AppFont.display(40, weight: .bold))
-                        .tracking(-0.01 * 40)
-                        .foregroundColor(.white)
-                        .padding(.top, 6)
-                } else if let err = vm.lastError {
-                    VStack(spacing: 8) {
-                        Text("hesaplanamadı")
-                            .font(AppFont.display(28, weight: .bold))
-                            .foregroundColor(AppColor.danger)
-                        Text(err)
-                            .font(AppFont.body(12))
-                            .foregroundColor(AppColor.text40)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 24)
-                    }
-                    .padding(.top, 6)
-                } else {
-                    Text("yükleniyor…")
-                        .font(AppFont.body(16))
-                        .foregroundColor(AppColor.text40)
-                        .padding(.top, 6)
-                }
+                Text(archetypeMonoLabel)
+                    .font(AppFont.mono(11, weight: .medium))
+                    .tracking(0.16 * 11)
+                    .foregroundColor(AppColor.accent)
+                    .textCase(.uppercase)
             }
-            .padding(.horizontal, 24)
-
-            // 3 obs cards (typewriter reveal)
-            VStack(spacing: 10) {
-                if let result = vm.archetype {
-                    ForEach(Array(result.displayDescription.enumerated()), id: \.offset) { idx, line in
-                        if idx < revealedCount {
-                            ObservationCard(text: line)
-                                .transition(.opacity.combined(with: .move(edge: .leading)))
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 28)
+            .padding(.top, 36)
 
-            Spacer()
-
-            VStack(spacing: 10) {
-                Text("HER ZAMAN DEĞİŞEBİLİR. AYARLARDAN.")
-                    .font(AppFont.mono(11))
-                    .tracking(0.04 * 11)
-                    .foregroundColor(AppColor.text40)
-
-                if vm.lastError != nil {
-                    PrimaryButton("tekrar dene") {
-                        vm.retryCalibrationSubmit()
-                    }
-                    .padding(.horizontal, 24)
+            HStack {
+                Spacer()
+                if let arch = vm.archetype {
+                    ArchetypeIconView(archetype: arch.archetypePrimary.iconKey, size: 200)
+                } else if vm.lastError != nil {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 60, weight: .light))
+                        .foregroundColor(AppColor.danger)
+                        .frame(width: 200, height: 200)
                 } else {
-                    PrimaryButton("devam et",
-                                  isEnabled: vm.archetype != nil,
-                                  action: vm.advance)
-                    .padding(.horizontal, 24)
+                    ProgressView().tint(AppColor.accent).frame(width: 200, height: 200)
                 }
-
-                Button("yeniden kalibre et") {
-                    vm.quizIndex = 0
-                    vm.quizAnswers.removeAll()
-                    vm.archetype = nil
-                    vm.step = .calibrationQuiz
-                }
-                .font(AppFont.body(14))
-                .foregroundColor(AppColor.text60)
+                Spacer()
             }
-            .padding(.bottom, 32)
+            .padding(.top, 20)
+
+            Spacer(minLength: 16)
+
+            descriptionCard
+                .padding(.horizontal, 20)
+                .padding(.bottom, 16)
+
+            ctaBlock
+                .padding(.horizontal, 20)
+                .padding(.bottom, 28)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task {
-            // Submit calibration if not done yet
+            if let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first,
+               let inset = scene.windows.first?.safeAreaInsets.top, inset > 0 {
+                safeAreaTopInset = inset
+            }
             if vm.archetype == nil {
                 await vm.submitCalibration()
             }
             startReveal()
         }
-        .onAppear {
-            withAnimation(AppAnimation.spinSlow) {
-                rotation = 360
-            }
+    }
+
+    private var header: some View {
+        HStack {
+            EfsoTag("09 / 09 · kalibrasyon", color: AppColor.text40)
+            Spacer()
+            EfsoWordmark(size: 18, color: AppColor.text60)
         }
     }
 
-    private var orbital: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [AppColor.pink.opacity(0.55),
-                                 AppColor.purple.opacity(0.30),
-                                 .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 130
+    @ViewBuilder
+    private var descriptionCard: some View {
+        if let arch = vm.archetype {
+            VStack(alignment: .leading, spacing: 14) {
+                let primary = arch.displayDescription.first ?? ""
+                Text("\u{201C}\(primary)\u{201D}")
+                    .font(AppFont.displayItalic(17, weight: .regular))
+                    .foregroundColor(AppColor.ink)
+                    .lineSpacing(17 * 0.30)
+                    .tracking(-0.01 * 17)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if arch.displayDescription.count > 1 {
+                    let traits = Array(arch.displayDescription.dropFirst())
+                    HStack(spacing: 8) {
+                        ForEach(Array(traits.enumerated()), id: \.offset) { idx, trait in
+                            Text(trait.trLower)
+                                .font(AppFont.mono(10))
+                                .tracking(0.10 * 10)
+                                .foregroundColor(AppColor.text60)
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 5)
+                                .overlay(
+                                    Capsule().strokeBorder(AppColor.text10, lineWidth: 1)
+                                )
+                                .opacity(idx < revealedCount ? 1 : 0)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 22)
+            .padding(.vertical, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(AppColor.bg1)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .strokeBorder(AppColor.text10, lineWidth: 1)
                     )
-                )
-                .frame(width: 240, height: 240)
-                .blur(radius: 28)
-
-            ForEach(0..<3) { i in
-                let size = [230, 175, 125][i]
-                Circle()
-                    .strokeBorder(AppColor.holographic, lineWidth: 1)
-                    .frame(width: CGFloat(size), height: CGFloat(size))
-                    .opacity(0.6 - Double(i) * 0.05)
-                    .rotationEffect(.degrees(i % 2 == 0 ? rotation : -rotation))
+            )
+        } else if let err = vm.lastError {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("hesaplanamadı")
+                    .font(AppFont.displayItalic(20))
+                    .foregroundColor(AppColor.danger)
+                Text(err)
+                    .font(AppFont.body(13))
+                    .foregroundColor(AppColor.text60)
             }
-
-            // Arketip emoji center
-            Text(emojiFromArchetype())
-                .font(.system(size: 80))
-                .shadow(color: AppColor.pink.opacity(0.7), radius: 22)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(AppColor.bg1)
+            )
         }
-        .frame(width: 240, height: 240)
     }
 
-    private func emojiFromArchetype() -> String {
-        guard let label = vm.archetype?.archetypePrimary.label else { return "✨" }
-        // First scalar (emoji)
-        return String(label.first ?? "✨")
+    private var ctaBlock: some View {
+        VStack(spacing: 12) {
+            if vm.lastError != nil {
+                PrimaryButton("tekrar dene") { vm.retryCalibrationSubmit() }
+                Button("← geri dön") { vm.goBack() }
+                    .font(AppFont.body(13))
+                    .foregroundColor(AppColor.text40)
+                    .frame(height: 44)
+                    .accessibilityLabel("geri dön")
+            } else {
+                PrimaryButton("devam et", isEnabled: vm.archetype != nil, action: vm.advance)
+            }
+            Text("kalibrasyonu istediğin zaman yenileyebilirsin")
+                .font(AppFont.mono(10))
+                .tracking(0.10 * 10)
+                .foregroundColor(AppColor.text40)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    // MARK: - Computed
+
+    private var archetypeName: String {
+        guard let arch = vm.archetype else { return "..." }
+        // Label: "🥀 EFSO" → "dryroaster" map ile primaryKey'i al
+        return arch.archetypePrimary.iconKey
+    }
+
+    private var archetypeMonoLabel: String {
+        guard let arch = vm.archetype else { return "" }
+        return "\(arch.displayLabel) · \(arch.archetypePrimary.shortTitle)"
     }
 
     private func startReveal() {
         revealedCount = 0
         Task { @MainActor in
-            for i in 1...3 {
-                try? await Task.sleep(nanoseconds: 350_000_000)
-                withAnimation(AppAnimation.standard) {
+            for i in 1...4 {
+                try? await Task.sleep(for: .milliseconds(280))
+                withAnimation(.easeOut(duration: 0.35)) {
                     revealedCount = i
                 }
             }

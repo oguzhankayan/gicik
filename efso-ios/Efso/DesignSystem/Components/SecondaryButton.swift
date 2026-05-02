@@ -8,7 +8,7 @@ struct SecondaryButton: View {
         Button(action: action) {
             Text(title.trLower)
                 .font(AppFont.body(17, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundColor(AppColor.ink.opacity(0.85))
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(

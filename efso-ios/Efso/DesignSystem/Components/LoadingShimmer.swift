@@ -17,7 +17,7 @@ struct ShimmerModifier: ViewModifier {
                 LinearGradient(
                     colors: [
                         AppColor.bg1,
-                        Color.white.opacity(0.06),
+                        AppColor.ink.opacity(0.06),
                         AppColor.bg1,
                     ],
                     startPoint: UnitPoint(x: phase - 0.3, y: 0.5),
@@ -63,7 +63,7 @@ struct ReplyCardSkeleton: View {
     }
 
     private var labelText: String {
-        String(format: "%02d —", index + 1)
+        String(format: "%02d.", index + 1)
     }
 
     var body: some View {

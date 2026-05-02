@@ -44,12 +44,22 @@ final class HomeViewModel {
     var remainingToday: Int?
     var serverIsPremium: Bool = false
 
+    // MARK: - Cached stats
+
+    /// Bugün kullanılan üretim sayısı — free quota chip'leri için.
+    var todayUsageCount: Int {
+        history.filter { Calendar.istanbul.isDateInToday($0.createdAt) }.count
+    }
+
     /// Backend free_tier_exceeded → paywall trigger. HomeView sheet observes.
     var paywallTrigger: EntitlementGate.LockReason?
 
     // For picker
     var pickedItem: PhotosPickerItem? {
-        didSet { Task { await handlePickedItem() } }
+        didSet {
+            pickerLoadTask?.cancel()
+            pickerLoadTask = Task { await handlePickedItem() }
+        }
     }
     var pickedScreenshot: Data?
 
@@ -106,10 +116,14 @@ final class HomeViewModel {
     /// Picker'daki "elle yaz" butonu set eder. Mode değişiminde resetlenir.
     var isManualMode: Bool = false
 
+    /// Manuel giriş onaylandı, picker'a dönüldü (ton seçimi + üret).
+    var manualInputConfirmed: Bool = false
+
     /// Aktif generation Task — `backToHome()` veya `regenerate()` çağrılınca
     /// cancel edilir. Aksi halde abandoned SSE stream'leri kotayı ısırırdı:
     /// kullanıcı home'a dönmüş olsa bile backend reply üretmeye devam eder.
     private var generationTask: Task<Void, Never>?
+    private var pickerLoadTask: Task<Void, Never>?
 
     enum PickerState: Equatable {
         case empty
@@ -168,6 +182,7 @@ final class HomeViewModel {
         manualPosts = []
         manualPhotoDescriptions = []
         isManualMode = false
+        manualInputConfirmed = false
         streamingObservation = ""
         streamingReplies = [:]
         conversationId = nil
@@ -210,13 +225,10 @@ final class HomeViewModel {
         generationTask = Task { await runRealGeneration(mode: mode, imageData: data) }
     }
 
-    /// Manuel giriş ekranından generation'a geçiş (cevap/açılış/davet).
-    /// Validasyon: chat modlarında ≥1 mesaj + son mesaj other; profile
-    /// modunda en az 1 alan dolu.
-    func proceedToManualGeneration() {
+    /// Manuel giriş onayı — validasyon geçerse picker'a döner (ton seçimi için).
+    func confirmManualInput() {
         guard case .picker(let mode) = stage else { return }
 
-        // Validate
         if mode == .acilis {
             let hasSignal = !manualBio.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 || !manualHandle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -234,13 +246,21 @@ final class HomeViewModel {
                 lastError = "en az bir mesaj gir"
                 return
             }
-            guard cleaned.last?.sender == .other else {
-                lastError = "son mesaj karşı taraftan olmalı (sen cevap üreteceksin)"
+            guard cleaned.contains(where: { $0.sender == .other }) else {
+                lastError = "en az bir karşı taraf mesajı gerekli"
                 return
             }
             manualMessages = cleaned
         }
 
+        manualInputConfirmed = true
+        isManualMode = false
+        pickerState = .done(thumbnail: Data())
+    }
+
+    /// Manuel giriş ekranından generation'a geçiş (cevap/açılış/davet).
+    func proceedToManualGeneration() {
+        guard case .picker(let mode) = stage else { return }
         stage = .generation(mode)
         generationTask = Task { await runManualGeneration(mode: mode) }
     }
@@ -280,6 +300,50 @@ final class HomeViewModel {
     }
     var generationPhase: GenerationPhase = .idle
 
+    func updateArchetype(_ newArchetype: ArchetypePrimary) async throws {
+        let prev = archetype
+        archetype = newArchetype
+        do {
+            try await SupabaseService.shared.client
+                .from("profiles")
+                .update(["archetype_primary": newArchetype.rawValue])
+                .eq("id", value: AuthService.shared.userID?.uuidString ?? "")
+                .execute()
+        } catch {
+            archetype = prev
+            throw error
+        }
+    }
+
+    func deleteAccount() async throws {
+        struct EmptyBody: Encodable {}
+        struct EmptyResp: Decodable { let ok: Bool }
+        _ = try await APIClient.shared.invokeJSON(
+            .deleteAccount,
+            body: nil as EmptyBody?,
+            as: EmptyResp.self
+        )
+        UserDefaults.standard.set(false, .onboardingCompleted)
+        UserDefaults.standard.set(false, .aiConsentGiven)
+        UserDefaults.standard.set(false, .archetypeSpotlightSeen)
+        await SubscriptionManager.shared.signOut()
+        try? await AuthService.shared.signOut()
+    }
+
+    func revokeAIConsent() async {
+        UserDefaults.standard.set(false, .aiConsentGiven)
+        UserDefaults.standard.set(false, .onboardingCompleted)
+        if let uid = AuthService.shared.userID?.uuidString {
+            try? await SupabaseService.shared
+                .from("profiles")
+                .update(["ai_consent_given": false])
+                .eq("id", value: uid)
+                .execute()
+        }
+        await SubscriptionManager.shared.signOut()
+        try? await AuthService.shared.signOut()
+    }
+
     func reset() {
         stage = .home
         pickerState = .empty
@@ -297,7 +361,7 @@ final class HomeViewModel {
         // Küçük gecikme — UI'nin uploading state'ini frame atlamadan
         // gösterebilmesi için. Sadece hissel feedback amaçlı.
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 200_000_000)
+            try? await Task.sleep(for: .milliseconds(200))
             pickerState = .done(thumbnail: data)
         }
     }
@@ -308,7 +372,7 @@ final class HomeViewModel {
         do {
             if let data = try await item.loadTransferable(type: Data.self) {
                 pickerState = .uploading(progress: 0.7)
-                try? await Task.sleep(nanoseconds: 400_000_000)
+                try? await Task.sleep(for: .milliseconds(400))
                 pickedScreenshot = data
                 pickerState = .done(thumbnail: data)
             } else {
@@ -388,7 +452,10 @@ final class HomeViewModel {
                 platform: "unknown"
             )
             let data = try encoder.encode(payload)
-            return String(data: data, encoding: .utf8) ?? ""
+            guard let json = String(data: data, encoding: .utf8) else {
+                throw APIError.unknown("json encoding failed")
+            }
+            return json
         } else {
             let msgs = manualMessages
                 .map { ChatMsg(sender: $0.sender.rawValue,
@@ -401,7 +468,10 @@ final class HomeViewModel {
                 platform: "unknown"
             )
             let data = try encoder.encode(payload)
-            return String(data: data, encoding: .utf8) ?? ""
+            guard let json = String(data: data, encoding: .utf8) else {
+                throw APIError.unknown("json encoding failed")
+            }
+            return json
         }
     }
 
@@ -458,6 +528,7 @@ final class HomeViewModel {
         var observation = ""
         do {
             for try await event in APIClient.shared.invokeStream(.generateReplies, body: body) {
+                try Task.checkCancellation()
                 switch event {
                 case .observation(let text):
                     observation = text
@@ -562,92 +633,7 @@ final class HomeViewModel {
             return
         }
 
-        // Stage 2: generate-replies (SSE).
-        // tone nil → backend mode'a özgü 3 farklı tonu kullanır.
-        // tone set → 3 reply de o tonda farklı açılarla üretilir.
-        struct GenBody: Encodable {
-            let conversation_id: String
-            let tone: String?
-        }
-
-        let body = GenBody(
-            conversation_id: parseResp.conversation_id,
-            tone: selectedTone?.rawValue
-        )
-        var finalReplies: [ReplyOption] = []
-        var observation = ""
-
-        do {
-            for try await event in APIClient.shared.invokeStream(.generateReplies, body: body) {
-                switch event {
-                case .observation(let text):
-                    observation = text
-                    streamingObservation = text
-                    if generationPhase == .parsing { generationPhase = .streaming }
-                case .reply(let index, let tone, let text):
-                    let r = ReplyOption(index: index, tone: tone, text: text)
-                    streamingReplies[index] = r
-                    if generationPhase == .parsing { generationPhase = .streaming }
-                    if streamingReplies.count == 3 { generationPhase = .finishing }
-                case .done(_, _, let remaining, let isPrem):
-                    self.remainingToday = remaining
-                    self.serverIsPremium = isPrem
-                    break
-                case .error(let msg):
-                    if msg.trLower.contains("free_tier")
-                        || msg.contains("402")
-                        || msg.trLower.contains("limit")
-                        || msg.trLower.contains("doldu") {
-                        paywallTrigger = .dailyLimit
-                        // Stage'i home'a çek ki paywall sheet root'tan açılırken
-                        // generation view kalmasın altta — kullanıcı dönünce
-                        // skeleton yerine ana ekranı görsün.
-                        stage = .home
-                        return
-                    }
-                    lastError = "generate: \(msg)"
-                case .unknown:
-                    continue
-                }
-            }
-        } catch {
-            // Stream throw'unda da free-tier check; APIError.freeTierExceeded
-            // burada landed olabilir (APIClient'ın 402 mapping'ine bağlı).
-            if isFreeTierError(error) {
-                paywallTrigger = .dailyLimit
-                stage = .home
-                return
-            }
-            lastError = "generate: \(error.localizedDescription)"
-        }
-
-        // SSE drop detection — partial result kullanıcıya gitmesin.
-        finalReplies = (0..<3).compactMap { streamingReplies[$0] }
-        guard finalReplies.count == 3 else {
-            lastError = "üretim yarıda kaldı. tekrar dene."
-            generationPhase = .failed
-            SentrySDK.capture(message:
-                "SSE drop (cevap path): \(finalReplies.count)/3, mode=\(mode.rawValue)"
-            )
-            return
-        }
-        generationPhase = .idle
-
-        stage = .result(GenerationResult(
-            observation: observation,
-            replies: finalReplies,
-            conversationId: conversationId,
-            mode: mode
-        ))
-
-        // Append to history
-        history.insert(.init(
-            id: conversationId ?? UUID().uuidString,
-            mode: mode,
-            platform: "image",
-            createdAt: Date(),
-            snippet: "\"\(finalReplies.first?.text.prefix(40) ?? "")...\""
-        ), at: 0)
+        await streamGenerateReplies(conversationId: parseResp.conversation_id, mode: mode)
     }
 
     /// Mirror of backend ParseResult — only fields we care about on the client.
@@ -718,6 +704,7 @@ final class HomeViewModel {
         var observation = ""
         do {
             for try await event in APIClient.shared.invokeStream(.generateReplies, body: body) {
+                try Task.checkCancellation()
                 switch event {
                 case .observation(let text):
                     observation = text
@@ -745,6 +732,7 @@ final class HomeViewModel {
                 }
             }
         } catch {
+            if Task.isCancelled { return }
             if isFreeTierError(error) {
                 paywallTrigger = .dailyLimit
                 stage = .home
@@ -777,7 +765,9 @@ final class HomeViewModel {
             mode: .tonla,
             platform: "draft",
             createdAt: Date(),
-            snippet: "\"\(trimmedDraft.prefix(40))...\""
+            snippet: "\"\(trimmedDraft.prefix(80))\"",
+            observation: observation,
+            replies: finalReplies
         ), at: 0)
     }
 
@@ -838,8 +828,13 @@ final class HomeViewModel {
                 let platform_detected: String?
             }
             struct GenerationResultDTO: Decodable {
-                let replies: [ReplySnippet]?
-                struct ReplySnippet: Decodable { let text: String }
+                let observation: String?
+                let replies: [ReplyDTO]?
+                struct ReplyDTO: Decodable {
+                    let index: Int?
+                    let tone: String?
+                    let text: String
+                }
             }
         }
 
@@ -865,12 +860,17 @@ final class HomeViewModel {
                 // 80 char hard cap; UI lineLimit(2) zaten doğal truncate yapıyor.
                 // Ellipsis eklemiyoruz (brand voice "üç nokta yok").
                 let snippet = "\"\(snippetText.prefix(80))\""
+                let replies: [ReplyOption] = (r.generation_result?.replies ?? []).enumerated().map { i, dto in
+                    ReplyOption(index: dto.index ?? i, tone: dto.tone ?? "direkt", text: dto.text)
+                }
                 return ConversationHistoryItem(
                     id: r.id,
                     mode: mode,
                     platform: r.parse_result?.platform_detected ?? "image",
                     createdAt: date,
-                    snippet: snippet
+                    snippet: snippet,
+                    observation: r.generation_result?.observation,
+                    replies: replies
                 )
             }
             self.history = items

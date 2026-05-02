@@ -46,7 +46,7 @@ struct PrimaryButton: View {
     private var background: some View {
         switch style {
         case .solid:
-            Color.white
+            AppColor.ink
         case .holoBorder:
             ZStack {
                 AppColor.bg1
@@ -73,7 +73,7 @@ struct PrimaryButton: View {
     private var textColor: Color {
         switch style {
         case .solid, .holoFill: return AppColor.bg0
-        case .holoBorder: return .white
+        case .holoBorder: return AppColor.ink
         }
     }
 }

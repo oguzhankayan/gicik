@@ -28,6 +28,20 @@ Deno.serve(async (req: Request) => {
   try {
     const { userId, client, serviceClient } = await requireAuth(req);
 
+    // ─── AI consent check ───
+    const { data: consentProfile } = await client
+      .from("profiles")
+      .select("ai_consent_given")
+      .eq("id", userId)
+      .single();
+
+    if (!consentProfile?.ai_consent_given) {
+      return new Response(JSON.stringify({ error: "ai_consent_required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ─── parse multipart ───
     const formData = await req.formData();
     const screenshot = formData.get("screenshot");
@@ -43,7 +57,7 @@ Deno.serve(async (req: Request) => {
     const manualRaw = formData.get("manual_input") as string | null;
     const isManual = !!manualRaw;
 
-    if (!modeStr || !["cevap", "acilis", "hayalet", "davet"].includes(modeStr)) {
+    if (!modeStr || !["cevap", "acilis", "davet"].includes(modeStr)) {
       return errorResponse("invalid_input", "valid mode required");
     }
     const mode = modeStr as Mode;
@@ -339,7 +353,7 @@ function buildManualParseResult(raw: string, mode: Mode): ParseResult {
     };
   }
 
-  // chat shape (cevap, davet, hayalet)
+  // chat shape (cevap, davet)
   const msgs = (input.messages ?? [])
     .filter((m) => m && (m.sender === "user" || m.sender === "other"))
     .map((m) => ({

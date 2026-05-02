@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<title>efso · refined y2k redesign</title>
+<meta name="viewport" content="width=1600, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: 'Geist', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel" src="onboarding.jsx"></script>
+<script type="text/babel" src="modes.jsx"></script>
+<script type="text/babel" src="extras.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+  const E = window.EFSO_TOKENS;
+
+  // Frame helper — a 390x844 phone bezel wrapping any screen content.
+  function Phone({ children, w = 390, h = 844 }) {
+    return (
+      <div style={{
+        width: w, height: h, borderRadius: 52, overflow: 'hidden',
+        background: '#000', position: 'relative',
+        boxShadow: '0 30px 60px rgba(0,0,0,0.25), 0 0 0 8px #1a1622, 0 0 0 9px rgba(255,255,255,0.06)',
+      }}>
+        <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  // Note card for design rationale
+  function Note({ title, children, w = 320 }) {
+    return (
+      <div style={{
+        width: w, padding: '18px 20px',
+        background: '#fef4a8', borderRadius: 6,
+        boxShadow: '0 6px 20px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.08)',
+        fontFamily: 'Geist, system-ui, sans-serif',
+        color: '#5a4a2a', fontSize: 13, lineHeight: 1.55,
+      }}>
+        <div style={{
+          fontFamily: 'Geist Mono, monospace', fontSize: 10,
+          letterSpacing: '0.16em', textTransform: 'uppercase',
+          marginBottom: 10, opacity: 0.7,
+        }}>{title}</div>
+        {children}
+      </div>
+    );
+  }
+
+  // System spec board — tokens, type, voice, palette
+  function SystemBoard({ w = 1100, h = 760 }) {
+    const swatch = (label, c, sub) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{
+          width: '100%', height: 76, borderRadius: 12, background: c,
+          border: '1px solid rgba(0,0,0,0.08)',
+        }} />
+        <div>
+          <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(40,30,20,0.7)' }}>{label}</div>
+          <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 11, color: 'rgba(40,30,20,0.5)', marginTop: 2 }}>{sub}</div>
+        </div>
+      </div>
+    );
+
+    return (
+      <div style={{
+        width: w, height: h, padding: 36, background: '#fbf9f3',
+        borderRadius: 8, border: '1px solid rgba(0,0,0,0.06)',
+        display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 32,
+        fontFamily: 'Geist, system-ui, sans-serif', color: '#2a251f',
+      }}>
+        {/* LEFT — type & voice */}
+        <div>
+          <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.6 }}>system · refined y2k</div>
+          <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 56, lineHeight: 0.98, marginTop: 8, letterSpacing: '-0.03em' }}>
+            efso<span style={{ color: '#7B5BD9' }}>.</span>
+          </div>
+          <div style={{ marginTop: 10, fontSize: 13.5, color: '#5a5048', maxWidth: 460, lineHeight: 1.55 }}>
+            y2k'in DNA'sı (chrome, holo, koyu mor) korunuyor — ama olgunlaşmış. neon yok, gradient şişkinliği yok.
+            yerine: editorial serif, sıkı tipografi hiyerarşisi, tek canlı vurgu rengi, dozajlı holographic stroke.
+          </div>
+
+          {/* Type stack */}
+          <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+            <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6 }}>type stack</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: '14px 18px', marginTop: 14, alignItems: 'baseline' }}>
+              <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 11, opacity: 0.6 }}>display</div>
+              <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 28, letterSpacing: '-0.025em' }}>fraunces · italic</div>
+              <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 11, opacity: 0.6 }}>body</div>
+              <div style={{ fontFamily: 'Geist, sans-serif', fontSize: 18 }}>geist · sans</div>
+              <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 11, opacity: 0.6 }}>label</div>
+              <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 13, letterSpacing: '0.14em', textTransform: 'uppercase' }}>geist mono · uppercase</div>
+            </div>
+          </div>
+
+          {/* Voice */}
+          <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+            <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6 }}>voice · daha cesur, daha az kelime</div>
+
+            <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+              <div>
+                <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.12em', color: '#a06030', textTransform: 'uppercase', marginBottom: 6 }}>önce</div>
+                <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 14, lineHeight: 1.45, color: '#5a5048' }}>
+                  "üç gün sustu, sonra 'selam' attı. valla bu sıfırdan değil, korkudan. abi sen ne hissediyorsun ona bak."
+                </div>
+              </div>
+              <div>
+                <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.12em', color: '#7B5BD9', textTransform: 'uppercase', marginBottom: 6 }}>sonra</div>
+                <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 14, lineHeight: 1.45, color: '#2a251f' }}>
+                  "üç gün sustu, sonra 'selam' attı. valla bu sıfırdan değil — korkudan."
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 18, fontSize: 12.5, lineHeight: 1.6, color: '#5a5048' }}>
+              <b>kurallar:</b> abi/abla yok · "harikasın" yok · ünlem tek nokta atışı · noktalı virgül ve tire ritim için · cümle başına ortalama 7-9 kelime · gözlem önce, çıkarım sonra — asla tersi.
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT — palette + accent + voice ladder */}
+        <div>
+          <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6 }}>palette · ink + ash + chrome</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 14 }}>
+            {swatch('bg · 0',     '#0E0A14', 'inkstone')}
+            {swatch('bg · 1',     '#15101F', 'plum ink')}
+            {swatch('bg · 2',     '#1C1530', 'iris depth')}
+            {swatch('ink',        '#F4EFE6', 'paper warm')}
+            {swatch('accent',     '#C9A8FF', 'chrome lilac')}
+            {swatch('pop',        '#E8FF6B', 'highlighter')}
+          </div>
+
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 8 }}>holographic stroke (1px, sparing)</div>
+            <div style={{
+              height: 22, borderRadius: 6,
+              background: 'linear-gradient(110deg, #C9A8FF 0%, #FFC8E1 28%, #E8FF6B 52%, #9DD9FF 78%, #C9A8FF 100%)',
+            }} />
+            <div style={{ fontSize: 11.5, color: '#5a5048', marginTop: 8, lineHeight: 1.5 }}>
+              kullanım: primary CTA çevresi, premium kart kenarı, splash konsantrik halka.
+              gövdede yok — orada sadece tek mor accent.
+            </div>
+          </div>
+
+          {/* Wordmark study */}
+          <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+            <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6 }}>wordmark · same word, new typeface</div>
+            <div style={{ background: '#0E0A14', borderRadius: 14, padding: '32px 28px', marginTop: 12 }}>
+              <div style={{
+                fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontWeight: 500,
+                fontSize: 86, color: '#F4EFE6', lineHeight: 1, letterSpacing: '-0.04em',
+              }}>efso</div>
+              <div style={{
+                marginTop: 14, height: 1,
+                background: 'linear-gradient(110deg, #C9A8FF 0%, #FFC8E1 28%, #E8FF6B 52%, #9DD9FF 78%, #C9A8FF 100%)',
+              }} />
+              <div style={{
+                marginTop: 10, fontFamily: 'Geist Mono, monospace', fontSize: 11,
+                color: 'rgba(244,239,230,0.5)', letterSpacing: '0.18em', textTransform: 'uppercase',
+              }}>iletişim koçu · türkiye</div>
+            </div>
+          </div>
+
+          {/* Apple-review safe taglines */}
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 8 }}>tagline candidates</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                'ne diyeceğini değil, ne dediğini gör.',
+                'önce gözle. sonra yaz.',
+                'cümle bitmeden gönderme.',
+              ].map(t => (
+                <div key={t} style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 17, color: '#2a251f', letterSpacing: '-0.015em' }}>— {t}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function App() {
+    return (
+      <DesignCanvas initialZoom={0.55}>
+        <DCSection id="system" title="00 · system" subtitle="palette, type, voice, wordmark">
+          <DCArtboard id="sys" label="design system" width={1100} height={760}>
+            <SystemBoard />
+          </DCArtboard>
+          <DCArtboard id="rationale" label="why this direction" width={340} height={760}>
+            <Note w={340} title="manager note · refined y2k">
+              <div style={{ marginBottom: 10 }}>
+                önceki kimlik yüksek-enerjili Y2K idi: holographic her yerde, neon her yerde. genç ama gürültülü. olgunlaşmış versiyon: <b>aynı DNA, daha az ses</b>.
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <b>ne kaldı:</b> deep purple ink · chrome stroke · lowercase · ironik mesafe · ALL CAPS terk edildi (eski deck'teki Y2K display caps yerine editorial italic serif).
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <b>ne gitti:</b> her yerde gradient · pink+lime+blue üçlüsü gövdede · "harikasın" tonu · klişe Y2K süsleri.
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <b>yeni:</b> Fraunces italic display (bir kelime — büyük etki) · Geist sans body · tek <span style={{ color: '#7B5BD9' }}>chrome lilac</span> accent · highlighter pop sadece kritik durum bildirgesi (kalan kotа, "yeni" rozeti) · holo gradient sadece 1px stroke veya 2px highlight olarak.
+              </div>
+              <div>
+                <b>16-30 için neden çalışır:</b> 16-22'nin Y2K beklentisini chrome ile karşılıyor; 25-30'a editorial tipografi ile hitap ediyor. dating-first kalabilen ama Apple Lifestyle kategorisinde profesyonel duran kimlik.
+              </div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="onboarding" title="01 · ilk dokunuş" subtitle="splash + arketip ifşası">
+          <DCArtboard id="splash" label="01 · splash" width={390} height={844}>
+            <Phone><ScreenSplash /></Phone>
+          </DCArtboard>
+          <DCArtboard id="reveal" label="02 · arketip reveal" width={390} height={844}>
+            <Phone><ScreenCalibrationResult /></Phone>
+          </DCArtboard>
+          <DCArtboard id="onbnote" label="ux note" width={320} height={500}>
+            <Note title="onboarding'de değişen ne?">
+              <div style={{ marginBottom: 8 }}>
+                <b>splash:</b> tek wordmark, iki konsantrik chrome halka. lottie/animasyon ekleme — minimum 0.6s, maksimum 1.2s.
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <b>reveal:</b> Lottie konfeti yerine "pull quote" muamelesi. arketip ismi 56pt italic; dryroaster gibi okuyor — kuru, kararlı.
+              </div>
+              <div>
+                <b>arketip ikonu:</b> burada custom illustrasyonlarınız yer alacak (placeholder dashed çerçevede). ikon ~180px büyür reveal'da, ~88px küçülür profil ve home'da. emoji kalır <i>etiket</i> olarak (🥀 efso) — ana görsel değil.
+              </div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="home" title="02 · home" subtitle="mod seçimi · editorial liste">
+          <DCArtboard id="home" label="03 · home" width={390} height={844}>
+            <Phone><ScreenHome /></Phone>
+          </DCArtboard>
+          <DCArtboard id="homenote" label="ux note" width={320} height={500}>
+            <Note title="home felsefesi">
+              <div style={{ marginBottom: 8 }}>
+                kart-grid yerine <b>editorial liste</b>: her mod 36pt italic isim + tek satır mono açıklama + numerik prefix (01-04). tinder/rizz gibi app'lere benzemiyor — daha çok bir yayın gibi.
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <b>"bugünün gözlemi"</b> — efso günde bir kez kullanıcının dünkü davranışına dair 1 cümlelik gözlem fırlatır. sade, italic, vurgu mor accent'te. günlük geri dönüş anchor'u (Cal AI'ın "today" ekranı gibi ama yargılayıcı değil).
+              </div>
+              <div>
+                <b>quota chip:</b> "2/3 kaldı" lime accent ile — sayı dikkat çeker, tasarım değil.
+              </div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="cevap" title="03 · cevap modu" subtitle="screenshot → 3 reply, ana flow">
+          <DCArtboard id="cevap-in" label="04 · input" width={390} height={844}>
+            <Phone><ScreenCevapInput /></Phone>
+          </DCArtboard>
+          <DCArtboard id="cevap-out" label="05 · 3 reply çıktısı" width={390} height={844}>
+            <Phone><ScreenCevapOutput /></Phone>
+          </DCArtboard>
+          <DCArtboard id="cevapnote" label="ux note" width={320} height={500}>
+            <Note title="cevap akışı — kritik karar">
+              <div style={{ marginBottom: 8 }}>
+                <b>tone picker yer değiştirdi:</b> önceden output'tan sonra "tonla" hissi vardı. şimdi input'un altında, generate butonunun hemen üstünde — kullanıcı niyetini önce kuruyor, sonra üretim çıkıyor. tek geçişte sonuç.
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <b>3 reply hiyerarşisi:</b> 1. cevap "primary" (holo highlight + dolu CTA), 2-3 alternatif. <i>ama sıralama tonun keskinliğine göre, kalite sırasına göre değil</i> — kullanıcı kendi seçsin.
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <b>asistan sesi:</b> üstte pull-quote stilinde, mor sol-bordür ile. output kartlarından net şekilde ayrı duruyor — voice sızıntısı yok.
+              </div>
+              <div>
+                <b>angle etiketi:</b> her cevap mono uppercase angle var (iğneleyici / açık / soğuk). aynı tonun farklı keskinlikleri.
+              </div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="paypro" title="04 · paywall + profil">
+          <DCArtboard id="paywall" label="06 · paywall" width={390} height={844}>
+            <Phone><ScreenPaywall /></Phone>
+          </DCArtboard>
+          <DCArtboard id="profile" label="07 · profil" width={390} height={844}>
+            <Phone><ScreenProfile /></Phone>
+          </DCArtboard>
+          <DCArtboard id="finalnote" label="ux note" width={320} height={500}>
+            <Note title="paywall + profil">
+              <div style={{ marginBottom: 8 }}>
+                <b>paywall:</b> büyük italic başlık ("her konuşmada hazır."), benefit'ler ikonsuz — sadece mono "+ etiket" + body satır. minimal, premium hissi. trial card holo border ile bir kez vurgulanıyor — tek odak.
+              </div>
+              <div>
+                <b>profil:</b> arketip kartı + 3 stat (üretim/kopyalanan/beğeni) + son gözlemler arşivi (italic pull quote'lar). app'in ruhu burada — efso'nun kullanıcıya yazdığı küçük gözlemlerin koleksiyonu, instagram benzeri retansiyon kancası.
+              </div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="value" title="01a · ilk dokunuş — devam" subtitle="sign in, value, demographic">
+          <DCArtboard id="signin" label="signin" width={390} height={844}>
+            <Phone><ScreenSignIn /></Phone>
+          </DCArtboard>
+          <DCArtboard id="emailss" label="email sign in sheet" width={390} height={844}>
+            <Phone><ScreenEmailSignIn /></Phone>
+          </DCArtboard>
+          <DCArtboard id="valueintro" label="value intro 02/03" width={390} height={844}>
+            <Phone><ScreenValueIntro /></Phone>
+          </DCArtboard>
+          <DCArtboard id="demo" label="demographic" width={390} height={844}>
+            <Phone><ScreenDemographic /></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="calib" title="01b · kalibrasyon" subtitle="intro + 9-soruluk quiz çeşitleri">
+          <DCArtboard id="calintro" label="intro" width={390} height={844}>
+            <Phone><ScreenCalibrationIntro /></Phone>
+          </DCArtboard>
+          <DCArtboard id="qbinary" label="quiz · binary" width={390} height={844}>
+            <Phone><ScreenQuizBinary /></Phone>
+          </DCArtboard>
+          <DCArtboard id="qsingle" label="quiz · single" width={390} height={844}>
+            <Phone><ScreenQuizSingle /></Phone>
+          </DCArtboard>
+          <DCArtboard id="qlikert" label="quiz · likert" width={390} height={844}>
+            <Phone><ScreenQuizLikert /></Phone>
+          </DCArtboard>
+          <DCArtboard id="qslider" label="quiz · slider" width={390} height={844}>
+            <Phone><ScreenQuizSlider /></Phone>
+          </DCArtboard>
+          <DCArtboard id="qfree" label="quiz · free text" width={390} height={844}>
+            <Phone><ScreenQuizFreeText /></Phone>
+          </DCArtboard>
+          <DCArtboard id="calibnote" label="ux note" width={320} height={500}>
+            <Note title="kalibrasyon felsefesi">
+              <div style={{ marginBottom: 8 }}>9 soru = 60 saniye. her cell tipi farklı bir bilişsel dokunuş: ikili dilemma, çoklu seçim, likert, slider (tonun keskinliği için), serbest metin (writing sample).</div>
+              <div style={{ marginBottom: 8 }}><b>üst chrome:</b> ince progress bar + step counter — her zaman görünür ama nefes alıyor.</div>
+              <div><b>seçim feedback'i:</b> seçilen kart 1px holo highlight + bg2 dolgusu + ✓ rozeti. animasyon yok — basitçe katı.</div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="prefirst" title="01c · ilk üretim öncesi" subtitle="demo upload + permission + AI consent + value tease + rating prime">
+          <DCArtboard id="demoup" label="demo upload" width={390} height={844}>
+            <Phone><ScreenDemoUpload /></Phone>
+          </DCArtboard>
+          <DCArtboard id="notif" label="notification permission" width={390} height={844}>
+            <Phone><ScreenNotifPerm /></Phone>
+          </DCArtboard>
+          <DCArtboard id="aiconsent" label="ai consent" width={390} height={844}>
+            <Phone><ScreenAIConsent /></Phone>
+          </DCArtboard>
+          <DCArtboard id="prepay" label="pre-paywall value" width={390} height={844}>
+            <Phone><ScreenPrePaywallValue /></Phone>
+          </DCArtboard>
+          <DCArtboard id="rating" label="star rating prime" width={390} height={844}>
+            <Phone><ScreenStarRating /></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="modes" title="02b · diğer modlar" subtitle="açılış · tonla · davet">
+          <DCArtboard id="acilis" label="açılış" width={390} height={844}>
+            <Phone><ScreenAcilis /></Phone>
+          </DCArtboard>
+          <DCArtboard id="tonla" label="tonla" width={390} height={844}>
+            <Phone><ScreenTonla /></Phone>
+          </DCArtboard>
+          <DCArtboard id="davet" label="davet" width={390} height={844}>
+            <Phone><ScreenDavet /></Phone>
+          </DCArtboard>
+          <DCArtboard id="manualchat" label="elle yaz · chat composer" width={390} height={844}>
+            <Phone><ScreenManualChat /></Phone>
+          </DCArtboard>
+          <DCArtboard id="manualprof" label="profil bilgisi (elle)" width={390} height={844}>
+            <Phone><ScreenManualProfile /></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="flow-tail" title="03b · cevap akışı detay" subtitle="loading · history · arketip switch">
+          <DCArtboard id="gen" label="generation loading" width={390} height={844}>
+            <Phone><ScreenGeneration /></Phone>
+          </DCArtboard>
+          <DCArtboard id="result" label="history detail" width={390} height={844}>
+            <Phone><ScreenResult /></Phone>
+          </DCArtboard>
+          <DCArtboard id="archswitch" label="arketip switcher (sheet)" width={390} height={844}>
+            <Phone><ScreenArchetypeSwitcher /></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="meta" title="05 · meta ekranları" subtitle="how it works · settings · galeri">
+          <DCArtboard id="how" label="how it works" width={390} height={844}>
+            <Phone><ScreenHowItWorks /></Phone>
+          </DCArtboard>
+          <DCArtboard id="settings" label="settings" width={390} height={844}>
+            <Phone><ScreenSettings /></Phone>
+          </DCArtboard>
+          <DCArtboard id="voicesample" label="voice sample editor" width={390} height={844}>
+            <Phone><ScreenVoiceSampleEditor /></Phone>
+          </DCArtboard>
+          <DCArtboard id="gallery" label="6 arketip galeri" width={390} height={844}>
+            <Phone><ScreenArchetypeGallery /></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="next" title="06 · sırada ne var?" subtitle="bir sonraki adımlar">
+          <DCArtboard id="next" label="next steps" width={400} height={460}>
+            <Note w={400} title="bir sonraki tur">
+              <div style={{ marginBottom: 8 }}><b>1. arketip ikonlarını yerleştir.</b> 6 custom ikonun PNG/SVG'sini ver — reveal, profile, gallery, switcher'a koyacağım. şu an placeholder dashed çerçevede.</div>
+              <div style={{ marginBottom: 8 }}><b>2. tüm 25+ ekran kapsandı:</b> auth, kalibrasyon (5 cell tipi), pre-flow consent zinciri, 4 mod, history, settings, voice editor, galeri. eksik gördüğün varsa söyle.</div>
+              <div style={{ marginBottom: 8 }}><b>3. micro-interaction'lar:</b> generate butonu shimmer · reply skeleton · arketip reveal animasyonu (Lottie alternatifi web mock).</div>
+              <div style={{ marginBottom: 8 }}><b>4. swift handoff:</b> bu tokenları DesignSystem/Colors.swift + Typography.swift'e mapleyip vereyim mi?</div>
+              <div><b>5. voice sample expansion:</b> 6 arketip × 5 ton = 30 hücre için yeni "refined" örnekler — ekibinde kim yazıyor söyle, beraber bakalım.</div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

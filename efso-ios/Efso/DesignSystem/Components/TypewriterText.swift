@@ -65,7 +65,7 @@ struct TypewriterText: View {
             // Caret blink — yazma bittikten sonra da görünür kalsın istiyoruz
             // (parent showCaret'i false yapana kadar).
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 530_000_000)
+                try? await Task.sleep(for: .milliseconds(530))
                 if Task.isCancelled { break }
                 caretOn.toggle()
             }
@@ -82,7 +82,7 @@ struct TypewriterText: View {
         revealTask = Task { @MainActor in
             for i in 1...text.count {
                 if Task.isCancelled { return }
-                try? await Task.sleep(nanoseconds: charDelayMs * 1_000_000)
+                try? await Task.sleep(for: .milliseconds(charDelayMs))
                 if Task.isCancelled { return }
                 revealed = i
             }

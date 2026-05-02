@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// Manuel profil girişi — açılış modu için. Kullanıcı ss yerine
-/// karşı tarafın profilini elle yazar: handle, bio, post'lar, foto
-/// açıklamaları. En az bir alan dolu olmalı.
+/// Refined-y2k manuel profil — italic "onu tanıyalım." + 4 alanlı liste +
+/// holo CTA "kaydet ve devam".
 struct ManualProfileEntryView: View {
     @Bindable var vm: HomeViewModel
 
@@ -13,14 +12,14 @@ struct ManualProfileEntryView: View {
         VStack(spacing: 0) {
             topBar
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 18) {
                     header
-                    handleField
-                    bioField
+                    section(label: "isim", placeholder: "@elif", text: $vm.manualHandle, field: .handle)
+                    sectionMultiline(label: "bio", placeholder: "profilde yazan açıklama", text: $vm.manualBio, field: .bio, minHeight: 90)
                     postsSection
                     photoSection
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
                 .padding(.top, 16)
                 .padding(.bottom, 16)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -38,92 +37,86 @@ struct ManualProfileEntryView: View {
     }
 
     private var topBar: some View {
-        HStack(spacing: 12) {
+        HStack {
             Button { vm.backToHome() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
+                Text("× iptal")
+                    .font(AppFont.mono(12))
+                    .tracking(0.10 * 12)
                     .foregroundColor(AppColor.text60)
-                    .frame(width: 44, height: 44)
+                    .frame(height: 44)
+                    .padding(.horizontal, 16)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel("geri")
-            Spacer(minLength: 0)
-            Text("elle yaz · açılış")
-                .font(AppFont.body(16))
-                .foregroundColor(.white.opacity(0.85))
-            Spacer(minLength: 0)
-            Color.clear.frame(width: 44, height: 44)
+            .accessibilityLabel("iptal")
+            Spacer()
+            EfsoTag("profil bilgisi", color: AppColor.text40)
+            Spacer()
+            Color.clear.frame(width: 60, height: 44)
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 4)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("profili tarif et")
-                .font(AppFont.display(22, weight: .bold))
-                .tracking(-0.02 * 22)
-                .foregroundColor(.white)
-            Text("ne kadar verirsen o kadar isabetli açılış üretiriz. en az bir alan yeter.")
+        VStack(alignment: .leading, spacing: 6) {
+            Text("onu tanıyalım.")
+                .font(AppFont.displayItalic(30, weight: .regular))
+                .tracking(-0.025 * 30)
+                .foregroundColor(AppColor.ink)
+            Text("ne kadar verirsen o kadar isabetli açılış. en az bir alan yeter.")
                 .font(AppFont.body(13))
                 .foregroundColor(AppColor.text60)
-                .lineSpacing(13 * 0.40)
-                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private func section(label: String, placeholder: String, text: Binding<String>, field: Field) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            EfsoTag(label, color: AppColor.text40)
+            TextField(placeholder, text: text)
+                .focused($focused, equals: field)
+                .font(AppFont.body(14.5))
+                .foregroundColor(AppColor.ink)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(fieldBg)
         }
     }
 
-    private var handleField: some View {
-        labeledTextField(
-            label: "kullanıcı adı",
-            placeholder: "@elif",
-            text: $vm.manualHandle,
-            field: .handle
-        )
-    }
-
-    private var bioField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("BIO")
-                .font(AppFont.mono(11))
-                .tracking(0.04 * 11)
-                .foregroundColor(AppColor.text40)
+    private func sectionMultiline(label: String, placeholder: String, text: Binding<String>, field: Field, minHeight: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            EfsoTag(label, color: AppColor.text40)
             ZStack(alignment: .topLeading) {
-                if vm.manualBio.isEmpty {
-                    Text("profilde yazan açıklama. (opsiyonel ama en zenginidir)")
+                if text.wrappedValue.isEmpty {
+                    Text(placeholder)
                         .font(AppFont.body(14))
                         .foregroundColor(AppColor.text30)
-                        .padding(.horizontal, 14)
-                        .padding(.top, 12)
-                        .allowsHitTesting(false)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
                 }
-                TextEditor(text: $vm.manualBio)
-                    .focused($focused, equals: .bio)
-                    .font(AppFont.body(14))
-                    .foregroundColor(.white)
+                TextEditor(text: text)
+                    .focused($focused, equals: field)
+                    .font(AppFont.body(14.5))
+                    .foregroundColor(AppColor.ink)
                     .scrollContentBackground(.hidden)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .frame(minHeight: 90)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(minHeight: minHeight)
             }
-            .background(roundedFieldBg)
+            .background(fieldBg)
         }
     }
 
     private var postsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionHeader(title: "POST / TWEET", count: vm.manualPosts.count, max: 5) {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionHeader(label: "sevdikleri", count: vm.manualPosts.count) {
                 vm.manualPosts.append("")
                 let i = vm.manualPosts.count - 1
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(50))
                     focused = .post(i)
                 }
             }
             ForEach(vm.manualPosts.indices, id: \.self) { i in
-                indexedRow(
-                    binding: $vm.manualPosts[i],
-                    placeholder: "son post / tweet'lerinden biri",
-                    field: .post(i)
-                ) {
+                indexedRow(binding: $vm.manualPosts[i], placeholder: "post / tweet / sevdiği şey", field: .post(i)) {
                     vm.manualPosts.remove(at: i)
                 }
             }
@@ -131,133 +124,73 @@ struct ManualProfileEntryView: View {
     }
 
     private var photoSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionHeader(title: "FOTO AÇIKLAMASI", count: vm.manualPhotoDescriptions.count, max: 5) {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionHeader(label: "nerden", count: vm.manualPhotoDescriptions.count) {
                 vm.manualPhotoDescriptions.append("")
                 let i = vm.manualPhotoDescriptions.count - 1
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(50))
                     focused = .photo(i)
                 }
             }
             ForEach(vm.manualPhotoDescriptions.indices, id: \.self) { i in
-                indexedRow(
-                    binding: $vm.manualPhotoDescriptions[i],
-                    placeholder: "fotoğrafta ne var (kahve, kedi, dağ, vb.)",
-                    field: .photo(i)
-                ) {
+                indexedRow(binding: $vm.manualPhotoDescriptions[i], placeholder: "tinder, 4 gündür konuşma", field: .photo(i)) {
                     vm.manualPhotoDescriptions.remove(at: i)
                 }
             }
         }
     }
 
-    // MARK: - Helpers
+    private func sectionHeader(label: String, count: Int, onAdd: @escaping () -> Void) -> some View {
+        HStack {
+            EfsoTag(label, color: AppColor.text40)
+            Spacer()
+            if count < 5 {
+                Button(action: onAdd) {
+                    Text("+ ekle")
+                        .font(AppFont.mono(11, weight: .medium))
+                        .tracking(0.10 * 11)
+                        .foregroundColor(AppColor.accent)
+                }
+            }
+        }
+    }
 
-    private func labeledTextField(
-        label: String,
-        placeholder: String,
-        text: Binding<String>,
-        field: Field
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(label.uppercased())
-                .font(AppFont.mono(11))
-                .tracking(0.04 * 11)
-                .foregroundColor(AppColor.text40)
-            TextField(placeholder, text: text)
+    private func indexedRow(binding: Binding<String>, placeholder: String, field: Field, onDelete: @escaping () -> Void) -> some View {
+        HStack(spacing: 8) {
+            TextField(placeholder, text: binding, axis: .vertical)
                 .focused($focused, equals: field)
                 .font(AppFont.body(14))
-                .foregroundColor(.white)
+                .foregroundColor(AppColor.ink)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
-                .background(roundedFieldBg)
-        }
-    }
-
-    private func sectionHeader(title: String, count: Int, max: Int, onAdd: @escaping () -> Void) -> some View {
-        HStack {
-            Text(title)
-                .font(AppFont.mono(11))
-                .tracking(0.04 * 11)
-                .foregroundColor(AppColor.text40)
-            Spacer()
-            if count < max {
-                Button(action: onAdd) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 11, weight: .semibold))
-                            .accessibilityHidden(true)
-                        Text("ekle")
-                            .font(AppFont.body(11, weight: .medium))
-                    }
-                    .foregroundColor(AppColor.lime)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .frame(minHeight: 36)
-                    .background(
-                        Capsule().fill(AppColor.lime.opacity(0.12))
-                    )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(title.lowercased()) ekle")
-            }
-        }
-    }
-
-    private func indexedRow(
-        binding: Binding<String>,
-        placeholder: String,
-        field: Field,
-        onDelete: @escaping () -> Void
-    ) -> some View {
-        HStack(spacing: 8) {
-            ZStack(alignment: .topLeading) {
-                if binding.wrappedValue.isEmpty {
-                    Text(placeholder)
-                        .font(AppFont.body(13))
-                        .foregroundColor(AppColor.text30)
-                        .padding(.horizontal, 12)
-                        .padding(.top, 10)
-                        .allowsHitTesting(false)
-                }
-                TextField("", text: binding, axis: .vertical)
-                    .focused($focused, equals: field)
-                    .font(AppFont.body(13))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .lineLimit(1...4)
-            }
-            .frame(maxWidth: .infinity)
-            .background(roundedFieldBg)
-
+                .lineLimit(1...4)
+                .background(fieldBg)
             Button(action: onDelete) {
                 Image(systemName: "minus.circle")
                     .font(.system(size: 18))
                     .foregroundColor(AppColor.text40)
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
-                    .accessibilityHidden(true)
             }
             .accessibilityLabel("sil")
         }
     }
 
-    private var roundedFieldBg: some View {
+    private var fieldBg: some View {
         RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(AppColor.bg1.opacity(0.55))
+            .fill(AppColor.bg1)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(AppColor.text08, lineWidth: 1)
+                    .strokeBorder(AppColor.text10, lineWidth: 1)
             )
     }
 
     private var canSubmit: Bool {
-        let trim: (String) -> String = { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-        return !trim(vm.manualBio).isEmpty
-            || !trim(vm.manualHandle).isEmpty
-            || vm.manualPosts.contains { !trim($0).isEmpty }
-            || vm.manualPhotoDescriptions.contains { !trim($0).isEmpty }
+        func nonEmpty(_ s: String) -> Bool { !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return nonEmpty(vm.manualBio) || nonEmpty(vm.manualHandle)
+            || vm.manualPosts.contains(where: nonEmpty)
+            || vm.manualPhotoDescriptions.contains(where: nonEmpty)
     }
 
     @ViewBuilder
@@ -267,29 +200,14 @@ struct ManualProfileEntryView: View {
                 Text(err)
                     .font(AppFont.body(12))
                     .foregroundColor(AppColor.warning)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-            } else if !canSubmit {
-                Text("en az bir alan doldur (bio, handle, post veya foto)")
-                    .font(AppFont.body(12))
-                    .foregroundColor(AppColor.text40)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
             }
-            HStack(spacing: 10) {
-                SecondaryButton(title: "temizle") {
-                    vm.manualBio = ""
-                    vm.manualHandle = ""
-                    vm.manualPosts = []
-                    vm.manualPhotoDescriptions = []
-                    vm.lastError = nil
-                }
-                PrimaryButton("üret", isEnabled: canSubmit) {
-                    vm.lastError = nil
-                    vm.proceedToManualGeneration()
-                }
+            HoloPrimaryButton(title: "tamam", isEnabled: canSubmit) {
+                vm.lastError = nil
+                vm.confirmManualInput()
             }
-            .padding(.horizontal, 24)
+            .opacity(canSubmit ? 1 : 0.35)
+            .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
     }

@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Pill chip — onboarding selection, tone selector, vb.
-/// Selected state'te holographic 1pt border + soft pink glow.
+/// Refined-y2k pill — selected: ink fill (dark text); unselected: outlined.
+/// Mode tone selector ve onboarding seçimleri burayı kullanır.
 struct Chip: View {
     let label: String
     let isSelected: Bool
@@ -33,28 +33,19 @@ struct Chip: View {
                 }
                 Text(label.trLower)
             }
-            .font(AppFont.body(size == .large ? 15 : 14))
-            .foregroundColor(isSelected ? .white : AppColor.text60)
+            .font(AppFont.body(size == .large ? 15 : 14, weight: isSelected ? .semibold : .regular))
+            .foregroundColor(isSelected ? AppColor.bg0 : AppColor.ink)
             .padding(.horizontal, size == .large ? 20 : 16)
-            // Görsel yükseklik 36pt (regular) / 44pt (large) ama HIG hit-target
-            // 44pt minimum. Regular'da görsel kapsülü küçük tutuyoruz, hit
-            // alanını contentShape ile 44pt'a genişletiyoruz.
             .frame(height: size == .large ? 44 : 36)
             .background(
-                ZStack {
-                    Capsule()
-                        .fill(isSelected ? AppColor.bgGlass : AppColor.bg1)
-                    Capsule()
-                        .strokeBorder(
-                            isSelected ? AppColor.pink : AppColor.text10,
-                            lineWidth: isSelected ? 1.5 : 1
-                        )
-                }
+                Capsule().fill(isSelected ? AppColor.ink : Color.clear)
             )
-            .contentShape(Rectangle().inset(by: -4))   // ~4pt padding her yönde
+            .overlay(
+                Capsule().strokeBorder(isSelected ? Color.clear : AppColor.text20, lineWidth: 1)
+            )
+            .contentShape(Rectangle().inset(by: -4))
             .frame(minHeight: 44)
         }
         .sensoryFeedback(.selection, trigger: isSelected)
     }
 }
-

@@ -1,9 +1,8 @@
 import SwiftUI
 
 /// Auth + onboarding state'ine göre routing.
-/// 1. Sign in olmadıysa → SignInView
-/// 2. Sign in oldu ama onboarding tamamlanmadıysa → OnboardingFlowView
-/// 3. İkisi de tamam → MainShellView
+/// Anonymous-first: SignInView yok. Bootstrap bitene kadar splash, sonra
+/// onboarding tamamlanmadıysa flow, tamamlandıysa MainShell.
 struct RootView: View {
     @State private var auth = AuthService.shared
     // String literal yerine UDKey case'i — drift riski sıfır, tek doğru kaynak.
@@ -13,14 +12,10 @@ struct RootView: View {
         ZStack {
             CosmicBackground()
 
-            // Cold-launch: restoreSession bitene kadar minimal brand
-            // bekleme ekranı. Aksi halde 1 frame SignInView flash ediyor,
-            // sonra Home'a atlıyordu. SplashView onboarding-spesifik
-            // (cinematic + onContinue) olduğu için reuse etmiyoruz.
             if auth.isRestoring {
                 AuthRestoreSplash()
             } else if !auth.isSignedIn {
-                SignInView()
+                AuthFailureView { Task { await auth.bootstrap() } }
             } else if !onboardingCompleted {
                 OnboardingFlowView {
                     onboardingCompleted = true
@@ -46,14 +41,49 @@ struct MainShellView: View {
     }
 }
 
-/// Auth restore sırasında gösterilen statik brand splash.
-/// Cinematic SplashView'dan farklı: onContinue beklemez, sadece marka.
+/// Bootstrap (session restore + anon sign-in) sırasında gösterilen statik
+/// brand splash. Cinematic SplashView'dan farklı: onContinue beklemez, sadece
+/// marka.
 private struct AuthRestoreSplash: View {
     var body: some View {
         VStack {
             Spacer()
             Logo(size: 36)
             Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct AuthFailureView: View {
+    let onRetry: () -> Void
+    @State private var isRetrying = false
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 32, weight: .light))
+                .foregroundColor(AppColor.text40)
+            Text("bağlantı kurulamadı")
+                .font(AppFont.displayItalic(22))
+                .foregroundColor(AppColor.ink)
+            Text("internet bağlantını kontrol edip tekrar dene.")
+                .font(AppFont.body(14))
+                .foregroundColor(AppColor.text60)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            Spacer()
+            PrimaryButton("tekrar dene", isEnabled: !isRetrying) {
+                isRetrying = true
+                onRetry()
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    isRetrying = false
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 48)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

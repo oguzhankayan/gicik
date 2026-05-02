@@ -1,10 +1,10 @@
 
 // DesignCanvas.jsx — Figma-ish design canvas wrapper
 // Warm gray grid bg + Sections + Artboards + PostIt notes.
-// Artboards are reorderable (grip-drag), labels/titles are inline-editable,
-// and any artboard can be opened in a fullscreen focus overlay (←/→/Esc).
-// State persists to a .design-canvas.state.json sidecar via the host
-// bridge. No assets, no deps.
+// Artboards are reorderable (grip-drag), deletable, labels/titles are
+// inline-editable, and any artboard can be opened in a fullscreen focus
+// overlay (←/→/Esc). State persists to a .design-canvas.state.json sidecar
+// via the host bridge. No assets, no deps.
 //
 // Usage:
 //   <DesignCanvas>
@@ -39,17 +39,58 @@ if (typeof document !== 'undefined' && !document.getElementById('dc-styles')) {
     '.dc-card{transition:box-shadow .15s,transform .15s}',
     '.dc-card *{scrollbar-width:none}',
     '.dc-card *::-webkit-scrollbar{display:none}',
-    '.dc-labelrow{display:flex;align-items:center;gap:4px;height:24px}',
-    '.dc-grip{cursor:grab;display:flex;align-items:center;padding:5px 4px;border-radius:4px;transition:background .12s}',
+    // Per-artboard header: grip + label on the left, delete/expand on the
+    // right. Single flex row; when the artboard's on-screen width is too
+    // narrow for both the label yields (ellipsis, then hidden entirely below
+    // ~4ch via the container query) and the buttons stay on the row.
+    '.dc-header{position:absolute;bottom:100%;left:-4px;margin-bottom:calc(4px * var(--dc-inv-zoom,1));z-index:2;',
+    '  display:flex;align-items:center;container-type:inline-size}',
+    '.dc-labelrow{display:flex;align-items:center;gap:4px;height:24px;flex:1 1 auto;min-width:0}',
+    '.dc-grip{flex:0 0 auto;cursor:grab;display:flex;align-items:center;padding:5px 4px;border-radius:4px;transition:background .12s,opacity .12s}',
     '.dc-grip:hover{background:rgba(0,0,0,.08)}',
     '.dc-grip:active{cursor:grabbing}',
-    '.dc-labeltext{cursor:pointer;border-radius:4px;padding:3px 6px;display:flex;align-items:center;transition:background .12s}',
+    '.dc-labeltext{flex:1 1 auto;min-width:0;cursor:pointer;border-radius:4px;padding:3px 6px;',
+    '  display:flex;align-items:center;transition:background .12s;overflow:hidden}',
+    // Below ~4ch of label room: hide the label entirely, and drop the grip to
+    // hover-only (same reveal rule as .dc-btns) so a narrow header is clean
+    // until the card is moused.
+    '@container (max-width: 110px){',
+    '  .dc-labeltext{display:none}',
+    '  .dc-grip{opacity:0}',
+    '  [data-dc-slot]:hover .dc-grip{opacity:1}',
+    '}',
     '.dc-labeltext:hover{background:rgba(0,0,0,.05)}',
-    '.dc-expand{position:absolute;bottom:100%;right:0;margin-bottom:5px;z-index:2;opacity:0;transition:opacity .12s,background .12s;',
-    '  width:22px;height:22px;border-radius:5px;border:none;cursor:pointer;padding:0;',
-    '  background:transparent;color:rgba(60,50,40,.7);display:flex;align-items:center;justify-content:center}',
+    '.dc-labeltext .dc-editable{overflow:hidden;text-overflow:ellipsis;max-width:100%}',
+    '.dc-labeltext .dc-editable:focus{overflow:visible;text-overflow:clip}',
+    '.dc-btns{flex:0 0 auto;margin-left:auto;display:flex;gap:2px;opacity:0;transition:opacity .12s}',
+    '[data-dc-slot]:hover .dc-btns,.dc-btns:has(.dc-confirm){opacity:1}',
+    '.dc-expand,.dc-delete{width:22px;height:22px;border-radius:5px;border:none;cursor:pointer;padding:0;',
+    '  background:transparent;color:rgba(60,50,40,.7);display:flex;align-items:center;justify-content:center;',
+    '  font:inherit;transition:background .12s,color .12s}',
     '.dc-expand:hover{background:rgba(0,0,0,.06);color:#2a251f}',
-    '[data-dc-slot]:hover .dc-expand{opacity:1}',
+    '.dc-delete:hover{background:rgba(201,100,66,.12);color:#c96442}',
+    '.dc-delete.dc-confirm{width:auto;padding:0 7px;gap:5px;background:#c96442;color:#fff;',
+    '  font-size:12px;font-weight:500}',
+    '.dc-delete.dc-confirm:hover{background:#b5563a}',
+    // Chrome (titles / labels / buttons) counter-scales against the viewport
+    // zoom so it stays a constant on-screen size. --dc-inv-zoom is set by
+    // DCViewport on every transform update and inherits to all descendants —
+    // any overlay inside the world (e.g. a TweaksPanel on an artboard) can use
+    // it the same way.
+    //
+    // The header uses transform:scale (out-of-flow, so layout impact doesn't
+    // matter) with its world-space width set to card-width / inv-zoom so that
+    // after counter-scaling its on-screen width exactly matches the card's —
+    // that's what lets the container query + text-overflow behave against the
+    // card's visible edge at every zoom level.
+    //
+    // The section head uses CSS zoom instead of transform so its layout box
+    // grows with the counter-scale, pushing the card row down — otherwise the
+    // constant-screen-size title would overflow into the (shrinking) world-
+    // space gap and overlap the artboard headers at low zoom.
+    '.dc-header{width:calc((100% + 4px) / var(--dc-inv-zoom,1));',
+    '  transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom left}',
+    '.dc-sectionhead{zoom:var(--dc-inv-zoom,1)}',
   ].join('\n');
   document.head.appendChild(s);
 }
@@ -58,8 +99,9 @@ const DCCtx = React.createContext(null);
 
 // ─────────────────────────────────────────────────────────────
 // DesignCanvas — stateful wrapper around the pan/zoom viewport.
-// Owns runtime state (per-section order, renamed titles/labels, focused
-// artboard). Order/titles/labels persist to a .design-canvas.state.json
+// Owns runtime state (per-section order, renamed titles/labels, hidden
+// artboards, focused artboard). Order/titles/labels/hidden persist to a
+// .design-canvas.state.json
 // sidecar next to the HTML. Reads go via plain fetch() so the saved
 // arrangement is visible anywhere the HTML + sidecar are served together
 // (omelette preview, direct link, downloaded zip). Writes go through the
@@ -115,11 +157,19 @@ function DesignCanvas({ children, minScale, maxScale, style }) {
     if (!sid) return;
     sectionOrder.push(sid);
     const persisted = state.sections[sid] || {};
-    const srcIds = [];
+    const abs = [];
     React.Children.forEach(sec.props.children, (ab) => {
       if (!ab || ab.type !== DCArtboard) return;
       const aid = ab.props.id ?? ab.props.label;
-      if (!aid) return;
+      if (aid) abs.push([aid, ab]);
+    });
+    // hidden is scoped to one source revision — when the agent regenerates
+    // (artboard-ID set changes), prior deletes don't apply to new content.
+    const srcKey = abs.map(([k]) => k).join('\x1f');
+    const hidden = persisted.srcKey === srcKey ? (persisted.hidden || []) : [];
+    const srcIds = [];
+    abs.forEach(([aid, ab]) => {
+      if (hidden.includes(aid)) return;
       registry[`${sid}/${aid}`] = { sectionId: sid, artboard: ab };
       srcIds.push(aid);
     });
@@ -183,11 +233,48 @@ function DCViewport({ children, minScale = 0.1, maxScale = 8, style = {} }) {
   const vpRef = React.useRef(null);
   const worldRef = React.useRef(null);
   const tf = React.useRef({ x: 0, y: 0, scale: 1 });
+  // Persist viewport across reloads so the user lands back where they were
+  // after an agent edit or browser refresh. The sandbox origin is already
+  // per-project; pathname keeps multiple canvas files in one project apart.
+  const tfKey = 'dc-viewport:' + location.pathname;
+  const saveT = React.useRef(0);
 
+  const lastPostedScale = React.useRef();
   const apply = React.useCallback(() => {
     const { x, y, scale } = tf.current;
     const el = worldRef.current;
-    if (el) el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+    if (!el) return;
+    el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+    // Exposed for zoom-invariant chrome (labels, buttons, TweaksPanel).
+    el.style.setProperty('--dc-inv-zoom', String(1 / scale));
+    // Keep the host toolbar's % readout in sync with the canvas scale. Pan
+    // ticks leave scale unchanged — skip the cross-frame post for those.
+    if (lastPostedScale.current !== scale) {
+      lastPostedScale.current = scale;
+      window.parent.postMessage({ type: '__dc_zoom', scale }, '*');
+    }
+    clearTimeout(saveT.current);
+    saveT.current = setTimeout(() => {
+      try { localStorage.setItem(tfKey, JSON.stringify(tf.current)); } catch {}
+    }, 200);
+  }, [tfKey]);
+
+  React.useLayoutEffect(() => {
+    const flush = () => {
+      clearTimeout(saveT.current);
+      try { localStorage.setItem(tfKey, JSON.stringify(tf.current)); } catch {}
+    };
+    try {
+      const s = JSON.parse(localStorage.getItem(tfKey) || 'null');
+      if (s && Number.isFinite(s.x) && Number.isFinite(s.y) && Number.isFinite(s.scale)) {
+        tf.current = { x: s.x, y: s.y, scale: Math.min(maxScale, Math.max(minScale, s.scale)) };
+        apply();
+      }
+    } catch {}
+    // Flush on pagehide and unmount so a reload within the 200ms debounce
+    // window doesn't drop the last pan/zoom.
+    window.addEventListener('pagehide', flush);
+    return () => { window.removeEventListener('pagehide', flush); flush(); };
   }, []);
 
   React.useEffect(() => {
@@ -272,6 +359,36 @@ function DCViewport({ children, minScale = 0.1, maxScale = 8, style = {} }) {
       vp.style.cursor = '';
     };
 
+    // Host-driven zoom (toolbar % menu). Zooms around viewport centre so the
+    // visible midpoint stays fixed — matching the host's iframe-zoom feel.
+    const onHostMsg = (e) => {
+      const d = e.data;
+      if (d && d.type === '__dc_set_zoom' && typeof d.scale === 'number') {
+        const r = vp.getBoundingClientRect();
+        zoomAt(r.left + r.width / 2, r.top + r.height / 2, d.scale / tf.current.scale);
+      } else if (d && d.type === '__dc_probe') {
+        // Host's [readyGen] reset asks whether a canvas is present; it
+        // fires on the iframe's native 'load', which for canvases with
+        // images/fonts is after our mount-time announce, so re-announce.
+        // Clear the pan-tick guard so apply() re-posts the current scale
+        // even if it's unchanged — the host just reset dcScale to 1.
+        window.parent.postMessage({ type: '__dc_present' }, '*');
+        lastPostedScale.current = undefined;
+        apply();
+      }
+    };
+    window.addEventListener('message', onHostMsg);
+    // Announce canvas mode so the host toolbar proxies its % control here
+    // instead of scaling the iframe element (which would just shrink the
+    // viewport window of an infinite canvas). The apply() that follows emits
+    // the initial __dc_zoom so the toolbar % is correct before first pinch.
+    // lastPostedScale reset mirrors the __dc_probe handler: the layout
+    // effect's restore-path apply() may already have posted the restored
+    // scale (before __dc_present), so clear the guard to re-post it in order.
+    window.parent.postMessage({ type: '__dc_present' }, '*');
+    lastPostedScale.current = undefined;
+    apply();
+
     vp.addEventListener('wheel', onWheel, { passive: false });
     vp.addEventListener('gesturestart', onGestureStart, { passive: false });
     vp.addEventListener('gesturechange', onGestureChange, { passive: false });
@@ -281,6 +398,7 @@ function DCViewport({ children, minScale = 0.1, maxScale = 8, style = {} }) {
     vp.addEventListener('pointerup', onPointerUp);
     vp.addEventListener('pointercancel', onPointerUp);
     return () => {
+      window.removeEventListener('message', onHostMsg);
       vp.removeEventListener('wheel', onWheel);
       vp.removeEventListener('gesturestart', onGestureStart);
       vp.removeEventListener('gesturechange', onGestureChange);
@@ -336,8 +454,13 @@ function DCSection({ id, title, subtitle, children, gap = 48 }) {
   const all = React.Children.toArray(children);
   const artboards = all.filter((c) => c && c.type === DCArtboard);
   const rest = all.filter((c) => !(c && c.type === DCArtboard));
-  const srcOrder = artboards.map((a) => a.props.id ?? a.props.label);
   const sec = (ctx && sid && ctx.section(sid)) || {};
+  // Must match DesignCanvas's srcKey computation exactly (it filters falsy
+  // IDs), or onDelete persists a srcKey that DesignCanvas never recognizes.
+  const allIds = artboards.map((a) => a.props.id ?? a.props.label).filter(Boolean);
+  const srcKey = allIds.join('\x1f');
+  const hidden = sec.srcKey === srcKey ? (sec.hidden || []) : [];
+  const srcOrder = allIds.filter((k) => !hidden.includes(k));
 
   const order = React.useMemo(() => {
     const kept = (sec.order || []).filter((k) => srcOrder.includes(k));
@@ -346,13 +469,22 @@ function DCSection({ id, title, subtitle, children, gap = 48 }) {
 
   const byId = Object.fromEntries(artboards.map((a) => [a.props.id ?? a.props.label, a]));
 
+  // marginBottom counter-scales so the on-screen gap between sections stays
+  // constant — otherwise at low zoom the (world-space) gap collapses while
+  // the screen-constant sectionhead below it doesn't, and the title reads as
+  // belonging to the section above. paddingBottom below is just enough for
+  // the 24px artboard-header (abs-positioned above each card) plus ~8px, so
+  // the title sits tight against its own row at every zoom.
   return (
-    <div data-dc-section={sid} style={{ marginBottom: 80, position: 'relative' }}>
-      <div style={{ padding: '0 60px 56px' }}>
-        <DCEditable tag="div" value={sec.title ?? title}
-          onChange={(v) => ctx && sid && ctx.patchSection(sid, { title: v })}
-          style={{ fontSize: 28, fontWeight: 600, color: DC.title, letterSpacing: -0.4, marginBottom: 6, display: 'inline-block' }} />
-        {subtitle && <div style={{ fontSize: 16, color: DC.subtitle }}>{subtitle}</div>}
+    <div data-dc-section={sid}
+      style={{ marginBottom: 'calc(80px * var(--dc-inv-zoom, 1))', position: 'relative' }}>
+      <div style={{ padding: '0 60px' }}>
+        <div className="dc-sectionhead" style={{ paddingBottom: 36 }}>
+          <DCEditable tag="div" value={sec.title ?? title}
+            onChange={(v) => ctx && sid && ctx.patchSection(sid, { title: v })}
+            style={{ fontSize: 28, fontWeight: 600, color: DC.title, letterSpacing: -0.4, marginBottom: 6, display: 'inline-block' }} />
+          {subtitle && <div style={{ fontSize: 16, color: DC.subtitle }}>{subtitle}</div>}
+        </div>
       </div>
       <div style={{ display: 'flex', gap, padding: '0 60px', alignItems: 'flex-start', width: 'max-content' }}>
         {order.map((k) => (
@@ -360,6 +492,10 @@ function DCSection({ id, title, subtitle, children, gap = 48 }) {
             label={(sec.labels || {})[k] ?? byId[k].props.label}
             onRename={(v) => ctx && ctx.patchSection(sid, (x) => ({ labels: { ...x.labels, [k]: v } }))}
             onReorder={(next) => ctx && ctx.patchSection(sid, { order: next })}
+            onDelete={() => ctx && ctx.patchSection(sid, (x) => ({
+              hidden: [...(x.srcKey === srcKey ? (x.hidden || []) : []), k],
+              srcKey,
+            }))}
             onFocus={() => ctx && ctx.setFocus(`${sid}/${k}`)} />
         ))}
       </div>
@@ -371,10 +507,22 @@ function DCSection({ id, title, subtitle, children, gap = 48 }) {
 // DCArtboard — marker; rendered by DCArtboardFrame via DCSection.
 function DCArtboard() { return null; }
 
-function DCArtboardFrame({ sectionId, artboard, label, order, onRename, onReorder, onFocus }) {
+function DCArtboardFrame({ sectionId, artboard, label, order, onRename, onReorder, onFocus, onDelete }) {
   const { id: rawId, label: rawLabel, width = 260, height = 480, children, style = {} } = artboard.props;
   const id = rawId ?? rawLabel;
   const ref = React.useRef(null);
+  const delRef = React.useRef(null);
+  const [confirming, setConfirming] = React.useState(false);
+
+  // Two-click delete: first click arms the button (turns into an inline
+  // "Delete?" pill), second click commits. Any pointerdown outside the
+  // button disarms.
+  React.useEffect(() => {
+    if (!confirming) return;
+    const off = (e) => { if (!delRef.current || !delRef.current.contains(e.target)) setConfirming(false); };
+    document.addEventListener('pointerdown', off, true);
+    return () => document.removeEventListener('pointerdown', off, true);
+  }, [confirming]);
 
   // Live drag-reorder: dragged card sticks to cursor; siblings slide into
   // their would-be slots in real time via transforms. DOM order only
@@ -440,18 +588,32 @@ function DCArtboardFrame({ sectionId, artboard, label, order, onRename, onReorde
 
   return (
     <div ref={ref} data-dc-slot={id} style={{ position: 'relative', flexShrink: 0 }}>
-      <div className="dc-labelrow" style={{ position: 'absolute', bottom: '100%', left: -4, marginBottom: 4, color: DC.label }}>
-        <div className="dc-grip" onPointerDown={onGripDown} title="Drag to reorder">
-          <svg width="9" height="13" viewBox="0 0 9 13" fill="currentColor"><circle cx="2" cy="2" r="1.1"/><circle cx="7" cy="2" r="1.1"/><circle cx="2" cy="6.5" r="1.1"/><circle cx="7" cy="6.5" r="1.1"/><circle cx="2" cy="11" r="1.1"/><circle cx="7" cy="11" r="1.1"/></svg>
+      <div className="dc-header" style={{ color: DC.label }} onPointerDown={(e) => e.stopPropagation()}>
+        <div className="dc-labelrow">
+          <div className="dc-grip" onPointerDown={onGripDown} title="Drag to reorder">
+            <svg width="9" height="13" viewBox="0 0 9 13" fill="currentColor"><circle cx="2" cy="2" r="1.1"/><circle cx="7" cy="2" r="1.1"/><circle cx="2" cy="6.5" r="1.1"/><circle cx="7" cy="6.5" r="1.1"/><circle cx="2" cy="11" r="1.1"/><circle cx="7" cy="11" r="1.1"/></svg>
+          </div>
+          <div className="dc-labeltext" onClick={onFocus} title="Click to focus">
+            <DCEditable value={label} onChange={onRename} onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 15, fontWeight: 500, color: DC.label, lineHeight: 1 }} />
+          </div>
         </div>
-        <div className="dc-labeltext" onClick={onFocus} title="Click to focus">
-          <DCEditable value={label} onChange={onRename} onClick={(e) => e.stopPropagation()}
-            style={{ fontSize: 15, fontWeight: 500, color: DC.label, lineHeight: 1 }} />
+        <div className="dc-btns">
+          <button ref={delRef} className={'dc-delete' + (confirming ? ' dc-confirm' : '')}
+            onClick={() => { if (confirming) onDelete(); else setConfirming(true); }}
+            title={confirming ? 'Click again to delete' : 'Delete'}>
+            {confirming
+              ? <>
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3.5h8M4.5 3.5v-1a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1M3 3.5v6a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-6"/></svg>
+                  Delete?
+                </>
+              : <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3.5h8M4.5 3.5v-1a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1M3 3.5v6a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-6M5 5.5v3M7 5.5v3"/></svg>}
+          </button>
+          <button className="dc-expand" onClick={onFocus} title="Focus">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M7 1h4v4M5 11H1V7M11 1L7.5 4.5M1 11l3.5-3.5"/></svg>
+          </button>
         </div>
       </div>
-      <button className="dc-expand" onClick={onFocus} onPointerDown={(e) => e.stopPropagation()} title="Focus">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M7 1h4v4M5 11H1V7M11 1L7.5 4.5M1 11l3.5-3.5"/></svg>
-      </button>
       <div className="dc-card"
         style={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06)', overflow: 'hidden', width, height, background: '#fff', ...style }}>
         {children || <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 13, fontFamily: DC.font }}>{id}</div>}
@@ -489,9 +651,14 @@ function DCFocusOverlay({ entry, sectionMeta, sectionOrder }) {
 
   const go = (d) => { const n = peers[(idx + d + peers.length) % peers.length]; if (n) ctx.setFocus(`${sectionId}/${n}`); };
   const goSection = (d) => {
-    const ns = sectionOrder[(secIdx + d + sectionOrder.length) % sectionOrder.length];
-    const first = sectionMeta[ns] && sectionMeta[ns].slotIds[0];
-    if (first) ctx.setFocus(`${ns}/${first}`);
+    // Sections whose artboards are all deleted have slotIds:[] — step past
+    // them to the next non-empty section so ↑/↓ doesn't dead-end.
+    const n = sectionOrder.length;
+    for (let i = 1; i < n; i++) {
+      const ns = sectionOrder[(((secIdx + d * i) % n) + n) % n];
+      const first = sectionMeta[ns] && sectionMeta[ns].slotIds[0];
+      if (first) { ctx.setFocus(`${ns}/${first}`); return; }
+    }
   };
 
   React.useEffect(() => {
@@ -548,7 +715,7 @@ function DCFocusOverlay({ entry, sectionMeta, sectionOrder }) {
           {ddOpen && (
             <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, background: '#2a251f', borderRadius: 8,
               boxShadow: '0 8px 32px rgba(0,0,0,.4)', padding: 4, minWidth: 200, zIndex: 10 }}>
-              {sectionOrder.map((sid) => (
+              {sectionOrder.filter((sid) => sectionMeta[sid].slotIds.length).map((sid) => (
                 <button key={sid} onClick={() => { setDd(false); const f = sectionMeta[sid].slotIds[0]; if (f) ctx.setFocus(`${sid}/${f}`); }}
                   style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
                     background: sid === sectionId ? 'rgba(255,255,255,.1)' : 'transparent', color: '#fff',

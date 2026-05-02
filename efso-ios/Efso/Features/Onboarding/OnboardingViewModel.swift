@@ -1,22 +1,18 @@
 import Foundation
 import Observation
 
-/// Onboarding flow state machine — Rizz playbook (2026-04-30 reorder).
-/// Yeni sıra: value önce, demographic sona. Calibration ortada (kullanıcı zaten içeride).
-/// Paywall öncesi value carousel + star prime ile commitment ramping.
+/// Onboarding flow state machine (Rizz playbook reorder).
+/// Paywall önce, kalibrasyon sonra — conversion first.
 enum OnboardingStep: Int, CaseIterable {
-    case splash               // cinematic, auto-advance
-    case valueIntro           // 3-page swipeable carousel
-    case calibrationIntro
+    case splash
+    case valueIntro           // 2-page value carousel
+    case notification
+    case demographic          // yaş, cinsiyet, niyet
+    case aiConsent
+    case paywall
+    case calibrationIntro     // quiz tanıtımı (post-paywall)
     case calibrationQuiz
     case calibrationResult
-    case demographic          // sona alındı, kullanıcı zaten ısındı
-    case demoUpload
-    case notification         // cinematic 3D bell
-    case starRating           // SKStoreReview prime
-    case prePaywallValue      // archetype-aware reinforcement
-    case aiConsent
-    case paywall              // single tier weekly + carousel
     case completed
 }
 

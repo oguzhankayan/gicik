@@ -1,30 +1,15 @@
 import SwiftUI
 
-/// Y2K "efso" logo. `o` harfi içinde holographic dot
-/// (önceden "ı" üzerindeydi; isim değişti).
-/// Kullanım: `Logo(size: 88)` — splash screen'de
+/// Refined-y2k logo — lowercase italic editorial serif. Y2K holographic dot
+/// pattern emekli; yerine sadece typeface'in karakteri konuşur.
+/// Bu wrapper geriye uyumluluk için kalıyor; yeni kodda `EfsoWordmark` kullan.
 struct Logo: View {
     let size: CGFloat
 
     init(size: CGFloat = 64) { self.size = size }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
-            Text("efs")
-            ZStack {
-                Text("o")
-                Circle()
-                    .fill(AppColor.holographic)
-                    .frame(width: size * 0.16, height: size * 0.16)
-                    .shadow(color: AppColor.pink.opacity(0.7), radius: 6)
-                    .shadow(color: AppColor.purple.opacity(0.5), radius: 12)
-            }
-        }
-        .font(AppFont.display(size, weight: .bold))
-        .tracking(-size * 0.04)
-        .foregroundColor(.white)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("efso")
+        EfsoWordmark(size: size, color: AppColor.ink, withDot: false)
     }
 }
 

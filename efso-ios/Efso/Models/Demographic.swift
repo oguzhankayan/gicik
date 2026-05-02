@@ -32,9 +32,9 @@ enum Intent: String, Codable, CaseIterable {
     var label: String {
         switch self {
         case .relationship: "ilişki"
-        case .casual: "casual"
+        case .casual: "rahat"
         case .fun: "eğlence"
-        case .taken: "birlikteyim"
+        case .taken: "ilişkim var"
         }
     }
 }

@@ -46,5 +46,8 @@ efso-backend/supabase/.branches/
 # Local agent caches
 .agents/cache/
 
+# Wrangler (Cloudflare Pages local cache)
+.wrangler/
+
 # Scratch — audit reports, handoff drafts
 scratch/

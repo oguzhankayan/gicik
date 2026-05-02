@@ -82,6 +82,20 @@ Deno.serve(async (req: Request) => {
   try {
     const { userId, client, serviceClient } = await requireAuth(req);
 
+    // ─── AI consent check ───
+    const { data: consentProfile } = await client
+      .from("profiles")
+      .select("ai_consent_given")
+      .eq("id", userId)
+      .single();
+
+    if (!consentProfile?.ai_consent_given) {
+      return new Response(JSON.stringify({ error: "ai_consent_required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = (await req.json().catch(() => null)) as RequestBody | null;
     if (!body?.conversation_id) {
       return errorResponse("invalid_input", "conversation_id required");
@@ -263,9 +277,12 @@ Deno.serve(async (req: Request) => {
         }
 
         // Output filter — toxic positivity guard
+        let qualityWarning = false;
         if (hasToxicPositivity(structured.observation)
           || structured.replies.some(r => hasToxicPositivity(r.text))) {
           // Log; do not retry inside same edge instance to avoid runaway cost.
+          // Flag the done event so the client knows output may not meet quality standards.
+          qualityWarning = true;
           await serviceClient.from("security_events").insert({
             user_id: userId,
             event_type: "toxic_request",
@@ -299,7 +316,7 @@ Deno.serve(async (req: Request) => {
           })
           .eq("id", conv.id);
 
-        await serviceClient.rpc("fn_increment_usage", { p_user_id: userId });
+        await serviceClient.rpc("fn_increment_usage", { p_user_id: userId, p_cost_usd: cost });
 
         await serviceClient
           .from("profiles")
@@ -322,6 +339,7 @@ Deno.serve(async (req: Request) => {
           conversation_id: conv.id,
           remaining_today: remainingToday,
           is_premium: subState?.is_active === true,
+          ...(qualityWarning ? { quality_warning: true } : {}),
         });
         controller.close();
       },
@@ -386,10 +404,27 @@ function buildUserPrompt(parse: ParseResult, tones: Tone[], mode: Mode): string 
     };
   } else {
     inputLabel = "konuşma çözümü:";
+    // Hedef mesaj: cevap üretilecek olan KARŞI tarafın son mesajı.
+    // user'ın kendi mesajına asla cevap üretme.
+    const msgs = Array.isArray(parse.messages) ? parse.messages : [];
+    const lastOtherIdx = (() => {
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i]?.sender === "other") return i;
+      }
+      return -1;
+    })();
+    const targetMessage = lastOtherIdx >= 0 ? msgs[lastOtherIdx] : null;
+    const stalled = parse.last_message_from === "user";
     inputPayload = {
       platform: parse.platform_detected,
       messages: parse.messages,
       last_message_from: parse.last_message_from,
+      target_message: targetMessage,
+      target_message_index: lastOtherIdx,
+      conversation_state: stalled ? "user_sent_last" : "other_replied_last",
+      task: stalled
+        ? "son mesaj kullanıcıdan. zaman bilgin yok — konuşma az önce akıyor olabilir, biraz beklemiş de olabilir. güvenli default: kullanıcının son mesajının üzerine binen, akışı yumuşakça ileri taşıyan kısa bir devam mesajı (3 adet). karşı tarafın eski mesajına direkt cevap değil, kullanıcının kendi mesajına ek/uzatma. sitem, randevu teklifi, ton dozu yükseltme yasak."
+        : "karşı tarafın son mesajına (target_message) yanıt üret.",
       tone_observed: parse.tone_observed,
       red_flags: parse.red_flags,
       context_summary: parse.context_summary_tr,
@@ -404,6 +439,7 @@ function buildUserPrompt(parse: ParseResult, tones: Tone[], mode: Mode): string 
     tonesList,
     "",
     "3 cevap üret, hepsi aynı arketipten ama yukarıdaki sıraya göre 3 farklı tonda.",
+    "asla kullanıcının kendi (sender=\"user\") mesajına cevap üretme. conversation_state=\"other_replied_last\" ise cevaplar karşı tarafın son mesajına (target_message) yanıt. conversation_state=\"user_sent_last\" ise kullanıcı son mesajı atmış demektir; cevaplar kullanıcının kendi mesajının üzerine binen yumuşak devam mesajları olur (sitem, randevu teklifi, ton yükseltme yasak — ton dozu sıkı kalır).",
     "observation alanı asistan sesi (lowercase, kısa, gözlem).",
     "schema:",
     `{
@@ -457,7 +493,7 @@ function fillL4Template(
   // L4 template'te "<user_voice></user_voice>" gibi boş yapılar kalmıyor.
   const trimmedVoice = (ctx.voiceSample ?? "").trim();
   const userVoiceBlock = trimmedVoice
-    ? `\n<user_voice>\n${trimmedVoice}\n</user_voice>\n`
+    ? `\n<user_voice>\naşağıdaki örnekler kullanıcının YAZIM TARZIDIR — kelime seçimi, cümle uzunluğu, noktalama, emoji kullanımı gibi yüzeysel stil ipuçları al. ama içerik/strateji/ton kararlarını arketip + seçilen ton belirler, bu örnekler değil. tarz hafif bir renklendirmedir, baskın değildir.\n\n${trimmedVoice}\n</user_voice>\n`
     : "";
 
   const trimmedExtra = (ctx.extraContext ?? "").trim();

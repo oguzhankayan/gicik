@@ -1,12 +1,13 @@
 import SwiftUI
 
-/// Result — observation hint + 3 reply card + tone switcher + actions footer.
-/// replies boşsa explicit failure state (boş scroll yerine retry CTA'lı kart).
+/// Refined-y2k sonuç ekranı — observation pull-quote (mor sol-bordür) +
+/// primary card (holographic 2pt highlight + ink CTA) + 2 alternatif.
 struct ResultView: View {
     @Bindable var vm: HomeViewModel
     let result: GenerationResult
 
     @State private var copiedIndex: Int? = nil
+    @State private var safeAreaTopInset: CGFloat = 59
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,19 +23,61 @@ struct ResultView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MARK: - Content
+    private var topBar: some View {
+        HStack {
+            Button { vm.backToHome() } label: {
+                Text("← yeni")
+                    .font(AppFont.mono(12))
+                    .tracking(0.10 * 12)
+                    .foregroundColor(AppColor.text60)
+                    .frame(height: 44)
+                    .padding(.horizontal, 4)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("yeni")
+
+            Spacer()
+            EfsoTag("\(result.mode.label.trLower) · \(toneLabel)", color: AppColor.text40)
+            Spacer()
+            Color.clear.frame(width: 44, height: 44)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, safeAreaTopInset)
+        .padding(.bottom, 4)
+        .task {
+            if let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first,
+               let inset = scene.windows.first?.safeAreaInsets.top, inset > 0 {
+                safeAreaTopInset = inset
+            }
+        }
+    }
 
     private var contentScroll: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 18) {
-                observationVerdict(result.observation)
-                    .padding(.top, 8)
+            VStack(spacing: 0) {
+                if !observationText.isEmpty {
+                    AssistantObservationCard(text: observationText, fontSize: 19)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 14)
+                }
+
+                Text("3 cevap · kaydır")
+                    .font(AppFont.mono(10))
+                    .tracking(0.16 * 10)
+                    .foregroundColor(AppColor.text40)
+                    .textCase(.uppercase)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 12)
 
                 VStack(spacing: 12) {
-                    ForEach(result.replies) { reply in
+                    ForEach(Array(result.replies.enumerated()), id: \.element.id) { idx, reply in
                         ReplyCard(
-                            toneAngle: replyLabel(reply),
+                            toneAngle: reply.toneLabel,
                             text: reply.text,
+                            isPrimary: idx == 0,
                             isCopied: copiedIndex == reply.index,
                             onCopy: { copy(reply) },
                             onThumbsUp: { sendFeedback(reply, positive: true) },
@@ -42,70 +85,20 @@ struct ResultView: View {
                         )
                     }
                 }
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 4)
-            .padding(.bottom, 24)
-        }
-    }
-
-    /// Em-dash yerine interpunct (·) — marka tonu minimal, AI imzası uzak dur.
-    private func replyLabel(_ reply: ReplyOption) -> String {
-        let idx = String(format: "%02d", reply.index + 1)
-        return "\(idx) · \(reply.toneLabel.trLower)"
-    }
-
-    /// Observation = efso'ın gözlemi. Eskiden italic info bar'dı (kimse
-    /// okumuyordu). Artık page-title treatment: büyük lowercase display, küçük
-    /// "gözlem" mono label üstünde. Markanın gerçek anı, footnote değil.
-    /// Boş gelirse hiç render edilmez.
-    @ViewBuilder
-    private func observationVerdict(_ text: String) -> some View {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines).trLower
-        if !trimmed.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("gözlem")
-                    .font(AppFont.mono(11))
-                    .tracking(0.04 * 11)
-                    .foregroundColor(AppColor.text40)
-                Text(trimmed)
-                    .font(AppFont.display(20, weight: .bold))
-                    .tracking(-0.02 * 20)
-                    .foregroundColor(.white)
-                    .lineSpacing(20 * 0.10)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
             }
         }
     }
 
-    // MARK: - TopBar
-
-    private var topBar: some View {
-        HStack {
-            Button { vm.backToHome() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(AppColor.text60)
-            }
-            .accessibilityLabel("geri")
-            Spacer()
-            Text(result.mode.label.trLower)
-                .font(AppFont.mono(11))
-                .tracking(0.04 * 11)
-                .foregroundColor(AppColor.text40)
-            Spacer()
-            Color.clear.frame(width: 18, height: 18)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 60)
-        .padding(.bottom, 8)
+    private var observationText: String {
+        result.observation.trimmingCharacters(in: .whitespacesAndNewlines).trLower
     }
 
-    // MARK: - Failure state
+    private var toneLabel: String {
+        vm.selectedTone?.label.trLower ?? "üç ton"
+    }
 
-    /// replies=[] olduğunda boş ScrollView yerine açık retry CTA.
-    /// observation alanı backend'in fail copy'sini taşır ("bağlantı sorunu...").
     private var failureState: some View {
         VStack(spacing: 18) {
             Spacer()
@@ -113,9 +106,8 @@ struct ResultView: View {
                 .font(.system(size: 28, weight: .light))
                 .foregroundColor(AppColor.text40)
             Text("üretim tutmadı.")
-                .font(AppFont.display(20, weight: .bold))
-                .tracking(-0.02 * 20)
-                .foregroundColor(.white)
+                .font(AppFont.displayItalic(24))
+                .foregroundColor(AppColor.ink)
             Text(result.observation.isEmpty
                  ? "bağlantı veya parse sorunu. tekrar dene."
                  : result.observation)
@@ -125,7 +117,7 @@ struct ResultView: View {
                 .padding(.horizontal, 32)
             Spacer()
             VStack(spacing: 10) {
-                PrimaryButton("tekrar dene") { vm.regenerate() }
+                HoloPrimaryButton(title: "tekrar dene") { vm.regenerate() }
                 Button("geri dön") { vm.backToHome() }
                     .font(AppFont.body(13))
                     .foregroundColor(AppColor.text40)
@@ -136,65 +128,89 @@ struct ResultView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Action footer (tone switcher + actions)
-
     private var actionFooter: some View {
-        VStack(spacing: 14) {
-            toneSwitcher
-            HStack(spacing: 10) {
-                SecondaryButton(title: "tekrarla") { vm.regenerate() }
-                PrimaryButton("baştan") { vm.backToHome() }
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.top, 12)
-        .padding(.bottom, 28)
-        .background(
-            // Footer'ı içerikten ayır — küçük üst stroke, fill yok.
-            VStack(spacing: 0) {
-                Rectangle()
-                    .fill(AppColor.text05)
-                    .frame(height: 1)
-                Spacer()
-            }
-        )
-    }
-
-    /// Sonuç ekranında ton değiştir → sadece seçim yapılır, üretim tetiklenmez.
-    /// Kullanıcı seçimi onaylamak için "tekrarla" butonuna basınca yeni tonla
-    /// regenerate olur. Önceki tap-anında-üret davranışı sürpriz costtu — yanlış
-    /// tona basınca kazara yeni LLM call (free tier'da kotaya geçer).
-    /// "üç farklı" pill default'a geri dönüş.
-    private var toneSwitcher: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        VStack(spacing: 12) {
             HStack(spacing: 8) {
-                Chip(
-                    label: "üç farklı",
-                    isSelected: vm.selectedTone == nil
-                ) {
-                    vm.selectedTone = nil
+                Text("beğendin mi?")
+                    .font(AppFont.mono(11))
+                    .tracking(0.12 * 11)
+                    .foregroundColor(AppColor.text40)
+                Spacer()
+                feedbackPill("👍", positive: true)
+                feedbackPill("👎", positive: false)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(AppColor.bg1)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(AppColor.text10, lineWidth: 1)
+                    )
+            )
+
+            HStack(spacing: 10) {
+                Button {
+                    vm.regenerate()
+                } label: {
+                    Text("tekrarla")
+                        .font(AppFont.body(14))
+                        .foregroundColor(AppColor.ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(AppColor.bg1)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(AppColor.text10, lineWidth: 1)
+                                )
+                        )
                 }
-                ForEach(Tone.allCases) { tone in
-                    Chip(
-                        label: tone.label.trLower,
-                        isSelected: vm.selectedTone == tone,
-                        emoji: tone.emoji
-                    ) {
-                        vm.selectedTone = tone
-                    }
+                Button {
+                    vm.backToHome()
+                } label: {
+                    Text("baştan")
+                        .font(AppFont.body(14, weight: .semibold))
+                        .foregroundColor(AppColor.bg0)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(AppColor.ink)
+                        )
                 }
             }
-            .padding(.vertical, 2)
         }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 24)
     }
 
-    // MARK: - Actions
+    private func feedbackPill(_ glyph: String, positive: Bool) -> some View {
+        Button {
+            guard let first = result.replies.first else { return }
+            sendFeedback(first, positive: positive)
+        } label: {
+            Text(glyph)
+                .font(AppFont.body(14))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(AppColor.bg2)
+                )
+        }
+        .buttonStyle(.plain)
+    }
 
     private func copy(_ reply: ReplyOption) {
         UIPasteboard.general.string = reply.text
         copiedIndex = reply.index
         Task {
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            try? await Task.sleep(for: .milliseconds(1500))
+            guard !Task.isCancelled else { return }
             if copiedIndex == reply.index { copiedIndex = nil }
         }
     }
@@ -207,7 +223,6 @@ struct ResultView: View {
             let selected_reply_index: Int?
             let feedback: String
         }
-
         struct FeedbackResp: Decodable { let ok: Bool }
 
         Task {

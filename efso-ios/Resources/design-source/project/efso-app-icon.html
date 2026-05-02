@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<title>efso · app icon</title>
+<meta name="viewport" content="width=1600, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: 'Geist', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel">
+  // shared tokens stub for icon file
+  window.EFSO_TOKENS = {
+    bg0: '#0E0A14', ink: '#F4EFE6', accent: '#C9A8FF', accentDeep: '#7B5BD9', pop: '#E8FF6B',
+    display: '"Fraunces", serif', body: '"Geist", sans-serif', mono: '"Geist Mono", monospace',
+  };
+</script>
+<script type="text/babel" src="app-icon.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+  function Note({ title, children, w = 380 }) {
+    return (
+      <div style={{
+        width: w, padding: '20px 22px',
+        background: '#fef4a8', borderRadius: 6,
+        boxShadow: '0 6px 20px rgba(0,0,0,0.10)',
+        fontFamily: 'Geist, sans-serif', color: '#5a4a2a', fontSize: 13, lineHeight: 1.55,
+      }}>
+        <div style={{
+          fontFamily: 'Geist Mono, monospace', fontSize: 10,
+          letterSpacing: '0.16em', textTransform: 'uppercase',
+          marginBottom: 10, opacity: 0.7,
+        }}>{title}</div>
+        {children}
+      </div>
+    );
+  }
+
+  function App() {
+    return (
+      <DesignCanvas initialZoom={0.55}>
+        <DCSection id="brief" title="00 · brief" subtitle="ne arıyoruz?">
+          <DCArtboard id="brief" label="brief" width={440} height={680}>
+            <Note w={440} title="app icon · ne arıyoruz?">
+              <div style={{ marginBottom: 10 }}>
+                <b>kategori:</b> Apple Lifestyle / Productivity. Apple Review için temiz, premium, keskin durmalı.
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <b>kimlik:</b> refined Y2K. mor ink + chrome lilac accent + editorial italic serif. ne 2003 nostaljisi, ne sıradan SaaS.
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <b>tanınma:</b> efso bir kelime, "e" tek başına bile yeter mi? cevap: bazen evet (monogram), bazen hayır (wordmark).
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <b>komşuları:</b> ana rakipler emoji-icon ya da Brandbook generator çıktısı. biz "kitap kapağı" gibi durmalıyız.
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <b>kontrast:</b> hem dark mode hem light mode ana ekranda iyi durmalı. küçük boy (40px notif badge) okunaklı kalmalı.
+              </div>
+              <div>
+                <b>aşağıda 6 yön:</b> wordmark · monogram + chrome ring · konuşma balonu · pull quote · chrome cipher · minimal e.
+              </div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="d1" title="01 · ef." subtitle="wordmark, editorial italic">
+          <DCArtboard id="ic1" label="01 · wordmark" width={1280} height={720}>
+            <IconRow
+              kind="direction 01"
+              name="ef."
+              Component={IconWordmark}
+              hero="lowercase italic 'ef' + chrome lilac nokta. Vogue-mektup hissi. dark bg, paper-warm ink. en ürün-doğru olan, çünkü kimlikle birebir konuşuyor."
+              blurb="kapak tipografisi gibi. tek harfe inmeyen tek yön — markanın 4 harfini de göz hatırlayacak. 40px'te bile 'ef' okunabiliyor; nokta accent rengi ile bütünleşiyor."
+            />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="d2" title="02 · monogram + chrome ring" subtitle="halka × harf">
+          <DCArtboard id="ic2" label="02 · monogram ring" width={1280} height={720}>
+            <IconRow
+              kind="direction 02"
+              name="e ⊙"
+              Component={IconMonogramRing}
+              hero="tek 'e' bir holographic halka içinde. splash ekranındaki konsantrik halka motifinin tek-frame versiyonu. en Y2K-DNA-yoğun seçenek."
+              blurb="splash'taki halka burada da var — tutarlı bir gloss. küçük boyda halka ince kalıyor; 40px'te ek doku görünmeyebilir, sadece 'e' kalır."
+            />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="d3" title="03 · konuşma balonu" subtitle="bağlam ipucu">
+          <DCArtboard id="ic3" label="03 · bubble" width={1280} height={720}>
+            <IconRow
+              kind="direction 03"
+              name="bubble"
+              Component={IconBubble}
+              hero="konuşma balonu + içinde küçük italic 'e'. ne yaptığını net söyleyen ikon — mesajlaşma. holographic stroke balonu çevreliyor."
+              blurb="kategoriyi ışıltısızca anlatır. ama balon çok 'messaging app' kalıbına yaklaşıyor — efso bir koç, mesajlaşma uygulaması değil. bu yön risk."
+            />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="d4" title="04 · pull quote" subtitle="light mode, editorial">
+          <DCArtboard id="ic4" label="04 · quote" width={1280} height={720}>
+            <IconRow
+              kind="direction 04"
+              name="&ldquo;efso"
+              Component={IconQuote}
+              hero="büyük italic tırnak işareti + altta 'efso' wordmark. paper-warm bg. tek light icon — ana ekranda dark grid'de bir yara izi gibi durur."
+              blurb="ürünün kalbi: pull quote. icon da bir alıntı. App Store'da sıra dışı görünür çünkü baskın renk paper, pop tek harfi mor."
+            />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="d5" title="05 · chrome cipher" subtitle="abstract glyph">
+          <DCArtboard id="ic5" label="05 · cipher" width={1280} height={720}>
+            <IconRow
+              kind="direction 05"
+              name="cipher"
+              Component={IconCipher}
+              hero="soyut chrome şerit — bir 'e' ipucu, bir akış ipucu. Apple Watch Activity / Threads izi. Y2K'nin chrome metalik mirası ama 2025 tonunda."
+              blurb="harfsiz tanınma sınavı. en zor yön — ama başarılırsa en güçlü. wordmark'tan tamamen ayrı bir ikon dili. uzun vadeli marka aleti."
+            />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="d6" title="06 · minimal e." subtitle="cal-ai-clean">
+          <DCArtboard id="ic6" label="06 · minimal" width={1280} height={720}>
+            <IconRow
+              kind="direction 06"
+              name="e."
+              Component={IconMinimal}
+              hero="lila-mor gradient bg + siyah italic 'e' + paper nokta. Cal AI / Linear / Things temizliği. en güvenli, en az risk."
+              blurb="App Store algoritmasının seveceği yön: yüksek kontrast, tek harf, doygun renk. ama 'refined Y2K' sözünü tutmuyor — 'modern startup' dili."
+            />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="rec" title="07 · öneri" subtitle="hangi yön?">
+          <DCArtboard id="rec" label="recommendation" width={1100} height={620}>
+            <Note w={1100} title="öneri sıralaması · senin için">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+                <div>
+                  <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 28, marginBottom: 6, letterSpacing: '-0.02em' }}>1. ef.</div>
+                  <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5BD9', marginBottom: 8 }}>en güçlü aday</div>
+                  <div style={{ lineHeight: 1.5 }}>
+                    marka tipografisini direkt kullanıyor. her ekranda göreceğin Fraunces italic'i homescreen'e taşıyor. nokta accent rengi — küçük ama unutulmaz.
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 28, marginBottom: 6, letterSpacing: '-0.02em' }}>2. e ⊙</div>
+                  <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5BD9', marginBottom: 8 }}>marka kalbi</div>
+                  <div style={{ lineHeight: 1.5 }}>
+                    splash → icon birebir tutarlılık. en "Y2K refined" hisseden. 40px'te kayıp riski var ama en duygusal seçenek.
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 28, marginBottom: 6, letterSpacing: '-0.02em' }}>3. &ldquo;efso</div>
+                  <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7B5BD9', marginBottom: 8 }}>cesur seçim</div>
+                  <div style={{ lineHeight: 1.5 }}>
+                    light mode icon = kategoride sıra dışı. App Store grid'inde gözünü çeker. ama brand pivot eden yön — onay riski.
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid rgba(0,0,0,0.1)', fontSize: 13, lineHeight: 1.6 }}>
+                <b>benim önerim:</b> <b>1 (ef.)</b> production'a gönder. <b>2 (e ⊙)</b>'yi alternatif tema olarak App Store'da bırak — iOS 18 alternative app icon özelliği için ideal. <b>3 (&ldquo;efso)</b>'yu ise marketing materyallerinde (web hero, App Store screenshot) kullan.<br/><br/>
+                hangisinde sabitleyelim? 1024×1024 PNG export edip vereyim mi, yoksa Figma'da tweak edip dönelim mi?
+              </div>
+            </Note>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

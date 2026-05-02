@@ -1,114 +1,141 @@
 import SwiftUI
 
-/// Demographic — 3 grup chip seçimi (cinsiyet, yaş, niyet).
-/// design-source/parts/onboarding.jsx → DemographicScreen
+/// Refined-y2k demographic — italic "seni kim tanıyalım?" + yaş 4-grid + cinsiyet liste.
 struct DemographicView: View {
     @Bindable var vm: OnboardingViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            TopBar(active: 4, total: 12, onBack: { vm.goBack() })
+        VStack(spacing: 0) {
+            OnbHeader(step: 3, total: 5, onBack: { vm.goBack() })
 
-            VStack(alignment: .leading, spacing: 0) {
-                Text("01 / KISA TANIŞMA")
-                    .font(AppFont.mono(11))
-                    .tracking(0.04 * 11)
-                    .foregroundColor(AppColor.lime)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("seni\ntanıyalım.")
+                        .font(AppFont.displayItalic(38, weight: .regular))
+                        .tracking(-0.03 * 38)
+                        .foregroundColor(AppColor.ink)
+                        .lineSpacing(38 * 0.0)
+                    Text("üç hızlı seçim. tarzını buradan kalibre ediyoruz.")
+                        .font(AppFont.body(14))
+                        .foregroundColor(AppColor.text60)
+                        .lineSpacing(14 * 0.4)
+                        .padding(.top, 10)
 
-                Text("önce biraz\ntanışalım")
-                    .font(AppFont.display(30, weight: .bold))
-                    .tracking(-0.02 * 30)
-                    .foregroundColor(.white)
-                    .padding(.top, 12)
-
-                section(title: "cinsiyet") {
-                    HStack(spacing: 8) {
-                        ForEach(Gender.allCases, id: \.self) { g in
-                            Chip(label: g.label,
-                                 isSelected: vm.demographic.gender == g,
-                                 size: .large) {
-                                vm.demographic.gender = g
+                    VStack(alignment: .leading, spacing: 12) {
+                        EfsoTag("yaş", color: AppColor.text40)
+                        HStack(spacing: 8) {
+                            ForEach(AgeBracket.allCases, id: \.self) { a in
+                                ageCell(a)
                             }
                         }
                     }
-                }
-                .padding(.top, 36)
+                    .padding(.top, 32)
 
-                section(title: "yaş") {
-                    HStack(spacing: 8) {
-                        ForEach(AgeBracket.allCases, id: \.self) { a in
-                            Chip(label: a.label,
-                                 isSelected: vm.demographic.ageBracket == a,
-                                 size: .large) {
-                                vm.demographic.ageBracket = a
+                    VStack(alignment: .leading, spacing: 12) {
+                        EfsoTag("cinsiyet", color: AppColor.text40)
+                        VStack(spacing: 8) {
+                            ForEach(Gender.allCases, id: \.self) { g in
+                                genderRow(g)
                             }
                         }
                     }
-                }
-                .padding(.top, 28)
+                    .padding(.top, 24)
 
-                section(title: "ne arıyorsun") {
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10),
-                                        GridItem(.flexible(), spacing: 10)],
-                              spacing: 10) {
-                        ForEach(Intent.allCases, id: \.self) { intent in
-                            intentCard(intent)
+                    VStack(alignment: .leading, spacing: 12) {
+                        EfsoTag("ne arıyorsun", color: AppColor.text40)
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10),
+                                            GridItem(.flexible(), spacing: 10)],
+                                  spacing: 10) {
+                            ForEach(Intent.allCases, id: \.self) { intent in
+                                intentCard(intent)
+                            }
                         }
                     }
+                    .padding(.top, 24)
                 }
-                .padding(.top, 28)
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 8)
 
-            Spacer()
-
-            PrimaryButton("devam", isEnabled: vm.demographic.isComplete) {
+            HoloPrimaryButton(title: "devam", isEnabled: vm.demographic.isComplete) {
                 vm.advance()
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 32)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 28)
         }
     }
 
-    @ViewBuilder
-    private func section<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(AppFont.body(14))
-                .foregroundColor(AppColor.text60)
-            content()
+    private func ageCell(_ a: AgeBracket) -> some View {
+        let on = vm.demographic.ageBracket == a
+        return Button { vm.demographic.ageBracket = a } label: {
+            Text(a.label)
+                .font(AppFont.body(14, weight: on ? .semibold : .medium))
+                .foregroundColor(on ? AppColor.bg0 : AppColor.ink)
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(on ? AppColor.ink : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(on ? Color.clear : AppColor.text20, lineWidth: 1)
+                )
         }
+        .accessibilityValue(on ? "seçili" : "")
+        .sensoryFeedback(.selection, trigger: vm.demographic.ageBracket)
+    }
+
+    private func genderRow(_ g: Gender) -> some View {
+        let on = vm.demographic.gender == g
+        return Button { vm.demographic.gender = g } label: {
+            HStack {
+                Text(g.label.trLower)
+                    .font(AppFont.body(15))
+                    .foregroundColor(AppColor.ink)
+                Spacer()
+                if on {
+                    Text("✓")
+                        .font(AppFont.mono(11))
+                        .foregroundColor(AppColor.accent)
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(on ? AppColor.bg2 : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(on ? AppColor.text20 : AppColor.text10, lineWidth: 1)
+            )
+        }
+        .accessibilityValue(on ? "seçili" : "")
     }
 
     private func intentCard(_ intent: Intent) -> some View {
-        Button {
-            vm.demographic.intent = intent
-        } label: {
+        let on = vm.demographic.intent == intent
+        return Button { vm.demographic.intent = intent } label: {
             HStack(spacing: 12) {
-                Text(intent.emoji)
-                    .font(.system(size: 22))
-                Text(intent.label)
-                    .font(AppFont.body(16))
-                    .foregroundColor(.white)
+                Text(intent.emoji).font(.system(size: 18))
+                Text(intent.label.trLower)
+                    .font(AppFont.body(14))
+                    .foregroundColor(AppColor.ink)
                 Spacer()
             }
-            .padding(.horizontal, 16)
-            .frame(height: 80)
+            .padding(.horizontal, 14)
+            .frame(height: 64)
             .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(vm.demographic.intent == intent ? AppColor.bgGlass : AppColor.bg1.opacity(0.55))
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(
-                            vm.demographic.intent == intent
-                                ? AnyShapeStyle(AppColor.holographic)
-                                : AnyShapeStyle(AppColor.text08),
-                            lineWidth: 1
-                        )
-                }
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(on ? AppColor.bg2 : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(on ? AppColor.accent : AppColor.text10, lineWidth: 1)
             )
         }
+        .accessibilityValue(on ? "seçili" : "")
         .sensoryFeedback(.selection, trigger: vm.demographic.intent)
     }
 }

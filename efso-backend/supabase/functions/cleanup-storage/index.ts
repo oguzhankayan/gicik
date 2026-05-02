@@ -56,5 +56,34 @@ Deno.serve(async (req: Request) => {
       .in("id", ids);
   }
 
-  return jsonResponse({ ok: true, deleted, failed, scanned: paths.length });
+  // ─── Step 2: 30-day conversation data cleanup ───
+  // CLAUDE.md mandate: conversations 30 gün tutulur. Row'u silmiyoruz (history
+  // metadata kalır), parse_result ve generation_result null'lanır.
+  const cutoff30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: oldConvs, error: oldConvErr } = await client
+    .from("conversations")
+    .select("id")
+    .lt("created_at", cutoff30d)
+    .or("parse_result.neq.null,generation_result.neq.null");
+
+  let conversationsCleaned = 0;
+  if (oldConvErr) {
+    console.error("30d conversation select failed", oldConvErr.message);
+  } else if (oldConvs && oldConvs.length > 0) {
+    const ids = oldConvs.map((r) => r.id);
+    const { error: updateErr } = await client
+      .from("conversations")
+      .update({ parse_result: null, generation_result: null })
+      .in("id", ids);
+
+    if (updateErr) {
+      console.error("30d conversation cleanup update failed", updateErr.message);
+    } else {
+      conversationsCleaned = ids.length;
+      console.log(`30d cleanup: nullified parse/generation data for ${conversationsCleaned} conversations`);
+    }
+  }
+
+  return jsonResponse({ ok: true, deleted, failed, scanned: paths.length, conversations_cleaned: conversationsCleaned });
 });

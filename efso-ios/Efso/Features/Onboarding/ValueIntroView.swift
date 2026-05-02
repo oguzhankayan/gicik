@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// Value carousel — splash sonrası, kullanıcı henüz hiçbir şey vermeden ne yaptığımızı gösterir.
-/// 3 sayfa, swipe + bottom CTA. son sayfada CTA "kalibre et" olur, kalibrasyona düşer.
-/// Visual'ler 1536×1024 PNG asset (slide1/slide2/slide3) — Nano Banana Pro üretim.
+/// 2-page value carousel — full-bleed hero background + alt CTA bloğu.
+/// Hero görseller (input/output) zaten orta-alt ağırlıklı kompoze; üst metin alanı temiz kalır.
 struct ValueIntroView: View {
     let onContinue: () -> Void
 
@@ -10,106 +9,136 @@ struct ValueIntroView: View {
 
     private let pages: [Page] = [
         Page(
-            kicker: "ne yapar",
-            headline: "ekran görüntüsü\nat. cevap çıksın.",
-            body: "dm, eski, patron, eşleşme — fark etmez. konuşmayı oku, 3 cevap üret. senin tarzında.",
-            asset: "slide1"
+            heroImage: "hero1",
+            title: "konuşmayı yükle,",
+            titleAccent: "cevabı bize bırak.",
+            body: "dm, bio, eşleşme ya da eski mesaj. ne varsa ekle.",
+            cta: "devam"
         ),
         Page(
-            kicker: "neden farklı",
-            headline: "klişe değil.\nseni dinler.",
-            body: "kalibrasyonla tarzını öğrenir. flörtöz, esprili, direkt — sen seçersin, efso o ses olur.",
-            asset: "slide2"
+            heroImage: "hero2",
+            title: "cevaplar anında hazır.",
+            titleAccent: "senin tarzında.",
+            body: "senin tonuna uygun üç cevap.",
+            cta: "başla"
         ),
-        Page(
-            kicker: "nasıl çalışır",
-            headline: "iki dakikada\ntanışalım.",
-            body: "9 soru. tarzını belirleyelim. sonrası kolay.",
-            asset: "slide3"
-        )
     ]
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                Button("atla") { onContinue() }
-                    .font(AppFont.body(13))
-                    .foregroundColor(AppColor.text40)
-                    .padding(.trailing, 20)
-            }
-            .padding(.top, 60)
-
+        ZStack {
             TabView(selection: $page) {
                 ForEach(pages.indices, id: \.self) { idx in
-                    pageView(pages[idx])
+                    heroImage(pages[idx])
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipped()
                         .tag(idx)
+                        .ignoresSafeArea()
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(.easeInOut(duration: 0.3), value: page)
+            .ignoresSafeArea()
 
-            ProgressDots(total: pages.count, active: page)
-                .padding(.bottom, 24)
+            // okunurluk için iki uçtan yumuşak scrim — gradientler ekran kenarlarından başlar
+            ZStack {
+                VStack { Spacer(minLength: 0) }
 
-            PrimaryButton(page == pages.count - 1 ? "kalibre et" : "devam") {
-                if page < pages.count - 1 {
-                    withAnimation { page += 1 }
-                } else {
-                    onContinue()
-                }
+                LinearGradient(
+                    colors: [AppColor.bg0.opacity(0.88), AppColor.bg0.opacity(0.35), .clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 260)
+                .frame(maxHeight: .infinity, alignment: .top)
+
+                LinearGradient(
+                    colors: [.clear, AppColor.bg0.opacity(0.55), AppColor.bg0.opacity(0.97)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 300)
+                .frame(maxHeight: .infinity, alignment: .bottom)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 32)
+            .allowsHitTesting(false)
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                copyBlock
+                    .padding(.top, AppSpacing.xxl + AppSpacing.md)
+
+                Spacer(minLength: 0)
+
+                VStack(spacing: AppSpacing.lg) {
+                    progressDots
+                    HoloPrimaryButton(title: pages[page].cta) {
+                        if page < pages.count - 1 {
+                            withAnimation(AppAnimation.standard) { page += 1 }
+                        } else {
+                            onContinue()
+                        }
+                    }
+                    .padding(.horizontal, AppSpacing.lg)
+                }
+                .padding(.bottom, AppSpacing.xl)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    @ViewBuilder
-    private func pageView(_ p: Page) -> some View {
-        VStack(spacing: 28) {
-            Spacer(minLength: 12)
-
-            Image(p.asset)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: 320, maxHeight: 240)
-                .padding(.horizontal, 24)
-
-            Spacer(minLength: 12)
-
-            VStack(alignment: .leading, spacing: 14) {
-                Text(p.kicker.trUpper)
-                    .font(AppFont.mono(11))
-                    .tracking(0.06 * 11)
-                    .foregroundColor(AppColor.lime)
-                Text(p.headline)
-                    .font(AppFont.display(30, weight: .bold))
-                    .tracking(-0.02 * 30)
-                    .foregroundColor(.white)
-                    .lineSpacing(30 * 0.04)
-                Text(p.body)
-                    .font(AppFont.body(15))
-                    .foregroundColor(AppColor.text60)
-                    .lineSpacing(15 * 0.4)
-                    .fixedSize(horizontal: false, vertical: true)
+    private var copyBlock: some View {
+        VStack(spacing: AppSpacing.sm + 2) {
+            VStack(spacing: 0) {
+                Text(pages[page].title)
+                    .font(AppFont.displayItalic(38, weight: .regular))
+                    .tracking(-0.03 * 38)
+                    .foregroundColor(AppColor.ink)
+                Text(pages[page].titleAccent)
+                    .font(AppFont.displayItalic(38, weight: .regular))
+                    .tracking(-0.03 * 38)
+                    .foregroundColor(AppColor.accent)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 28)
-            .padding(.bottom, 12)
+            .multilineTextAlignment(.center)
+            .minimumScaleFactor(0.75)
+
+            Text(pages[page].body)
+                .font(AppFont.body(14))
+                .foregroundColor(AppColor.text60)
+                .lineSpacing(14 * 0.4)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, AppSpacing.lg)
         }
+        .id(page)
+        .transition(.opacity)
+        .animation(.easeInOut(duration: 0.25), value: page)
+    }
+
+    private var progressDots: some View {
+        HStack(spacing: 6) {
+            ForEach(pages.indices, id: \.self) { i in
+                Capsule()
+                    .fill(i == page ? AppColor.ink : AppColor.bg2)
+                    .frame(width: i == page ? 24 : 6, height: 6)
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: page)
+    }
+
+    private func heroImage(_ p: Page) -> some View {
+        Image(p.heroImage)
+            .resizable()
+            .scaledToFill()
     }
 
     private struct Page {
-        let kicker: String
-        let headline: String
+        let heroImage: String
+        let title: String
+        let titleAccent: String
         let body: String
-        let asset: String
+        let cta: String
     }
 }
 
 #Preview {
     ValueIntroView(onContinue: {})
-        .background(CosmicBackground())
         .preferredColorScheme(.dark)
 }

@@ -54,6 +54,7 @@ struct EfsoApp: App {
         }
     }
 
+    @MainActor
     private func bootstrapAnalytics() {
         AnalyticsService.shared.bootstrap()
     }

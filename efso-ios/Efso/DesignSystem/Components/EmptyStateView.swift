@@ -30,6 +30,7 @@ struct EmptyStateView: View {
             Image(systemName: icon)
                 .font(.system(size: 32, weight: .light))
                 .foregroundColor(tone.color)
+                .accessibilityHidden(true)
             Text(title)
                 .font(AppFont.display(20, weight: .bold))
                 .tracking(-0.02 * 20)

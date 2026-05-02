@@ -121,7 +121,7 @@ final class APIClient {
         body: Encodable,
     ) -> AsyncThrowingStream<SSEEvent, Error> {
         AsyncThrowingStream { continuation in
-            Task {
+            let innerTask = Task {
                 do {
                     let token = try await accessToken()
                     let url = Configuration.supabaseURL.appendingPathComponent("functions/v1/\(endpoint.rawValue)")
@@ -154,7 +154,7 @@ final class APIClient {
                     func resetWatchdog() {
                         watchdog?.cancel()
                         watchdog = Task {
-                            try? await Task.sleep(nanoseconds: watchdogTimeout)
+                            try? await Task.sleep(for: .seconds(30))
                             if !Task.isCancelled {
                                 continuation.finish(throwing: APIError.unknown("üretim zaman aşımı"))
                             }
@@ -190,6 +190,7 @@ final class APIClient {
                     continuation.finish(throwing: error)
                 }
             }
+            continuation.onTermination = { _ in innerTask.cancel() }
         }
     }
 
@@ -198,10 +199,10 @@ final class APIClient {
     // ──────────────────────────────────────────────────────────
 
     private func accessToken() async throws -> String {
-        // Fall back to anon key if no user session (lets us call edge functions
-        // that explicitly accept anon auth — none of ours, but safe).
-        let session = try? await supabase.auth.session
-        return session?.accessToken ?? Configuration.supabaseAnonKey
+        // Anon key fallback kaldırıldı — Bearer token olarak kullanılmamalı.
+        // Session yoksa çağrı yapılamaz; bootstrap sırasında anon user oluşur.
+        let session = try await supabase.auth.session
+        return session.accessToken
     }
 
     private func mapError(data: Data, status: Int) throws -> APIError {

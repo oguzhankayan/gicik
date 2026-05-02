@@ -94,7 +94,7 @@ struct SpotlightOverlay: View {
             )
         }
         .fill(
-            Color.black.opacity(visible ? 0.92 : 0.0),
+            AppColor.bg0.opacity(visible ? 0.92 : 0.0),
             style: FillStyle(eoFill: true)
         )
         .contentShape(Rectangle())   // tap anywhere

@@ -1,20 +1,14 @@
 import SwiftUI
 import RevenueCat
 
-/// Paywall — Rizz playbook (2026-04-30): üstte feature carousel + tek "ücretsiz başlat"
-/// CTA. Fiyat ana ekranda görünmez. CTA tap → bottom sheet ile plan + price + ödeme.
-/// `lockReason` opsiyonel. nil = onboarding sonu hard paywall.
+/// Paywall — Rizz playbook: full-bleed bg + kısa value prop + tek CTA → sheet.
+/// Fiyat, disclosure, dismiss, footer link'ler hepsi sheet içinde.
 struct PaywallView: View {
     let onContinue: () -> Void
     let onDismiss: (() -> Void)?
     var lockReason: EntitlementGate.LockReason?
 
-    @State private var subs = SubscriptionManager.shared
-    @State private var carouselIndex = 0
     @State private var showPlanSheet = false
-    @State private var showTerms = false
-    @State private var restoreError: String?
-    @State private var showPrivacy = false
 
     init(
         onContinue: @escaping () -> Void,
@@ -27,153 +21,220 @@ struct PaywallView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            CosmicBackground()
-            VStack(spacing: 0) {
-                if onDismiss != nil { dismissBar }
+        VStack(spacing: 0) {
+            if onDismiss != nil { dismissBar } else { Spacer().frame(height: 0) }
 
-                carousel
-                    .frame(height: 460)
-                    .padding(.top, onDismiss == nil ? 36 : 0)
+            Spacer(minLength: 0)
 
-                Spacer(minLength: 0)
-
-                bottomBlock
+            VStack(spacing: AppSpacing.lg) {
+                titleBlock
+                featureList
             }
+            .padding(.horizontal, AppSpacing.lg)
+
+            HoloPrimaryButton(title: "ücretsiz dene") {
+                showPlanSheet = true
+            }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.lg)
+            .padding(.bottom, AppSpacing.xl)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .task { await runCarouselTimer() }
+        .background(
+            ZStack {
+                backgroundImage
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+
+                LinearGradient(
+                    colors: [.clear, AppColor.bg0.opacity(0.55), AppColor.bg0.opacity(0.95)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 420)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+            }
+            .ignoresSafeArea()
+        )
         .sheet(isPresented: $showPlanSheet) {
             PlanSelectorSheet(
                 onPurchased: {
                     showPlanSheet = false
                     onContinue()
-                }
+                },
+                onDecline: {
+                    showPlanSheet = false
+                    onContinue()
+                },
+                onCancel: { showPlanSheet = false },
+                showDecline: onDismiss == nil
             )
-            .presentationDetents([.fraction(0.55)])
+            .presentationDetents([.fraction(0.5)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(28)
-            .presentationBackground(AppColor.bg1)
+            .presentationBackground(AppColor.bg0)
         }
     }
-
-    // MARK: - Top dismiss
 
     private var dismissBar: some View {
         HStack {
             Spacer()
             Button { onDismiss?() } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(AppColor.text40)
-                    .padding(10)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .accessibilityLabel("kapat")
         }
-        .padding(.top, 50)
-        .padding(.trailing, 12)
+        .padding(.top, AppSpacing.sm)
+        .padding(.trailing, AppSpacing.sm)
     }
 
-    // MARK: - Carousel
-
-    private struct CarouselSlide: Identifiable {
-        let id = UUID()
-        let asset: String
-        let headline: String
-        let body: String
-    }
-
-    private let slides: [CarouselSlide] = [
-        .init(
-            asset: "paywall1",
-            headline: "sınırsız\ncevap üret",
-            body: "ekran görüntüsü at, 3 cevap çıksın. günlük limit yok."
-        ),
-        .init(
-            asset: "paywall2",
-            headline: "5 ton,\ntek tıkla",
-            body: "flörtöz, esprili, direkt, sıcak, gizemli. her senaryoya uyan ses."
-        ),
-        .init(
-            asset: "paywall3",
-            headline: "tarzın saklı,\nsenin",
-            body: "kalibrasyon ve örnek metnin sadece sende. ekranlar 24 saatte siliniyor."
-        )
-    ]
-
-    private var carousel: some View {
-        VStack(spacing: 14) {
-            TabView(selection: $carouselIndex) {
-                ForEach(slides.indices, id: \.self) { idx in
-                    slideView(slides[idx])
-                        .tag(idx)
-                        .padding(.horizontal, 24)
-                }
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("efso'yu ücretsiz")
+                    .foregroundColor(AppColor.ink)
+                Text("denemeni istiyoruz.")
+                    .foregroundColor(AppColor.accent)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(.easeInOut(duration: 0.35), value: carouselIndex)
+            .font(AppFont.displayItalic(34, weight: .regular))
+            .tracking(-0.025 * 34)
+            .lineSpacing(34 * -0.04)
+            .minimumScaleFactor(0.7)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            ProgressDots(total: slides.count, active: carouselIndex)
-        }
-    }
-
-    @ViewBuilder
-    private func slideView(_ s: CarouselSlide) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Image(s.asset)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity, maxHeight: 280)
-
-            if let reason = lockReason, s.asset == "paywall1" {
-                Text(reason.headline.trLower)
-                    .font(AppFont.display(28, weight: .bold))
-                    .tracking(-0.02 * 28)
-                    .foregroundColor(.white)
-            } else {
-                Text(s.headline)
-                    .font(AppFont.display(28, weight: .bold))
-                    .tracking(-0.02 * 28)
-                    .foregroundColor(.white)
-                    .lineSpacing(28 * 0.05)
-            }
-
-            Text(s.body)
+            Text(subhead)
                 .font(AppFont.body(14))
                 .foregroundColor(AppColor.text60)
                 .lineSpacing(14 * 0.4)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private var subhead: String {
+        if let reason = lockReason {
+            return reason.headline
+        }
+        return "3 gün ücretsiz. ne diyeceğini bulmana yardım etsin, sonra karar ver."
+    }
+
+    private var featureList: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md - AppSpacing.xs) {
+            ForEach(features, id: \.self) { f in
+                HStack(alignment: .center, spacing: AppSpacing.md - 2) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(AppColor.accent)
+                    Text(f)
+                        .font(AppFont.body(14.5))
+                        .foregroundColor(AppColor.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Bottom CTA
+    private let features: [String] = [
+        "sınırsız cevap, her mod, her ton",
+        "30 gün konuşma arşivi",
+        "kalibrasyonu istediğin kadar yenile",
+    ]
 
-    private var bottomBlock: some View {
-        VStack(spacing: 10) {
-            PrimaryButton("3 gün ücretsiz dene") {
-                showPlanSheet = true
+    private var backgroundImage: some View {
+        Image("paywall-bg")
+            .resizable()
+            .scaledToFill()
+    }
+}
+
+// MARK: - Plan selector sheet (fiyat + disclosure + footer hepsi burada)
+
+struct PlanSelectorSheet: View {
+    let onPurchased: () -> Void
+    let onDecline: () -> Void
+    let onCancel: () -> Void
+    let showDecline: Bool
+
+    @State private var subs = SubscriptionManager.shared
+    @State private var purchasing = false
+    @State private var error: String?
+    @State private var showTerms = false
+    @State private var showPrivacy = false
+    @State private var restoreError: String?
+    @State private var restoreSuccess = false
+
+    init(
+        onPurchased: @escaping () -> Void,
+        onDecline: @escaping () -> Void = {},
+        onCancel: @escaping () -> Void,
+        showDecline: Bool = true
+    ) {
+        self.onPurchased = onPurchased
+        self.onDecline = onDecline
+        self.onCancel = onCancel
+        self.showDecline = showDecline
+    }
+
+    var body: some View {
+        VStack(spacing: AppSpacing.md) {
+            Text("planını seç")
+                .font(AppFont.displayItalic(26))
+                .tracking(-0.02 * 26)
+                .foregroundColor(AppColor.ink)
+                .padding(.top, AppSpacing.md)
+
+            planCard
+
+            VStack(spacing: AppSpacing.sm) {
+                HoloPrimaryButton(
+                    title: purchasing ? "..." : "ücretsiz başlat",
+                    isEnabled: !purchasing
+                ) {
+                    Task { await runPurchase() }
+                }
+
+                if showDecline {
+                    Button {
+                        onDecline()
+                    } label: {
+                        Text("şimdi değil")
+                            .font(AppFont.body(13))
+                            .foregroundColor(AppColor.text40)
+                            .underline(true, color: AppColor.text20)
+                            .frame(minHeight: 44)
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if let error {
+                    Text(error)
+                        .font(AppFont.body(11))
+                        .foregroundColor(AppColor.danger)
+                        .multilineTextAlignment(.center)
+                }
             }
 
-            Button("ücretsiz devam et") {
-                onContinue()
-            }
-            .font(AppFont.body(14))
-            .foregroundColor(AppColor.text40)
-            .padding(.top, 4)
+            Text("3 gün ücretsiz. sonra haftalık \(weeklyPriceText) otomatik yenilenir. ayarlar, apple id, abonelikler'den iptal.")
+                .font(AppFont.body(10))
+                .foregroundColor(AppColor.text40)
+                .multilineTextAlignment(.center)
+                .lineSpacing(10 * 0.35)
+                .padding(.horizontal, AppSpacing.xs)
 
-            HStack(spacing: 18) {
-                Button("geri yükle") { Task { await runRestore() } }
-                Text("·").foregroundColor(AppColor.text20)
-                Button("şartlar") { showTerms = true }
-                Text("·").foregroundColor(AppColor.text20)
-                Button("gizlilik") { showPrivacy = true }
-            }
-            .font(AppFont.body(11))
-            .foregroundColor(AppColor.text40)
-            .padding(.top, 8)
+            Spacer(minLength: 0)
+
+            footerRow
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 32)
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.bottom, AppSpacing.xs)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sheet(isPresented: $showTerms) {
             LegalSheet(kind: .terms) { showTerms = false }
                 .presentationBackground(AppColor.bg0)
@@ -187,155 +248,92 @@ struct PaywallView: View {
         } message: {
             Text(restoreError ?? "")
         }
-    }
-
-    private func runRestore() async {
-        let ok = await subs.restore()
-        if ok {
-            onContinue()
-        } else {
-            // Sessiz fail user'ı şüpheye düşürüyordu ("ödedim ama olmadı?").
-            // Açık alert: aktif satın alma yok demek.
-            restoreError = "aktif aboneliğin görünmüyor. mağazadan satın aldığından emin misin?"
+        .alert("aktif abonelik bulundu", isPresented: $restoreSuccess) {
+            Button("devam", role: .cancel) {
+                restoreSuccess = false
+                onPurchased()
+            }
+        } message: {
+            Text("premium erişimin geri yüklendi.")
         }
-    }
-
-    /// Carousel auto-advance — `.task` ile bağlandığı için view disappear'da
-    /// SwiftUI cancellation otomatik propagate olur. Önceden iç içe Task
-    /// spawn edip handle'ı kaybediyordu (paywall kapansa da loop çalışmaya
-    /// devam ediyordu).
-    private func runCarouselTimer() async {
-        while !Task.isCancelled {
-            do {
-                try await Task.sleep(for: .seconds(6))
-            } catch {
-                return // cancellation
-            }
-            withAnimation(.easeInOut(duration: 0.35)) {
-                carouselIndex = (carouselIndex + 1) % slides.count
-            }
-        }
-    }
-}
-
-// MARK: - Plan selector sheet
-
-/// Rizz-style alttan açılan plan sheet'i. Trial header + tek tier kart + CTA.
-struct PlanSelectorSheet: View {
-    let onPurchased: () -> Void
-
-    @State private var subs = SubscriptionManager.shared
-    @State private var purchasing = false
-    @State private var error: String?
-
-    var body: some View {
-        VStack(spacing: 18) {
-            VStack(spacing: 6) {
-                Text("planını seç")
-                    .font(AppFont.display(22, weight: .bold))
-                    .tracking(-0.02 * 22)
-                    .foregroundColor(.white)
-                Text("3 gün ücretsiz, sonra istersen devam et.")
-                    .font(AppFont.body(13))
-                    .foregroundColor(AppColor.text60)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.top, 24)
-
-            planCard
-
-            VStack(spacing: 10) {
-                PrimaryButton(
-                    purchasing ? "..." : "ücretsiz başlat",
-                    isEnabled: !purchasing
-                ) {
-                    Task { await runPurchase() }
-                }
-
-                if let error {
-                    Text(error)
-                        .font(AppFont.body(11))
-                        .foregroundColor(AppColor.danger)
-                        .multilineTextAlignment(.center)
-                }
-
-                Text("3 gün sonra haftalık \(weeklyPriceText), iptal etmezsen yenilenir. ayarlardan istediğin an iptal.")
-                    .font(AppFont.body(10))
-                    .foregroundColor(AppColor.text40)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(10 * 0.4)
-                    .padding(.horizontal, 4)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var planCard: some View {
-        VStack(spacing: 0) {
-            // Trial badge — kart üstüne yapışık
-            HStack {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 11))
-                    .foregroundColor(AppColor.bg0)
-                Text("3 GÜN ÜCRETSİZ")
-                    .font(AppFont.mono(10))
-                    .tracking(0.06 * 10)
-                    .foregroundColor(AppColor.bg0)
-                Spacer()
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text("haftalık")
+                    .font(AppFont.body(16, weight: .semibold))
+                    .foregroundColor(AppColor.ink)
+                Text("sınırsız cevap, tüm tonlar")
+                    .font(AppFont.body(12))
+                    .foregroundColor(AppColor.text60)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 7)
-            .background(AppColor.lime)
-
-            // Plan body
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("haftalık")
-                        .font(AppFont.body(16, weight: .bold))
-                        .foregroundColor(.white)
-                    Text("sınırsız cevap, tüm tonlar")
-                        .font(AppFont.body(12))
-                        .foregroundColor(AppColor.text60)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(weeklyPriceText)
-                        .font(AppFont.body(16, weight: .bold))
-                        .foregroundColor(.white)
-                    if let perDay = perDayText {
-                        Text(perDay)
-                            .font(AppFont.body(11))
-                            .foregroundColor(AppColor.text40)
-                    }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(weeklyPriceText)
+                    .font(AppFont.body(16, weight: .semibold))
+                    .foregroundColor(AppColor.ink)
+                if let perDay = perDayText {
+                    Text(perDay)
+                        .font(AppFont.body(11))
+                        .foregroundColor(AppColor.text40)
                 }
             }
-            .padding(14)
         }
-        .background(AppColor.bg2.opacity(0.7))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(AppColor.holographic.opacity(0.6), lineWidth: 1.5)
+        .padding(AppSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(AppColor.bg2.opacity(0.6))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(AppColor.text10, lineWidth: 1)
+        )
+    }
+
+    private var footerRow: some View {
+        HStack(spacing: 0) {
+            footerLink("restore") { Task { await runRestore() } }
+            footerDot
+            footerLink("şartlar") { showTerms = true }
+            footerDot
+            footerLink("gizlilik") { showPrivacy = true }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func footerLink(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title.trUpper)
+                .font(AppFont.mono(10))
+                .tracking(0.14 * 10)
+                .foregroundColor(AppColor.text40)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 6)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var footerDot: some View {
+        Text("·")
+            .font(AppFont.mono(10))
+            .foregroundColor(AppColor.text20)
     }
 
     private var weeklyPriceText: String {
         subs.weeklyPackage?.storeProduct.localizedPriceString ?? "₺49 / hafta"
     }
 
-    /// Günlük ekvivalent — "₺7 / gün" gibi UX için.
     private var perDayText: String? {
         guard let pkg = subs.weeklyPackage else { return "günlük ~₺7" }
         let price = pkg.storeProduct.price as Decimal
         let perDay = NSDecimalNumber(decimal: price / 7).doubleValue
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.locale = pkg.storeProduct.priceFormatter?.locale ?? Locale(identifier: "tr_TR")
         formatter.maximumFractionDigits = 1
+        formatter.locale = pkg.storeProduct.priceFormatter?.locale ?? Locale(identifier: "tr_TR")
         let str = formatter.string(from: NSNumber(value: perDay)) ?? ""
         return str.isEmpty ? nil : "günlük \(str)"
     }
@@ -355,6 +353,15 @@ struct PlanSelectorSheet: View {
             error = "ödeme tamamlanamadı veya iptal edildi."
         }
     }
+
+    private func runRestore() async {
+        let ok = await subs.restore()
+        if ok {
+            restoreSuccess = true
+        } else {
+            restoreError = "aktif aboneliğin görünmüyor. mağazadan satın aldığından emin misin?"
+        }
+    }
 }
 
 #Preview("hard paywall") {
@@ -371,10 +378,4 @@ struct PlanSelectorSheet: View {
     )
     .background(AppColor.bg0)
     .preferredColorScheme(.dark)
-}
-
-#Preview("plan sheet") {
-    PlanSelectorSheet(onPurchased: {})
-        .background(AppColor.bg0)
-        .preferredColorScheme(.dark)
 }

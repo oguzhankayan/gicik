@@ -33,9 +33,11 @@ struct GenerationResult: Codable, Equatable, Sendable {
 struct ConversationHistoryItem: Identifiable, Equatable {
     let id: String
     let mode: Mode
-    let platform: String  // "tinder" | "bumble" | "imessage" | ...
+    let platform: String
     let createdAt: Date
     let snippet: String
+    let observation: String?
+    let replies: [ReplyOption]
 
     var relativeTime: String {
         let interval = Date().timeIntervalSince(createdAt)

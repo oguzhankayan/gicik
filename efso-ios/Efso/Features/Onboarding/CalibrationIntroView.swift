@@ -1,73 +1,95 @@
 import SwiftUI
 
-/// Calibration intro — orbital ring animation + "9 soru. 2 dakika" + başla.
-/// design-source/parts/onboarding.jsx → CalibrationIntro
+/// Post-paywall kalibrasyon başlangıç — full-bleed hero bg + alt copy + 3-row list + CTA.
 struct CalibrationIntroView: View {
-    let onContinue: () -> Void
-    @State private var rotation: Double = 0
+    @Bindable var vm: OnboardingViewModel
 
     var body: some View {
         VStack(spacing: 0) {
-            TopBar(active: 1, total: 12)
-            Spacer()
-            orbital
-            Text("efso'ı kalibre et")
-                .font(AppFont.display(30, weight: .bold))
-                .tracking(-0.02 * 30)
-                .foregroundColor(.white)
-                .padding(.top, 32)
-                .multilineTextAlignment(.center)
+            Spacer(minLength: 0)
+                .frame(maxHeight: .infinity)
 
-            Text("9 soru. 2 dakika. soru sormaya gerek yok,\ngözlem yapmamız gerek.")
-                .font(AppFont.body(15))
-                .foregroundColor(AppColor.text60)
-                .multilineTextAlignment(.center)
-                .padding(.top, 10)
-                .padding(.horizontal, 32)
-                .lineSpacing(15 * 0.45)
-            Spacer()
+            VStack(alignment: .center, spacing: AppSpacing.sm + 4) {
+                Text("seni tanıyalım.")
+                    .font(AppFont.displayItalic(40, weight: .regular))
+                    .tracking(-0.03 * 40)
+                    .foregroundColor(AppColor.ink)
+                    .multilineTextAlignment(.center)
 
-            HStack(spacing: 18) {
-                statItem("9 soru")
-                statItem("~2 dk")
-                statItem("atlanamaz")
+                Text("9 kısa soru. tarzını belirleyelim,\ncevaplar sana göre olsun.")
+                    .font(AppFont.body(14.5))
+                    .foregroundColor(AppColor.text60)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(14.5 * 0.4)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.bottom, 18)
+            .padding(.horizontal, AppSpacing.lg)
 
-            PrimaryButton("başla", action: onContinue)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 32)
+            VStack(spacing: 0) {
+                ForEach(items.indices, id: \.self) { idx in
+                    HStack(alignment: .firstTextBaseline, spacing: AppSpacing.md + 2) {
+                        Text(items[idx].0)
+                            .font(AppFont.displayItalic(26, weight: .regular))
+                            .tracking(-0.02 * 26)
+                            .foregroundColor(AppColor.accent)
+                            .frame(width: 32, alignment: .leading)
+                        Text(items[idx].1)
+                            .font(AppFont.body(14))
+                            .foregroundColor(AppColor.ink)
+                        Spacer()
+                    }
+                    .padding(.vertical, AppSpacing.md - 4)
+                    .overlay(alignment: .top) {
+                        if idx == 0 {
+                            Rectangle().fill(AppColor.text10).frame(height: 1)
+                        }
+                    }
+                    .overlay(alignment: .bottom) {
+                        Rectangle().fill(AppColor.text10).frame(height: 1)
+                    }
+                }
+            }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.lg)
+
+            HoloPrimaryButton(title: "başla", action: vm.advance)
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.xl)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            withAnimation(AppAnimation.spinSlow) {
-                rotation = 360
+        .background(
+            ZStack {
+                backgroundImage
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+
+                LinearGradient(
+                    colors: [.clear, AppColor.bg0.opacity(0.55), AppColor.bg0.opacity(0.95)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 460)
+                .frame(maxHeight: .infinity, alignment: .bottom)
             }
-        }
+            .ignoresSafeArea()
+        )
     }
 
-    private var orbital: some View {
-        Image("calibration-orbital")
+    private var backgroundImage: some View {
+        Image("calibration-bg")
             .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 280, height: 280)
-            .rotationEffect(.degrees(rotation * 0.05)) // hafif drift
+            .scaledToFill()
     }
 
-    private func statItem(_ label: String) -> some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(AppColor.lime)
-                .frame(width: 6, height: 6)
-            Text(label)
-                .font(AppFont.body(13))
-                .foregroundColor(AppColor.text60)
-        }
-    }
+    private let items: [(String, String)] = [
+        ("9", "soru. kısa, dürüst"),
+        ("6", "arketipten birine yerleşeceksin"),
+        ("∞", "istediğin zaman yenile"),
+    ]
 }
 
 #Preview {
-    CalibrationIntroView(onContinue: {})
-        .background(CosmicBackground())
+    CalibrationIntroView(vm: OnboardingViewModel())
         .preferredColorScheme(.dark)
 }

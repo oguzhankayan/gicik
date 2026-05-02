@@ -6,14 +6,18 @@ struct TopBar: View {
     let total: Int
     var showBack: Bool
     var showClose: Bool
+    var topInset: CGFloat?
     var onBack: (() -> Void)?
     var onClose: (() -> Void)?
+
+    @State private var safeAreaTopInset: CGFloat = 59
 
     init(
         active: Int,
         total: Int,
         showBack: Bool = true,
         showClose: Bool = false,
+        topInset: CGFloat? = nil,
         onBack: (() -> Void)? = nil,
         onClose: (() -> Void)? = nil
     ) {
@@ -21,8 +25,13 @@ struct TopBar: View {
         self.total = total
         self.showBack = showBack
         self.showClose = showClose
+        self.topInset = topInset
         self.onBack = onBack
         self.onClose = onClose
+    }
+
+    private var resolvedTopInset: CGFloat {
+        topInset ?? safeAreaTopInset
     }
 
     var body: some View {
@@ -54,7 +63,15 @@ struct TopBar: View {
             .frame(width: 28, alignment: .trailing)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 60)
+        .padding(.top, resolvedTopInset)
         .padding(.bottom, 8)
+        .task {
+            if topInset == nil,
+               let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene }).first,
+               let inset = scene.windows.first?.safeAreaInsets.top, inset > 0 {
+                safeAreaTopInset = inset
+            }
+        }
     }
 }
